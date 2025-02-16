@@ -23,7 +23,7 @@ MQTT_PORT = <port_number> # Default: 1883
 from src.secrets.mqtt import *
 
 MQTT_TOPIC = "pico-w"
-MQTT_CLIENT_ID = "pico-w" + str(machine.unique_id())
+MQTT_CLIENT_ID = "Pico-W-" + str(machine.unique_id().hex())
 
 def main():
     # Connect to WiFi
