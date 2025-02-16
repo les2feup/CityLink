@@ -3,3 +3,5 @@ result*
 
 # Misc
 .direnv
+
+micropython/src/secrets/
