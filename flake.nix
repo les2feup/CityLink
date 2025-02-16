@@ -17,6 +17,15 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
+        openfw = pkgs.writeShellScriptBin "openfw" ''
+          sudo iptables -A INPUT -p tcp --dport 1883 -j ACCEPT
+          sudo systemctl reload firewall
+        '';
+
+        closefw = pkgs.writeShellScriptBin "closefw" ''
+          sudo iptables -D INPUT -p tcp --dport 1883 -j ACCEPT
+          sudo systemctl reload firewall
+        '';
 
         upload = pkgs.writeShellScriptBin "upload" ''
           mpremote cp -r ./micropython/src/ :
@@ -34,6 +43,12 @@
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             # helper scripts
+
+            # temporarily open/close firewall for mqtt
+            openfw
+            closefw
+
+            # micropython utils
             upload
             run
             flash
