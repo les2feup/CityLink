@@ -53,8 +53,11 @@
             run
             flash
 
-            mpremote
+            mpremote # micropython remote tool
             mosquitto # mqtt broker
+
+            # to install asyncapi cli
+            nodejs_23
           ];
         };
       }

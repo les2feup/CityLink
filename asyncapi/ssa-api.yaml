@@ -1,0 +1,13 @@
+asyncapi: 3.0.0
+info:
+  title: Smart Sensor Actuator API
+  version: 1.0.0
+  description: |-
+    The Smart Sensor Actuator (SSA) API that allows interation with
+    the SSA Hardware Abstraction Layer (HAL) to control and monitor
+    SSA devices in an IoT network.
+  license:
+    name: MIT
+    url: https://github.com/dvalnn/SmartSensorActuator/blob/main/LICENSE
+defaultContentType: application/json
+

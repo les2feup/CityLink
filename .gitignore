@@ -5,3 +5,5 @@ result*
 .direnv
 
 micropython/src/secrets/
+
+node_modules/

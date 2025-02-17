@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@asyncapi/cli": "^2.16.4"
+  }
+}
