@@ -41,6 +41,9 @@
       in
       {
         devShells.default = pkgs.mkShell {
+          shellHook = ''
+            export PATH=$PATH:$(pwd)/api/node_modules/.bin
+          '';
           buildInputs = with pkgs; [
             # helper scripts
 
@@ -58,6 +61,9 @@
 
             # to install asyncapi cli
             nodejs_23
+            # edge node development
+            bun # build tool and runtime
+            deno # for the language server
           ];
         };
       }
