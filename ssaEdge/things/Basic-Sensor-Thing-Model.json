@@ -3,7 +3,7 @@
     "https://www.w3.org/2022/wot/td/v1.1"
   ],
   "@type": "tm:ThingModel",
-  "title": "Basic Sensor",
+  "title": "BasicSensor",
   "version": {
     "model": "0.0.1"
   },

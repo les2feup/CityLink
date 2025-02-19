@@ -1,35 +1,25 @@
-"""
-Simple MQTT publisher script for Raspberry Pi Pico W to test WiFi and MQTT connectivity.
-
-This script connects to a WiFi network and publishes a message to an MQTT broker.
-The message is published to a topic called "pico-w".
-"""
-
 import time
+import json
 import network
-import machine
 from umqtt.simple import MQTTClient
 
-"""
-WIFI_SSID = "Your WiFi SSID"
-WIFI_PASSWORD = "Your WiFi password"
-"""
-from src.secrets.wifi import *
+def import_config() -> Dict[str, Any]:
+    config = {}
+    with open('../config/config.json', 'r') as config_file:
+        config = config | json.load(config_file)
+    with open('../config/secrets.json', 'r') as secrets_file:
+        config = config | json.load(secrets_file)
+    return config
 
-"""
-MQTT_BROKER = "Your MQTT broker IP address"
-MQTT_PORT = <port_number> # Default: 1883
-"""
-from src.secrets.mqtt import *
+def wlan_connect(ssid: str, password: str) -> None:
+    #TODO: Error handling
+    #TODO: Check if already connected
+    #TODO: Retries with timeout
+    #TODO: Check if SSID is available
 
-MQTT_TOPIC = "pico-w"
-MQTT_CLIENT_ID = "Pico-W-" + str(machine.unique_id().hex())
-
-def main():
-    # Connect to WiFi
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+    wlan.connect(ssid, password)
 
     print("Connecting to WiFi...", end="")
     while not wlan.isconnected():
@@ -37,29 +27,38 @@ def main():
         print(".", end="")
     print("\nConnected! IP Address:", wlan.ifconfig()[0])
 
-    # Initialize MQTT client
-    client = MQTTClient(MQTT_CLIENT_ID, MQTT_BROKER, MQTT_PORT)
+def mqtt_connect(client_id: str, broker: str, port: int) -> MQTTClient | None:
+    #TODO: Improve error handling
+    #TODO: Check if already connected
+    #TODO: Retries with timeout
 
     try:
+        client = MQTTClient(client_id, broker, port)
         client.connect()
         print("Connected to MQTT broker")
-
-        # Publish a test message
-        message = "Hello from Raspberry Pi Pico W!"
-        client.publish(MQTT_TOPIC, message)
-        print(f"Published message: {message} to topic: {MQTT_TOPIC}")
-
-        while True:
-            message = "Hello from Raspberry Pi Pico W! Time: " + str(time.time())
-            client.publish(MQTT_TOPIC, message)
-            print(f"Published message: {message} to topic: {MQTT_TOPIC}")
-            time.sleep(5)
-
-        client.disconnect()
-        print("Disconnected from MQTT broker")
-
+        return client
     except Exception as e:
-        print("Failed to connect or publish:", e)
+        print("Failed to connect to MQTT broker:", e)
+        return None
+
+def main():
+    CONFIG = import_config()
+
+    WIFI_SSID = CONFIG['wifi']['ssid']
+    WIFI_PASSWORD = CONFIG['wifi']['password']
+    wlan_connect(WIFI_SSID, WIFI_PASSWORD)
+
+    MQTT_HOST = CONFIG['broker']['host']
+    MQTT_PORT = CONFIG['broker']['port']
+    ID = CONFIG['self-id']['uuid']
+    client = mqtt_connect(ID, MQTT_HOST, MQTT_PORT)
+    if not client:
+        return
+
+    while True:
+        client.publish("test", f"Hello, MQTT! {time.time()}")
+        time.sleep(5)
+
 
 if __name__ == "__main__":
     main()

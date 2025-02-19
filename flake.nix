@@ -28,7 +28,15 @@
         '';
 
         upload = pkgs.writeShellScriptBin "upload" ''
+          mkdir -p ./micropython/temp
+          cat ./micropython/config/config.json | jq -c > ./micropython/temp/config.json
+          cat ./micropython/config/secrets.json | jq -c > ./micropython/temp/secrets.json
+
+          mpremote mkdir :config
+          mpremote cp -r ./micropython/temp/* :config
           mpremote cp -r ./micropython/src/ :
+
+          rm -rf ./micropython/temp
         '';
 
         run = pkgs.writeShellScriptBin "run" ''
@@ -36,7 +44,12 @@
         '';
 
         flash = pkgs.writeShellScriptBin "flash" ''
-          mpremote cp -r ./micropython/* :
+          upload
+          mpremote cp -r ./micropython/boot.py :
+        '';
+
+        nuke = pkgs.writeShellScriptBin "nuke" ''
+          mpremote run ./micropython/_nuke.py
         '';
       in
       {
@@ -55,6 +68,9 @@
             upload
             run
             flash
+            nuke
+
+            jq # json cli parser
 
             mpremote # micropython remote tool
             mosquitto # mqtt broker
