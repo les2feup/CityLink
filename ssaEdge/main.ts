@@ -1,87 +1,71 @@
-import wot_core from "@node-wot/core";
-import wot_http from "@node-wot/binding-http";
+import {
+  CompositionOptions,
+  ThingModelHelpers,
+} from "npm:@thingweb/thing-model";
 
-const { HttpClientFactory, HttpServer } = wot_http;
-const { Servient } = wot_core;
+import { ThingModel } from "npm:wot-thing-model-types";
 
-function main() {
-    const server = new Servient();
-    server.addServer(
-        new HttpServer({
-            port: 8081, // (default 8080)
-        }),
-    );
+import assert from "node:assert";
 
-    let count: number;
+function loadThingModel(): ThingModel | undefined {
+  const thingModel: ThingModel = JSON.parse(
+    Deno.readTextFileSync(
+      "./things/Basic-Sensor-Thing-Model.json",
+    ),
+  );
+  const validatedModel = ThingModelHelpers.validateThingModel(thingModel);
+  if (validatedModel.errors !== undefined) {
+    console.error("Thing Model is not valid: ", validatedModel.errors);
+    return undefined;
+  }
+  assert(validatedModel.valid, "Thing Model should be valid");
 
-    server.start().then((WoT) => {
-        WoT.produce({
-            title: "MyCounter",
-            properties: {
-                count: {
-                    type: "integer",
-                },
-            },
-        }).then((thing) => {
-            console.log(`Produced ${thing.getThingDescription().title}`);
+  return thingModel;
+}
 
-            // init property value
-            count = 0;
-            // set property handlers (using async-await)
-            // deno-lint-ignore require-await
-            thing.setPropertyReadHandler("count", async () => count);
-            thing.setPropertyWriteHandler("count", async (intOutput) => {
-                const value = await intOutput.value();
-                if (typeof value === "number") {
-                    count = value;
-                }
+function thingHandler(td: WoT.ThingDescription): void {
+  console.log(JSON.stringify(td, null, 2));
 
-                return undefined;
-            });
+  //TODO: Expose Thing
+}
 
-            // expose the thing
-            thing.expose().then(() => {
-                console.info(`${thing.getThingDescription().title} ready`);
-                console.info(
-                    `TD : ${
-                        JSON.stringify(thing.getThingDescription(), null, 2)
-                    }`,
-                );
-            });
-        });
-    });
+async function createThingFromModel(
+  tmTools: ThingModelHelpers,
+  model: ThingModel,
+  map: Record<string, unknown>,
+): Promise<WoT.ThingDescription> {
+  const options: CompositionOptions = {
+    map: map,
+    selfComposition: false,
+  };
 
-    const client = new Servient();
-    client.addClientFactory(new HttpClientFactory());
-    client.start().then(async (WoT) => {
-        try {
-            const td = await WoT.requestThingDescription(
-                "http://localhost:8081/mycounter",
-            );
+  const [thing] = await tmTools.getPartialTDs(
+    model,
+    options,
+  ) as WoT.ThingDescription[];
 
-            const thing = await WoT.consume(td);
-            console.info(`Consumed ${thing.getThingDescription().title}`);
+  return thing;
+}
 
-            let i: number = 0;
+function main(): void {
+  const tmTools = new ThingModelHelpers();
+  const model = loadThingModel();
+  if (model === undefined) {
+    console.error("Error loading Thing Model");
+    Deno.exit(1);
+  }
 
-            while (true) {
-                // read property
-                const count = await thing.readProperty("count");
-                const count_value = await count.value();
-                console.info(`count: ${count_value}`);
+  const map = {
+    THING_UUID_V4: `${crypto.randomUUID()}`,
+    MQTT_BROKER_ADDR: "mqtt://192.168.1.26:1883",
+  };
 
-                // write property
-                await thing.writeProperty("count", i++);
-
-                // wait 2 seconds
-                await new Promise((r) => setTimeout(r, 5000));
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    });
+  createThingFromModel(tmTools, model, map).then((td) => {
+    console.log(`Created TD from model: ${td.title}`);
+    thingHandler(td);
+  });
 }
 
 if (import.meta.main) {
-    main();
+  main();
 }

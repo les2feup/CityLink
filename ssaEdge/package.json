@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@node-wot/binding-http": "^0.8.16",
-    "@node-wot/core": "^0.8.16"
+    "@node-wot/core": "^0.8.16",
+    "@thingweb/thing-model": "^1.0.3",
+    "mqtt": "^5.10.3"
   }
 }

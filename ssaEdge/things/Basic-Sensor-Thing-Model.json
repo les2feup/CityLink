@@ -1,0 +1,37 @@
+{
+  "@context": [
+    "https://www.w3.org/2022/wot/td/v1.1"
+  ],
+  "@type": "tm:ThingModel",
+  "title": "Basic Sensor",
+  "version": {
+    "model": "0.0.1"
+  },
+  "id": "urn:uuid:{{THING_UUID_V4}}",
+  "description": "Simple sensor with a single value property",
+  "base": "mqtt://{{MQTT_BROKER_ADDR}}",
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  },
+  "security": "nosec_sc",
+  "properties": {
+    "value": {
+      "title": "sensor reading",
+      "observable": true,
+      "readOnly": true,
+      "writeOnly": false,
+      "forms": [
+        {
+          "op": [
+            "observeproperty",
+            "unobserveproperty"
+          ],
+          "href": " /basic-sensors/{{THING_UUID_V4}}/value",
+          "contentType": "text/plain"
+        }
+      ]
+    }
+  }
+}
