@@ -1,6 +1,8 @@
 import time
 import json
 import network
+import random
+
 from umqtt.simple import MQTTClient
 
 def import_config() -> Dict[str, Any]:
@@ -50,13 +52,19 @@ def main():
 
     MQTT_HOST = CONFIG['broker']['host']
     MQTT_PORT = CONFIG['broker']['port']
-    ID = CONFIG['self-id']['uuid']
-    client = mqtt_connect(ID, MQTT_HOST, MQTT_PORT)
+    SELF_ID = CONFIG['self-id']
+    UUID = SELF_ID['uuid']
+    client = mqtt_connect(UUID, MQTT_HOST, MQTT_PORT)
     if not client:
         return
 
+    #send message to registration topic
+    client.publish(f"register/{UUID}", json.dumps(SELF_ID), retain=True, qos=1)
+
+    # generate values on value property topic
+    BASE_TOPIC = f"{SELF_ID['model']}/{UUID}"
     while True:
-        client.publish("test", f"Hello, MQTT! {time.time()}")
+        client.publish(f"{BASE_TOPIC}/value", f"{random.randint(0, 100)}")
         time.sleep(5)
 
 
