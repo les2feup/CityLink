@@ -62,8 +62,7 @@
             # to install asyncapi cli
             nodejs_23
             # edge node development
-            bun # build tool and runtime
-            deno # for the language server
+            deno # dev tools and runtime
           ];
         };
       }
