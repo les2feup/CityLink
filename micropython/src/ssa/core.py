@@ -2,10 +2,22 @@ import os
 import json
 import time
 import network
+import asyncio
 
 from umqtt.simple import MQTTClient
 
-class SSA: 
+def __singleton(cls):
+    instance = None
+    def getinstance(*args, **kwargs):
+        nonlocal instance
+        if instance is None:
+            print("init instance")
+            instance = cls(*args, **kwargs)
+        return instance
+    return getinstance
+
+@__singleton
+class SSA(): 
     def __init__(self):
         self.UUID: str
         self.BASE_TOPIC: str
@@ -13,7 +25,6 @@ class SSA:
 
         self.wlan: network.WLAN | None = None 
         self.mqtt: MQTTClient | None = None
-        pass
 
     def __load_config(self) -> dict[str, Any]:
         CONFIG_FILE_PATH = "../config/config.json"
@@ -120,5 +131,12 @@ class SSA:
         self.mqtt.publish(self.REGISTRATION_TOPIC,
                           json.dumps(CONFIG["self-id"]), retain=True, qos=1)
 
+    def disconnect(self):
+        self.mqtt.disconnect()
+
     def publish(self, subtopic:str, msg:str, qos: int = 0):
+        print(f"Publishing {msg} to {subtopic}")
         self.mqtt.publish(f"{self.BASE_TOPIC}/{subtopic}", msg, qos=qos)
+
+
+__all__ = ["connect", "disconnect", "publish"]

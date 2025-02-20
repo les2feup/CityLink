@@ -1,15 +1,21 @@
 import time
 import random
+import asyncio
 
-from src.ssa import SSA
+from src.ssa.core import SSA
+from src.ssa.decorators import ssa_topic_handler
 
-def main():
+@ssa_topic_handler("value", 1000)
+def testPublish():
+    return random.randint(0, 100)
+
+async def main():
     ssa = SSA()
     ssa.connect("Goodbye")
 
-    while(True):
-        ssa.publish("value", f"{random.randint(0, 100)}")
-        time.sleep(5)
+    asyncio.create_task(testPublish())
+    await asyncio.sleep(2)
+    ssa.disconnect()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
