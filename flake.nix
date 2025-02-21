@@ -28,15 +28,20 @@
         '';
 
         upload = pkgs.writeShellScriptBin "upload" ''
-          mkdir -p ./micropython/temp
-          cat ./micropython/config/config.json | jq -c > ./micropython/temp/config.json
-          cat ./micropython/config/secrets.json | jq -c > ./micropython/temp/secrets.json
+          mkdir -p ./micropython/.temp
+          mkdir -p ./micropython/.temp/config
 
-          mpremote mkdir :config
-          mpremote cp -r ./micropython/temp/* :config
-          mpremote cp -r ./micropython/src/ :
+          cat ./micropython/config/config.json | jq -c > ./micropython/.temp/config/config.json
+          cat ./micropython/config/secrets.json | jq -c > ./micropython/.temp/config/secrets.json
 
-          rm -rf ./micropython/temp
+          python3 ./micropython/dev_utils/clean.py ./micropython/src ./micropython/.temp/src
+          python3 ./micropython/dev_utils/clean.py ./micropython/ssa ./micropython/.temp/ssa
+
+          mpremote cp -r ./micropython/.temp/config/ :
+          mpremote cp -r ./micropython/.temp/src/ :
+          mpremote cp -r ./micropython/.temp/ssa/ :
+
+          rm -rf ./micropython/.temp
         '';
 
         run = pkgs.writeShellScriptBin "run" ''
@@ -49,7 +54,7 @@
         '';
 
         nuke = pkgs.writeShellScriptBin "nuke" ''
-          mpremote run ./micropython/_nuke.py
+          mpremote run ./micropython/dev_utils/nuke.py
         '';
       in
       {
@@ -79,6 +84,11 @@
             nodejs_23
             # edge node development
             deno # dev tools and runtime
+
+            doxygen # documentation generator
+
+            # For clean.py script
+            python312Packages.astor
           ];
         };
       }

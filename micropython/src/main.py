@@ -1,21 +1,25 @@
 import time
 import random
-import asyncio
 
-from src.ssa.core import SSA
-from src.ssa.decorators import ssa_topic_handler
+from ssa.core import SSA
+from ssa.decorators import ssa_property_handler, ssa_event_handler, ssa_main
 
-@ssa_topic_handler("value", 1000)
-def testPublish():
+def example_action_callback(msg: str):
+    print(f"Action triggered with message: {msg}")
+
+@ssa_property_handler("value", 2000)
+async def example_prop_handler():
     return random.randint(0, 100)
 
-async def main():
-    ssa = SSA()
-    ssa.connect("Goodbye")
+@ssa_event_handler("event", 2000)
+async def example_event_handler():
+    return random.randint(0, 100) > 50, "Event occurred"
 
-    asyncio.create_task(testPublish())
-    await asyncio.sleep(2)
-    ssa.disconnect()
+@ssa_main
+def init(ssa: SSA):
+    ssa.register_handler(example_prop_handler)
+    ssa.register_handler(example_event_handler)
+    ssa.action_callback("action", example_action_callback)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    init()

@@ -1,4 +1,3 @@
-import asyncio
-from src.main import main
+import src.main
+main.run()
 
-asyncio.run(main())

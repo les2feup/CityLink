@@ -7,3 +7,5 @@ result*
 micropython/config/secrets.json
 
 node_modules/
+
+docs/
