@@ -56,6 +56,11 @@
         nuke = pkgs.writeShellScriptBin "nuke" ''
           mpremote run ./micropython/dev_utils/nuke.py
         '';
+
+        del_user = pkgs.writeShellScriptBin "del_user" ''
+          mpremote rm :./user/app.py
+          mpremote rmidr :./user
+        '';
       in
       {
         devShells.default = pkgs.mkShell {
@@ -70,10 +75,11 @@
             closefw
 
             # micropython utils
-            upload
             run
-            flash
             nuke
+            flash
+            upload
+            del_user
 
             jq # json cli parser
 
