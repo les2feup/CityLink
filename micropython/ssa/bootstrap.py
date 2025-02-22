@@ -35,6 +35,8 @@ def __registration_bootstrap():
         __run_main_loop()
     except Exception as e:
         raise Exception(f"[FATAL] Registration bootstrap failed with {e}")
+    else:
+        print("[INFO] Registration process complete. Reseting and running user code.")
 
 def __bootstrap():
     """!
@@ -51,13 +53,12 @@ def __bootstrap():
         import user.app as app
         print("[INFO] User code found. Starting application.")
         app.init()
+        print("[WARNING] User application terminated.")
     except ImportError as e:
         print(f"[WARNING] No user code found: {e}")
         __registration_bootstrap()
     except Exception as e:
         print(f"[ERROR] Failed to start user code: {e}")
-    finally:
-        print(f"[FATAL] [UNREACHABLE] Reached end of bootstrap. Exiting.")
 
 if __name__ == "__main__":
     __bootstrap()
