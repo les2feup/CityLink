@@ -220,5 +220,3 @@ class SSA():
             @param qos: The QoS level to use for the subscription, default is 0
         """
         self.__action_cb_dict[action] = callback_func
-
-__all__ = ["SSA", "register_handler", "action_callback"]

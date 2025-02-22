@@ -59,6 +59,5 @@ def __bootstrap():
     finally:
         print(f"[FATAL] [UNREACHABLE] Reached end of bootstrap. Exiting.")
 
-__all__ = []
 if __name__ == "__main__":
     __bootstrap()
