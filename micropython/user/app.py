@@ -20,6 +20,3 @@ def init(ssa: SSA):
     ssa.register_handler(example_prop_handler)
     ssa.register_handler(example_event_handler)
     ssa.action_callback("action", example_action_callback)
-
-if __name__ == "__main__":
-    print("[WARNING] user/app.py should not be run directly. Please run ssa/bootstrap.py instead.")
