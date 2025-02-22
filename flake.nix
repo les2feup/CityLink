@@ -59,7 +59,7 @@
 
         del_user = pkgs.writeShellScriptBin "del_user" ''
           mpremote rm :./user/app.py
-          mpremote rmidr :./user
+          mpremote rmdir :./user
         '';
       in
       {
