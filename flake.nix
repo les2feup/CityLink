@@ -34,18 +34,18 @@
           cat ./micropython/config/config.json | jq -c > ./micropython/.temp/config/config.json
           cat ./micropython/config/secrets.json | jq -c > ./micropython/.temp/config/secrets.json
 
-          python3 ./micropython/dev_utils/clean.py ./micropython/src ./micropython/.temp/src
+          python3 ./micropython/dev_utils/clean.py ./micropython/user/ ./micropython/.temp/user
           python3 ./micropython/dev_utils/clean.py ./micropython/ssa ./micropython/.temp/ssa
 
           mpremote cp -r ./micropython/.temp/config/ :
-          mpremote cp -r ./micropython/.temp/src/ :
+          mpremote cp -r ./micropython/.temp/user/ :
           mpremote cp -r ./micropython/.temp/ssa/ :
 
           rm -rf ./micropython/.temp
         '';
 
         run = pkgs.writeShellScriptBin "run" ''
-          mpremote run ./micropython/src/main.py
+          mpremote run ./micropython/ssa/bootstrap.py
         '';
 
         flash = pkgs.writeShellScriptBin "flash" ''

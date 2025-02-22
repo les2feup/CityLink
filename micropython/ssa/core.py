@@ -3,6 +3,7 @@ import json
 import time
 import network
 import asyncio
+import machine
 
 from umqtt.simple import MQTTClient
 
@@ -17,14 +18,14 @@ def __singleton(cls):
     return getinstance
 
 @__singleton
-class SSA(): 
+class SSA():
     def __init__(self):
         self.UUID: str
         self.BASE_TOPIC: str
         self.BASE_ACTION_TOPIC: str
         self.REGISTRATION_TOPIC: str
 
-        self.__wlan: network.WLAN | None = None 
+        self.__wlan: network.WLAN | None = None
         self.__mqtt: MQTTClient | None = None
 
         self.__action_cb_dict: Dict[str, funtion] = {}
@@ -79,11 +80,26 @@ class SSA():
         self.BASE_ACTION_TOPIC = f"{self.BASE_TOPIC}/actions"
         self.REGISTRATION_TOPIC = f"registration/{self.UUID}"
 
-    def __handle_config_change(self, msg: str):
-        raise Exception(f"[TODO] ssa.__handle_config_change not implemented: {msg}")
+    def __handle_app_change(self, app: Dict[str, Any]):
+        raise Exception(f"[TODO] ssa.__handle_app_update not implemented")
+
+    def __handle_config_change(self, config: Dict[str, Any]):
+        raise Exception(f"[TODO] ssa.__handle_config_change not implemented")
+
+    def __handle_firmware_update(self, msg: str):
+        update: Dict[str, Any] = json.loads(msg)
+
+        if "config" in update.keys():
+            print("[INFO] Updating configuration")
+            self.__handle_config_change(update["config"])
+
+        if "app" in update.keys():
+            print("[INFO] Updating application code")
+            self.__handle_app_change(update["app"])
+
+        machine.reset()
 
     def __wlan_connect(self, SSID: str, PASSWORD: str):
-        #TODO: Retries with timeout
         #TODO: Check if already connected
         #TODO: Check if given SSID exits
 
@@ -103,8 +119,6 @@ class SSA():
                        port: int,
                        last_will: str | None = None):
         #TODO: Improve error handling
-        #TODO: Check if already connected
-        #TODO: Retries with timeout
         #TODO: Add security
 
         self.__mqtt = MQTTClient(client_id, broker, port)
@@ -140,7 +154,7 @@ class SSA():
         except Exception as e:
             print(f"[WARNING] action callback {self.__action_cb_dict[action].__name__} failed to execute: {e}")
 
-    def connect(self, last_will: str | None = None):
+    def __connect(self, last_will: str | None = None, _with_registration: bool = False):
         CONFIG = self.__load_config()
         self.__validate_config(CONFIG)
 
@@ -158,31 +172,53 @@ class SSA():
         except Exception as e:
             raise Exception(f"[ERROR] MQTT broker connection failed: {e}")
 
-        #TODO: Improve registration process to be more robust
-        self.__mqtt.publish(self.REGISTRATION_TOPIC,
-                          json.dumps(CONFIG["self-id"]), retain=True, qos=1)
+        if _with_registration:
+            self.__mqtt.publish(self.REGISTRATION_TOPIC,
+                                json.dumps(CONFIG["self-id"]), retain=True, qos=1)
 
-    def publish(self, subtopic:str, msg:str, qos: int = 0):
+    def __publish(self, subtopic:str, msg:str, qos: int = 0):
         print(f"Publishing {msg} to {subtopic}")
         self.__mqtt.publish(f"{self.BASE_TOPIC}/{subtopic}", msg, qos=qos)
 
-    def register_handler(self, task: function):
-        self.__tasks.append(asyncio.create_task(task()))
+    #TODO: improve main loop periodicity by taking into account the time taken by message processing
+    async def __main_loop(self, _blocking: bool = False):
+        """! Run the main loop of the application
+            @param _blocking: If True, the loop will block until a message is received.
+                              If False, the loop will run in the background and periodically check for incoming messages
 
-    def action_callback(self, action:str, callback_func: funtion, qos: int = 0):
-        self.__action_cb_dict[action] = callback_func
+                              Blocking mode is an not meant for user code and is used as part of the bootstrap process
+                              to wait fo incoming firmware updates.
+        """
+        self.action_callback("config", self.__handle_firmware_update)
 
-    #TODO: improve main loop periodicity by taking into account the time taken by check_msg callback
-    async def main_loop(self):
         self.__mqtt.set_callback(self.__mqtt_sub_callback)
         self.__mqtt.subscribe(f"{self.BASE_ACTION_TOPIC}/#", qos=1)
 
-        self.action_callback("config", self.__handle_config_change)
 
         while True:
-            self.__mqtt.check_msg()
-            #TODO: Add a way to stop the loop
-            #TODO: Allow for configuration of the loop period
-            await asyncio.sleep_ms(200)
+            if _blocking:
+                self.__mqtt.wait_msg()
+            else:
+                #TODO: Add a way to stop the loop
+                #TODO: Allow for configuration of the loop period
+                self.__mqtt.check_msg()
+                await asyncio.sleep_ms(200)
 
-__all__ = ["connect", "publish", "set_action_handler"]
+    def register_handler(self, task: function):
+        """! Register a task to be executed as part of the main loop
+            @param task: The task to be executed
+                         The task should be an async function decorated with @ssa_property_handler or @ssa_event_handler
+                         See the ssa.decorators.py documentation for more information
+        """
+        self.__tasks.append(asyncio.create_task(task()))
+
+    def action_callback(self, action:str, callback_func: funtion, qos: int = 0):
+        """! Register a callback function to be executed when an action message is received
+            @param action: The name of the action to register the callback for
+            @param callback_func: The function to be called when the action message is received
+                                  The function should take a single string argument, the message payload
+            @param qos: The QoS level to use for the subscription, default is 0
+        """
+        self.__action_cb_dict[action] = callback_func
+
+__all__ = ["SSA", "register_handler", "action_callback"]

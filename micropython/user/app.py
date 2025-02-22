@@ -22,4 +22,4 @@ def init(ssa: SSA):
     ssa.action_callback("action", example_action_callback)
 
 if __name__ == "__main__":
-    init()
+    print("[WARNING] user/app.py should not be run directly. Please run ssa/bootstrap.py instead.")

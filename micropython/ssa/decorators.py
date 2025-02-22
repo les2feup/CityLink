@@ -7,16 +7,16 @@ def ssa_property_handler(property: str, period_ms: int):
     """! Decorator to handle the publication of a property to the broker
         @param property: The property to publish
         @param period_ms: The period in milliseconds to publish the property
-    
+
         The decorated function will be called in a loop, sleeping for the specified period
         after each call.
         The result of the decorated function will be published to the broker
         with the specified property name.
-    
+
         The decorated function should return the value to be published.
         The decorated function signature should be:
             async def func() -> Any
-    
+
         Note: See ssa_main decorator documentation for example usage
     """
     def decorator(func):
@@ -25,7 +25,7 @@ def ssa_property_handler(property: str, period_ms: int):
 
             while True:
                 result = await func()
-                ssa_instance.publish(f"{property}", f"{result}")
+                ssa_instance.__publish(f"{property}", f"{result}")
                 await asyncio.sleep_ms(period_ms)
             
         return wrapper
@@ -35,15 +35,15 @@ def ssa_event_handler(event: str, period_ms: int):
     """! Decorator to handle the publication of an event to the broker
         @param event: The event to publish
         @param period_ms: The period in milliseconds to check for event occurrence
-    
+
         The decorated function will be called in a loop, sleeping for the specified period
         after each call.
-    
+
         The decorated function should return a tuple of two values:
             async def func() -> Tuple[bool, Any]
             The first value should be a boolean indicating whether the event has occurred.
             The second value should be the result to publish to the broker in case of event occurrence.
-    
+
         Note: See ssa_main decorator documentation for example usage
     """
     def decorator(func):
@@ -53,7 +53,7 @@ def ssa_event_handler(event: str, period_ms: int):
             while True:
                 trigger_event, result = await func()
                 if trigger_event:
-                    ssa_instance.publish(f"{event}", f"{result}")
+                    ssa_instance.__publish(f"{event}", f"{result}")
                 await asyncio.sleep_ms(period_ms)
 
         return wrapper
@@ -78,7 +78,7 @@ def ssa_main(init_func):
         5. Start the main loop and service incoming messages and run the registered handlershandlers
 
         example usage:
-            
+
             @ssa_property_handler("value", 2000)
             async def example_prop_handler():
                 return random.randint(0, 100)
@@ -109,11 +109,11 @@ def ssa_main(init_func):
                 raise Exception(f"[ERROR] Failed to run initial setup: {e}")
 
             try:
-                ssa_instance.connect("Goodbye")
+                ssa_instance.__connect("Goodbye")
             except Exception as e:
                 raise Exception(f"[ERROR] SSA connection failed: {e}")
-                
-            await ssa_instance.main_loop()
-        
+
+            await ssa_instance.__main_loop()
+
         asyncio.run(ssa_entry_point())
     return main_wrapper

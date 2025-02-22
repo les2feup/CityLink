@@ -1,3 +1,2 @@
-import src.main
-main.run()
-
+from ssa.bootstrap import bootstrap
+bootstrap()
