@@ -157,6 +157,7 @@ class SSA():
         if _with_registration:
             self.__mqtt.publish(self.REGISTRATION_TOPIC,
                                 json.dumps(CONFIG["self-id"]), retain=True, qos=1)
+            print("[INFO] Registration message sent")
 
     def __publish(self, subtopic:str, msg:str, qos: int = 0):
         print(f"Publishing {msg} to {subtopic}")
