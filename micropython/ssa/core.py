@@ -39,16 +39,14 @@ class SSA():
         config: Dict[str, Any] = {}
 
         try:
-            config_file = open(CONFIG_FILE_PATH, "r")
-            config = config | json.load(config_file)
-            config_file.close()
+            with open(CONFIG_FILE_PATH, "r") as config_file:
+                config = json.load(config_file)
         except OSError as e:
             raise Exception(f"[ERROR] config.json could not be parsed: {e}") from e
 
         try:
-            secrets_file = open(SECRETS_FILE_PATH, "r")
-            config = config | json.load(secrets_file)
-            secrets_file.close()
+            with open(SECRETS_FILE_PATH, "r") as secrets_file:
+                config = config | json.load(secrets_file)
         except OSError as e:
             raise Exception(f"[ERROR] secrets.json could not be parsed: {e}") from e
 
