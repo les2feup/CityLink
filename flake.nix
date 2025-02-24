@@ -94,8 +94,8 @@
 
             doxygen # documentation generator
 
-            # For clean.py script
-            python312Packages.astor
+            python312Packages.astor # For clean.py script
+            python312Packages.typing-extensions
           ];
         };
       }

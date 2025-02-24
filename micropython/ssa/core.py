@@ -6,6 +6,8 @@ from time import sleep
 from network import WLAN, STA_IF
 from umqtt.simple import MQTTClient
 
+from typing import Any, Dict, List, Callable, Awaitable
+
 def __singleton(cls):
     instance = None
     def getinstance(*args, **kwargs):
@@ -27,10 +29,10 @@ class SSA():
         self.__wlan: WLAN | None = None
         self.__mqtt: MQTTClient | None = None
 
-        self.__action_cb_dict: Dict[str, funtion] = {}
+        self.__action_cb_dict: Dict[str, Callable[[str], None]] = {}
         self.__tasks: List[asyncio.Task] = []
 
-    def __load_config(self) -> dict[str, Any]:
+    def __load_config(self) -> Dict[str, Any]:
         CONFIG_FILE_PATH = "../config/config.json"
         SECRETS_FILE_PATH = "../config/secrets.json"
 
@@ -190,7 +192,7 @@ class SSA():
     def __handle_user_config(self, config: str):
         raise Exception(f"[TODO] ssa.__handle_config_change not implemented")
 
-    def register_handler(self, task: function):
+    def register_handler(self, task: Callable[[], Awaitable[None]]):
         """! Register a task to be executed as part of the main loop
             @param task: The task to be executed
                          The task should be an async function decorated with @ssa_property_handler or @ssa_event_handler
@@ -198,7 +200,7 @@ class SSA():
         """
         self.__tasks.append(asyncio.create_task(task()))
 
-    def action_callback(self, action: str, callback_func: funtion, qos: int = 0):
+    def action_callback(self, action: str, callback_func: Callable[[str], None], qos: int = 0):
         """! Register a callback function to be executed when an action message is received
             @param action: The name of the action to register the callback for
             @param callback_func: The function to be called when the action message is received
