@@ -1,17 +1,17 @@
-#TODO: improve handler periodicity by taking into account the time taken by the handler function
-
 import asyncio
-from ssa.core import SSA
+from ssa.core import SSA, SSA_Property
 
-def ssa_property_handler(property: str, period_ms: int):
+def ssa_property_task(property_name: str, period_ms: int, retain: bool = False, qos: int = 0):
     """! Decorator to handle the publication of a property to the broker
         @param property: The property to publish
         @param period_ms: The period in milliseconds to publish the property
 
         The decorated function will be called in a loop, sleeping for the specified period
         after each call.
-        The result of the decorated function will be published to the broker
+        The result of the decorated function will be published (on change) to the broker
         with the specified property name.
+        If the property has an event associated with it, the event will be checked and published
+        (if triggered) each cycle after the property is published.
 
         The decorated function should return the value to be published.
         The decorated function signature should be:
@@ -19,19 +19,33 @@ def ssa_property_handler(property: str, period_ms: int):
 
         Note: See ssa_main decorator documentation for example usage
     """
-    def decorator(func):
+    def decorator(func: Callable[[], Any]):
         def wrapper():
             ssa_instance = SSA()
+            if property_name not in ssa_instance.__properties:
+                ssa_instance.__properties[property_name] = SSA_Property(None)
 
             while True:
+                property: SSA_Property = ssa_instance.__properties[property_name]
+                previous = property.value
                 result = await func()
-                ssa_instance.__publish(f"properties/{property}", f"{result}")
+
+                if previous != result:
+                    ssa_instance.__properties[property_name].value = result
+                    ssa_instance.__publish(f"properties/{property_name}", f"{result}",
+                                           retain=retain, qos=qos)
+
+                is_event, event_value = property.check_event()
+                if is_event:
+                    ssa_instance.__publish(f"events/{property.event_name}", f"{event_value}")
+
+                #TODO: improve task periodicity by taking into account the time taken to execute the loop
                 await asyncio.sleep_ms(period_ms)
             
         return wrapper
     return decorator
 
-def ssa_event_handler(event: str, period_ms: int):
+def ssa_event_task(event: str, period_ms: int, retain: bool = False, qos: int = 0):
     """! Decorator to handle the publication of an event to the broker
         @param event: The event to publish
         @param period_ms: The period in milliseconds to check for event occurrence
@@ -46,14 +60,17 @@ def ssa_event_handler(event: str, period_ms: int):
 
         Note: See ssa_main decorator documentation for example usage
     """
-    def decorator(func):
+    def decorator(func: Callable[[], Tuple[bool, Any]]):
         def wrapper():
             ssa_instance = SSA()
 
             while True:
                 trigger_event, result = await func()
                 if trigger_event:
-                    ssa_instance.__publish(f"events/{event}", f"{result}")
+                    ssa_instance.__publish(f"events/{event}", f"{result}",
+                                           retain=retain, qos=qos)
+
+                #TODO: improve task periodicity by taking into account the time taken to execute the loop
                 await asyncio.sleep_ms(period_ms)
 
         return wrapper
