@@ -56,6 +56,7 @@ function main(): void {
   }
 
   const map = {
+    THING_MODEL: "base_ssa_thing",
     THING_UUID_V4: `${crypto.randomUUID()}`,
     MQTT_BROKER_ADDR: "192.168.1.26:1883",
   };
