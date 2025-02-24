@@ -78,7 +78,7 @@ class SSA():
 
         self.UUID = CONFIG["self-id"]["uuid"]
         self.BASE_TOPIC = f"{CONFIG["self-id"]['model']}/{self.UUID}"
-        self.BASE_ACTION_TOPIC = f"{self.BASE_TOPIC}/action"
+        self.BASE_ACTION_TOPIC = f"{self.BASE_TOPIC}/actions"
         self.REGISTRATION_TOPIC = f"registration/{self.UUID}"
 
     def __wlan_connect(self, SSID: str, PASSWORD: str):
