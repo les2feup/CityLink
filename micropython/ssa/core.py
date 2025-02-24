@@ -262,6 +262,9 @@ class SSA():
             @param transform: A function that takes the property value as an argument and returns the value to publish
                               to the broker in case of event occurrence
         """
+        if not event_name or '/' in event_name or '#' in event_name or '+' in event_name:
+            raise ValueError("Invalid event name. Must not be empty or contain MQTT wildcards ('/', '#', '+')")
+
         if prop_name not in self.__properties:
             self.__properties[prop_name] = SSA_Property(None)
 
@@ -273,7 +276,16 @@ class SSA():
                          The task should be an async function decorated with @ssa_property_task or @ssa_event_task
                          See the ssa.decorators.py documentation for more information
         """
-        self.__tasks.append(asyncio.create_task(task()))
+        async def wrapped_task():
+            try:
+                await task()
+            except Exception as e:
+                print(f"[ERROR] Task {task.__name__} failed: {e}")
+            finally:
+                if task in self.__tasks:
+                    self.__tasks.remove(task)
+
+        self.__tasks.append(asyncio.create_task(wrapped_task()))
 
     def action_callback(self, action: str, callback_func: Callable[[str], None], qos: int = 0):
         """! Register a callback function to be executed when an action message is received
