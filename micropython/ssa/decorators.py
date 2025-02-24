@@ -111,7 +111,7 @@ def ssa_main(init_func):
             try:
                 ssa_instance.__connect("Goodbye")
             except Exception as e:
-                raise Exception(f"[ERROR] SSA connection failed: {e}")
+                raise Exception(f"[ERROR] SSA connection failed: {e}") from e
 
             await ssa_instance.__main_loop()
 

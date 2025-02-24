@@ -35,7 +35,7 @@ def __registration_bootstrap():
         __connect_with_retries()
         __run_main_loop()
     except Exception as e:
-        raise Exception(f"[FATAL] Registration bootstrap failed with {e}")
+        raise Exception(f"[FATAL] Registration bootstrap failed with {e}") from e
     else:
         print("[INFO] Registration process complete. Reseting and running user code.")
 

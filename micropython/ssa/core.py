@@ -43,14 +43,14 @@ class SSA():
             config = config | json.load(config_file)
             config_file.close()
         except OSError as e:
-            raise Exception(f"[ERROR] config.json could not be parsed: {e}")
+            raise Exception(f"[ERROR] config.json could not be parsed: {e}") from e
 
         try:
             secrets_file = open(SECRETS_FILE_PATH, "r")
             config = config | json.load(secrets_file)
             secrets_file.close()
         except OSError as e:
-            raise Exception(f"[ERROR] secrets.json could not be parsed: {e}")
+            raise Exception(f"[ERROR] secrets.json could not be parsed: {e}") from e
 
         return config
 
@@ -74,7 +74,7 @@ class SSA():
             CONFIG["self_id"]["version"]["instance"]
             CONFIG["self_id"]["version"]["model"]
         except Exception as e:
-            raise Exception(f"[ERROR] malformed config: Missing \"{e}\" key")
+            raise Exception(f"[ERROR] malformed config: Missing \"{e}\" key") from e
 
         self.UUID = CONFIG["self_id"]["uuid"]
         self.BASE_TOPIC = f"{CONFIG["self_id"]['model']}/{self.UUID}"
@@ -146,14 +146,14 @@ class SSA():
             WIFI_PASSWORD = CONFIG["wifi"]["password"]
             self.__wlan_connect(WIFI_SSID, WIFI_PASSWORD)
         except Exception as e:
-            raise Exception(f"[ERROR] wlan connection failed: {e}")
+            raise Exception(f"[ERROR] wlan connection failed: {e}") from e
 
         try:
             MQTT_HOST = CONFIG['broker']['host']
             MQTT_PORT = CONFIG['broker']['port']
             self.__mqtt_connect(self.UUID, MQTT_HOST, MQTT_PORT)
         except Exception as e:
-            raise Exception(f"[ERROR] MQTT broker connection failed: {e}")
+            raise Exception(f"[ERROR] MQTT broker connection failed: {e}") from e
 
         if _with_registration:
             self.__mqtt.publish(self.REGISTRATION_TOPIC,
@@ -191,7 +191,7 @@ class SSA():
         soft_reset()
 
     def __handle_user_config(self, config: str):
-        raise Exception("[TODO] ssa.__handle_config_change not implemented")
+        raise Exception("[TODO] ssa.__handle_config_change not implemented") from e
 
     def register_handler(self, task: Callable[[], Awaitable[None]]):
         """! Register a task to be executed as part of the main loop
