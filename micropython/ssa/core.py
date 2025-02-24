@@ -39,18 +39,16 @@ class SSA():
         config: Dict[str, Any] = {}
 
         try:
-            config_file = open(CONFIG_FILE_PATH, "r")
-            config = config | json.load(config_file)
-            config_file.close()
+            with open(CONFIG_FILE_PATH, "r") as config_file:
+                config = json.load(config_file)
         except OSError as e:
-            raise Exception(f"[ERROR] config.json could not be parsed: {e}")
+            raise Exception(f"[ERROR] config.json could not be parsed: {e}") from e
 
         try:
-            secrets_file = open(SECRETS_FILE_PATH, "r")
-            config = config | json.load(secrets_file)
-            secrets_file.close()
+            with open(SECRETS_FILE_PATH, "r") as secrets_file:
+                config = config | json.load(secrets_file)
         except OSError as e:
-            raise Exception(f"[ERROR] secrets.json could not be parsed: {e}")
+            raise Exception(f"[ERROR] secrets.json could not be parsed: {e}") from e
 
         return config
 
@@ -67,18 +65,18 @@ class SSA():
             CONFIG["broker"]["port"]
 
             # Self identification config
-            CONFIG["self-id"]
-            CONFIG["self-id"]["uuid"]
-            CONFIG["self-id"]["model"]
-            CONFIG["self-id"]["version"]
-            CONFIG["self-id"]["version"]["instance"]
-            CONFIG["self-id"]["version"]["model"]
+            CONFIG["self_id"]
+            CONFIG["self_id"]["uuid"]
+            CONFIG["self_id"]["model"]
+            CONFIG["self_id"]["version"]
+            CONFIG["self_id"]["version"]["instance"]
+            CONFIG["self_id"]["version"]["model"]
         except Exception as e:
-            raise Exception(f"[ERROR] malformed config: Missing \"{e}\" key")
+            raise Exception(f"[ERROR] malformed config: Missing \"{e}\" key") from e
 
-        self.UUID = CONFIG["self-id"]["uuid"]
-        self.BASE_TOPIC = f"{CONFIG["self-id"]['model']}/{self.UUID}"
-        self.BASE_ACTION_TOPIC = f"{self.BASE_TOPIC}/action"
+        self.UUID = CONFIG["self_id"]["uuid"]
+        self.BASE_TOPIC = f"{CONFIG["self_id"]['model']}/{self.UUID}"
+        self.BASE_ACTION_TOPIC = f"{self.BASE_TOPIC}/actions"
         self.REGISTRATION_TOPIC = f"registration/{self.UUID}"
 
     def __wlan_connect(self, SSID: str, PASSWORD: str):
@@ -146,18 +144,19 @@ class SSA():
             WIFI_PASSWORD = CONFIG["wifi"]["password"]
             self.__wlan_connect(WIFI_SSID, WIFI_PASSWORD)
         except Exception as e:
-            raise Exception(f"[ERROR] wlan connection failed: {e}")
+            raise Exception(f"[ERROR] wlan connection failed: {e}") from e
 
         try:
             MQTT_HOST = CONFIG['broker']['host']
             MQTT_PORT = CONFIG['broker']['port']
             self.__mqtt_connect(self.UUID, MQTT_HOST, MQTT_PORT)
         except Exception as e:
-            raise Exception(f"[ERROR] MQTT broker connection failed: {e}")
+            raise Exception(f"[ERROR] MQTT broker connection failed: {e}") from e
 
         if _with_registration:
             self.__mqtt.publish(self.REGISTRATION_TOPIC,
-                                json.dumps(CONFIG["self-id"]), retain=True, qos=1)
+                                json.dumps(CONFIG["self_id"]), retain=True, qos=1)
+
             print("[INFO] Registration message sent")
 
     def __publish(self, subtopic:str, msg:str, qos: int = 0):

@@ -25,7 +25,7 @@ def ssa_property_handler(property: str, period_ms: int):
 
             while True:
                 result = await func()
-                ssa_instance.__publish(f"{property}", f"{result}")
+                ssa_instance.__publish(f"properties/{property}", f"{result}")
                 await asyncio.sleep_ms(period_ms)
             
         return wrapper
@@ -53,7 +53,7 @@ def ssa_event_handler(event: str, period_ms: int):
             while True:
                 trigger_event, result = await func()
                 if trigger_event:
-                    ssa_instance.__publish(f"{event}", f"{result}")
+                    ssa_instance.__publish(f"events/{event}", f"{result}")
                 await asyncio.sleep_ms(period_ms)
 
         return wrapper
@@ -111,7 +111,7 @@ def ssa_main(init_func):
             try:
                 ssa_instance.__connect("Goodbye")
             except Exception as e:
-                raise Exception(f"[ERROR] SSA connection failed: {e}")
+                raise Exception(f"[ERROR] SSA connection failed: {e}") from e
 
             await ssa_instance.__main_loop()
 
