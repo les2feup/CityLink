@@ -57,7 +57,7 @@ function main(): void {
 
   const map = {
     THING_UUID_V4: `${crypto.randomUUID()}`,
-    MQTT_BROKER_ADDR: "mqtt://192.168.1.26:1883",
+    MQTT_BROKER_ADDR: "192.168.1.26:1883",
   };
 
   createThingFromModel(tmTools, model, map).then((td) => {
