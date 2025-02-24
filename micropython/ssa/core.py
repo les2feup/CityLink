@@ -6,7 +6,31 @@ from time import sleep
 from network import WLAN, STA_IF
 from umqtt.simple import MQTTClient
 
-from typing import Any, Dict, List, Callable, Awaitable
+from typing import Any, Dict, List, Tuple, Callable, Awaitable
+
+
+class SSA_Property:
+    def __init__(self, value: Any):
+        self.value = value
+        self.has_event = False
+
+    def set_event(self, name: str, trigger: Callable[[Any], bool], transform: Callable[[Any], Any] | None):
+        self.has_event = True
+        self.event_name = name
+        self.event_trigger = trigger
+        self.event_callback = transform
+
+    def check_event(self) -> Tuple[bool, Any]:
+        if not self.has_event:
+            return False, None
+
+        if self.event_trigger(self.value):
+            if self.event_callback is not None:
+                return True, self.event_callback(self.value)
+            else:
+                return True, self.value
+        else:
+            return False, None
 
 def __singleton(cls):
     instance = None
@@ -32,6 +56,9 @@ class SSA():
         self.__action_cb_dict: Dict[str, Callable[[str], None]] = {}
         self.__tasks: List[asyncio.Task] = []
 
+        self.__properties: Dict[str, SSA_Property] = {}
+
+    #TODO: Make this function return config and secrets as separate dictionaries this function return config and secrets as separate dictionaries
     def __load_config(self) -> Dict[str, Any]:
         CONFIG_FILE_PATH = "../config/config.json"
         SECRETS_FILE_PATH = "../config/secrets.json"
@@ -156,12 +183,18 @@ class SSA():
         if _with_registration:
             self.__mqtt.publish(self.REGISTRATION_TOPIC,
                                 json.dumps(CONFIG["self_id"]), retain=True, qos=1)
+            print("[INFO] Registration published")
 
-            print("[INFO] Registration message sent")
+        #NOTE: CONFIG is not handled as a true property, as it is not expected to change
+        # This means that with retain, pushing the config after registration will comply
+        # with the spec and remove the need to keep the CONFIG variable in memory
+        self.__mqtt.publish(f"{self.BASE_TOPIC}/properties/ssa_hal/config",
+                            json.dumps(CONFIG), retain=True, qos=1)
+        print("[INFO] Config published")
 
-    def __publish(self, subtopic:str, msg:str, qos: int = 0):
-        print(f"Publishing {msg} to {subtopic}")
-        self.__mqtt.publish(f"{self.BASE_TOPIC}/{subtopic}", msg, qos=qos)
+    def __publish(self, subtopic:str, msg:str, retain: bool = False, qos: int = 0):
+        print(f"[DEBUG] Publishing `{msg}` to `{subtopic}`")
+        self.__mqtt.publish(f"{self.BASE_TOPIC}/{subtopic}", msg, retain=retain, qos=qos)
 
     def __handle_fw_update(self, update_str: str):
         print(f"[INFO] Firmware update received with size {len(update_str)}")
@@ -191,23 +224,6 @@ class SSA():
     def __handle_user_config(self, config: str):
         raise Exception("[TODO] ssa.__handle_config_change not implemented")
 
-    def register_handler(self, task: Callable[[], Awaitable[None]]):
-        """! Register a task to be executed as part of the main loop
-            @param task: The task to be executed
-                         The task should be an async function decorated with @ssa_property_handler or @ssa_event_handler
-                         See the ssa.decorators.py documentation for more information
-        """
-        self.__tasks.append(asyncio.create_task(task()))
-
-    def action_callback(self, action: str, callback_func: Callable[[str], None], qos: int = 0):
-        """! Register a callback function to be executed when an action message is received
-            @param action: The name of the action to register the callback for
-            @param callback_func: The function to be called when the action message is received
-                                  The function should take a single str argument, the received message payload
-            @param qos: The QoS level to use for the subscription, default is 0
-        """
-        self.__action_cb_dict[action] = callback_func
-
     #TODO: improve main loop periodicity by taking into account the time taken by message processing
     async def __main_loop(self, _blocking: bool = False):
         """! Run the main loop of the application
@@ -230,3 +246,52 @@ class SSA():
                 #TODO: Allow for configuration of the loop period
                 self.__mqtt.check_msg()
                 await asyncio.sleep_ms(200)
+
+    ######## ######## ####### ###### ###### Public API ####### ####### ####### ####### ####### 
+
+    def set_property_event(self,
+                           prop_name: str,
+                           event_name: str,
+                           trigger: Callable[[Any], bool],
+                           transform: Callable[[Any], Any] | None):
+        """! Set an event for a property, previously registered with @ssa_property_task
+            @param prop_name: The name of the property to set the event for
+            @param event_name: The name of the event to set
+            @param trigger: A function that takes the property value as an argument and returns a boolean
+                            indicating whether the event has occurred
+            @param transform: A function that takes the property value as an argument and returns the value to publish
+                              to the broker in case of event occurrence
+        """
+        if not event_name or '/' in event_name or '#' in event_name or '+' in event_name:
+            raise ValueError("Invalid event name. Must not be empty or contain MQTT wildcards ('/', '#', '+')")
+
+        if prop_name not in self.__properties:
+            self.__properties[prop_name] = SSA_Property(None)
+
+        self.__properties[prop_name].set_event(event_name, trigger, transform)
+
+    def create_task(self, task: Callable[[], Awaitable[None]]):
+        """! Register a task to be executed as part of the main loop
+            @param task: The task to be executed
+                         The task should be an async function decorated with @ssa_property_task or @ssa_event_task
+                         See the ssa.decorators.py documentation for more information
+        """
+        async def wrapped_task():
+            try:
+                await task()
+            except Exception as e:
+                print(f"[ERROR] Task {task.__name__} failed: {e}")
+            finally:
+                if task in self.__tasks:
+                    self.__tasks.remove(task)
+
+        self.__tasks.append(asyncio.create_task(wrapped_task()))
+
+    def action_callback(self, action: str, callback_func: Callable[[str], None], qos: int = 0):
+        """! Register a callback function to be executed when an action message is received
+            @param action: The name of the action to register the callback for
+            @param callback_func: The function to be called when the action message is received
+                                  The function should take a single str argument, the received message payload
+            @param qos: The QoS level to use for the subscription, default is 0
+        """
+        self.__action_cb_dict[action] = callback_func
