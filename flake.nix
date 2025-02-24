@@ -67,7 +67,7 @@
           shellHook = ''
             export PATH=$PATH:$(pwd)/api/node_modules/.bin
           '';
-          buildInputs = with pkgs; [
+          nativeBuildInputs = with pkgs; [
             # helper scripts
 
             # temporarily open/close firewall for mqtt
@@ -82,6 +82,7 @@
             del_user
 
             jq # json cli parser
+            rsbkb # for crc32 package
 
             mpremote # micropython remote tool
             mosquitto # mqtt broker

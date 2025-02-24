@@ -1,11 +1,9 @@
 import os
-import sys
 import json
-import time
-import network
 import asyncio
-import machine
 
+from time import sleep
+from network import WLAN, STA_IF
 from umqtt.simple import MQTTClient
 
 def __singleton(cls):
@@ -26,7 +24,7 @@ class SSA():
         self.BASE_ACTION_TOPIC: str
         self.REGISTRATION_TOPIC: str
 
-        self.__wlan: network.WLAN | None = None
+        self.__wlan: WLAN | None = None
         self.__mqtt: MQTTClient | None = None
 
         self.__action_cb_dict: Dict[str, funtion] = {}
@@ -78,20 +76,20 @@ class SSA():
 
         self.UUID = CONFIG["self-id"]["uuid"]
         self.BASE_TOPIC = f"{CONFIG["self-id"]['model']}/{self.UUID}"
-        self.BASE_ACTION_TOPIC = f"{self.BASE_TOPIC}/actions"
+        self.BASE_ACTION_TOPIC = f"{self.BASE_TOPIC}/action"
         self.REGISTRATION_TOPIC = f"registration/{self.UUID}"
 
     def __wlan_connect(self, SSID: str, PASSWORD: str):
         #TODO: Check if already connected
         #TODO: Check if given SSID exits
 
-        self.__wlan = network.WLAN(network.STA_IF)
+        self.__wlan = WLAN(STA_IF)
         self.__wlan.active(True)
         self.__wlan.connect(SSID, PASSWORD)
 
         print("[INFO] connecting to WiFi...", end="")
         while not self.__wlan.isconnected():
-            time.sleep(1)
+            sleep(1)
             print(".", end="")
         print("\n[INFO] connected! IP Address:", self.__wlan.ifconfig()[0])
 
@@ -115,17 +113,18 @@ class SSA():
 
     def __mqtt_get_subtopic(self, topic: str) -> str:
         topic = topic.decode("utf-8")
-        return topic.split("/")[-1]
+        if topic.startswith(self.BASE_ACTION_TOPIC):
+            return topic[len(self.BASE_ACTION_TOPIC) + 1:] # +1 to remove the trailing '/'
+        return None
 
     def __mqtt_sub_callback(self, topic: bytes, msg: bytes):
         print(f"[DEBUG] Received message from {topic}: {msg}")
-
         if topic is None:
             print("[WARNING] Received message from invalid topic. Ignoring.")
             return
 
         action = self.__mqtt_get_subtopic(topic)
-        if action not in self.__action_cb_dict.keys():
+        if action is None or action not in self.__action_cb_dict.keys():
             print(f"[WARNING] Received message for unregistered action: {action}. Ignoring.")
             return
 
@@ -163,19 +162,50 @@ class SSA():
         print(f"Publishing {msg} to {subtopic}")
         self.__mqtt.publish(f"{self.BASE_TOPIC}/{subtopic}", msg, qos=qos)
 
-    def __handle_firmware_update(self, firmware: str):
-        print(f"[INFO] Firmware update received with size {len(firmware)}")
+    def __handle_fw_update(self, update_str: str):
+        print(f"[INFO] Firmware update received with size {len(update_str)}")
+        update = json.loads(update_str)
+
+        from binascii import crc32, a2b_base64
+
+        binary = a2b_base64(update["base64"])
+        expected_crc = int(update["crc32"], 16)
+        bin_crc = crc32(binary)
+
+        if bin_crc != expected_crc:
+            print(f"[ERROR] CRC32 mismatch: expected:{hex(expected_crc)}, got {hex(bin_crc)} Firmware update failed.")
+            return
+
         if "user" not in os.listdir():
             os.mkdir("user")
 
+        print("[INFO] Writing firmware to device")
         with open("user/app.py", "w") as f:
-            f.write(firmware)
+            f.write(binary.decode("utf-8"))
 
         print("[INFO] Firmware write complete. Restarting device.")
-        machine.soft_reset()
+        from machine import soft_reset
+        soft_reset()
 
-    def __handle_config_change(self, config: str):
+    def __handle_user_config(self, config: str):
         raise Exception(f"[TODO] ssa.__handle_config_change not implemented")
+
+    def register_handler(self, task: function):
+        """! Register a task to be executed as part of the main loop
+            @param task: The task to be executed
+                         The task should be an async function decorated with @ssa_property_handler or @ssa_event_handler
+                         See the ssa.decorators.py documentation for more information
+        """
+        self.__tasks.append(asyncio.create_task(task()))
+
+    def action_callback(self, action: str, callback_func: funtion, qos: int = 0):
+        """! Register a callback function to be executed when an action message is received
+            @param action: The name of the action to register the callback for
+            @param callback_func: The function to be called when the action message is received
+                                  The function should take a single str argument, the received message payload
+            @param qos: The QoS level to use for the subscription, default is 0
+        """
+        self.__action_cb_dict[action] = callback_func
 
     #TODO: improve main loop periodicity by taking into account the time taken by message processing
     async def __main_loop(self, _blocking: bool = False):
@@ -186,8 +216,7 @@ class SSA():
                               Blocking mode is an not meant for user code and is used as part of the bootstrap process
                               to wait fo incoming firmware updates.
         """
-        self.action_callback("firmware", self.__handle_firmware_update)
-        self.action_callback("config", self.__handle_config_change)
+        self.action_callback("ssa_hal/firmware", self.__handle_fw_update)
 
         self.__mqtt.set_callback(self.__mqtt_sub_callback)
         self.__mqtt.subscribe(f"{self.BASE_ACTION_TOPIC}/#", qos=1)
@@ -200,20 +229,3 @@ class SSA():
                 #TODO: Allow for configuration of the loop period
                 self.__mqtt.check_msg()
                 await asyncio.sleep_ms(200)
-
-    def register_handler(self, task: function):
-        """! Register a task to be executed as part of the main loop
-            @param task: The task to be executed
-                         The task should be an async function decorated with @ssa_property_handler or @ssa_event_handler
-                         See the ssa.decorators.py documentation for more information
-        """
-        self.__tasks.append(asyncio.create_task(task()))
-
-    def action_callback(self, action:str, callback_func: funtion, qos: int = 0):
-        """! Register a callback function to be executed when an action message is received
-            @param action: The name of the action to register the callback for
-            @param callback_func: The function to be called when the action message is received
-                                  The function should take a single string argument, the message payload
-            @param qos: The QoS level to use for the subscription, default is 0
-        """
-        self.__action_cb_dict[action] = callback_func
