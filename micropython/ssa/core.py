@@ -67,17 +67,17 @@ class SSA():
             CONFIG["broker"]["port"]
 
             # Self identification config
-            CONFIG["self-id"]
-            CONFIG["self-id"]["uuid"]
-            CONFIG["self-id"]["model"]
-            CONFIG["self-id"]["version"]
-            CONFIG["self-id"]["version"]["instance"]
-            CONFIG["self-id"]["version"]["model"]
+            CONFIG["self_id"]
+            CONFIG["self_id"]["uuid"]
+            CONFIG["self_id"]["model"]
+            CONFIG["self_id"]["version"]
+            CONFIG["self_id"]["version"]["instance"]
+            CONFIG["self_id"]["version"]["model"]
         except Exception as e:
             raise Exception(f"[ERROR] malformed config: Missing \"{e}\" key")
 
-        self.UUID = CONFIG["self-id"]["uuid"]
-        self.BASE_TOPIC = f"{CONFIG["self-id"]['model']}/{self.UUID}"
+        self.UUID = CONFIG["self_id"]["uuid"]
+        self.BASE_TOPIC = f"{CONFIG["self_id"]['model']}/{self.UUID}"
         self.BASE_ACTION_TOPIC = f"{self.BASE_TOPIC}/actions"
         self.REGISTRATION_TOPIC = f"registration/{self.UUID}"
 
@@ -157,7 +157,8 @@ class SSA():
 
         if _with_registration:
             self.__mqtt.publish(self.REGISTRATION_TOPIC,
-                                json.dumps(CONFIG["self-id"]), retain=True, qos=1)
+                                json.dumps(CONFIG["self_id"]), retain=True, qos=1)
+
             print("[INFO] Registration message sent")
 
     def __publish(self, subtopic:str, msg:str, qos: int = 0):
