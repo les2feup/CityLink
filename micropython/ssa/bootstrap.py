@@ -23,6 +23,7 @@ def __run_main_loop():
     """! Start the bare minimum ssa main loop without any user code and wait for incoming firmware updates """
     ssa = SSA()
     try:
+        print("[INFO] Waiting for incoming firmware update.")
         asyncio.run(ssa.__main_loop(_blocking=True))
     except Exception as e:
         print(f"[ERROR] Main loop failed with {e}")

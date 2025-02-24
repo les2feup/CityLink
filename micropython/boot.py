@@ -1,2 +1,2 @@
-from ssa.bootstrap import bootstrap
-bootstrap()
+from ssa.bootstrap import __bootstrap
+__bootstrap()
