@@ -126,7 +126,7 @@ class SSA():
             return
 
         action = self.__mqtt_get_subtopic(topic)
-        if action is None or action not in self.__action_cb_dict.keys():
+        if action is None or action not in self.__action_cb_dict:
             print(f"[WARNING] Received message for unregistered action: {action}. Ignoring.")
             return
 
@@ -190,7 +190,7 @@ class SSA():
         soft_reset()
 
     def __handle_user_config(self, config: str):
-        raise Exception(f"[TODO] ssa.__handle_config_change not implemented")
+        raise Exception("[TODO] ssa.__handle_config_change not implemented")
 
     def register_handler(self, task: Callable[[], Awaitable[None]]):
         """! Register a task to be executed as part of the main loop
