@@ -1,37 +1,54 @@
 {
-  "@context": [
-    "https://www.w3.org/2022/wot/td/v1.1"
-  ],
-  "@type": "tm:ThingModel",
-  "title": "BasicSensor",
-  "version": {
-    "model": "0.0.1"
-  },
-  "id": "urn:uuid:{{THING_UUID_V4}}",
-  "description": "Simple sensor with a single value property",
-  "base": "mqtt://{{MQTT_BROKER_ADDR}}",
-  "securityDefinitions": {
-    "nosec_sc": {
-      "scheme": "nosec"
-    }
-  },
-  "security": "nosec_sc",
-  "properties": {
-    "value": {
-      "title": "sensor reading",
-      "observable": true,
-      "readOnly": true,
-      "writeOnly": false,
-      "forms": [
-        {
-          "op": [
-            "observeproperty",
-            "unobserveproperty"
-          ],
-          "href": " /basic-sensors/{{THING_UUID_V4}}/value",
-          "contentType": "text/plain"
+    "@context": [
+        "https://www.w3.org/2022/wot/td/v1.1"
+    ],
+    "@type": "tm:ThingModel",
+    "title": "Base SSA Thing",
+    "version": {
+        "model": "0.0.1"
+    },
+    "id": "urn:uuid:{{THING_UUID_V4}}",
+    "description": "Base SSA Thing Model. Describes only the core functionality of the Smart Sensor Actuator HAL.",
+    "securityDefinitions": {
+        "nosec_sc": {
+            "scheme": "nosec"
         }
-      ]
+    },
+    "security": "nosec_sc",
+    "properties": {},
+    "actions": {
+        "firmware": {
+            "title": "Update user firmware",
+            "description": "Push a firmware update to an SSA device. New update will overwrite existing code (if any) under user/app.py",
+            "input": {
+                "type": "object",
+                "properties": {
+                    "base64": {
+                        "type": "string",
+                        "description": "Micropython script developed for the SSA HAL.",
+                        "contentEncoding": "base64"
+                    },
+                    "crc32": {
+                        "type": "string",
+                        "description": "crc32 value of the base64 payload with '0x' prefix",
+                        "contentEncoding": "base16"
+                    }
+                },
+                "required": [
+                    "base64",
+                    "crc32"
+                ]
+            },
+            "forms": [
+                {
+                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                    "mqv:topic": "basic_sensor/{{THING_UUID_V4}}/actions/ssa_hal/firmware",
+                    "op": "invokeaction",
+                    "mqv:qos": "1",
+                    "mqv:retain": false,
+                    "contentType": "application/json"
+                }
+            ]
+        }
     }
-  }
 }
