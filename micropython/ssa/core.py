@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import time
 import network
@@ -80,25 +81,6 @@ class SSA():
         self.BASE_ACTION_TOPIC = f"{self.BASE_TOPIC}/actions"
         self.REGISTRATION_TOPIC = f"registration/{self.UUID}"
 
-    def __handle_app_change(self, app: Dict[str, Any]):
-        raise Exception(f"[TODO] ssa.__handle_app_update not implemented")
-
-    def __handle_config_change(self, config: Dict[str, Any]):
-        raise Exception(f"[TODO] ssa.__handle_config_change not implemented")
-
-    def __handle_firmware_update(self, msg: str):
-        update: Dict[str, Any] = json.loads(msg)
-
-        if "config" in update.keys():
-            print("[INFO] Updating configuration")
-            self.__handle_config_change(update["config"])
-
-        if "app" in update.keys():
-            print("[INFO] Updating application code")
-            self.__handle_app_change(update["app"])
-
-        machine.reset()
-
     def __wlan_connect(self, SSID: str, PASSWORD: str):
         #TODO: Check if already connected
         #TODO: Check if given SSID exits
@@ -150,7 +132,7 @@ class SSA():
         print(f"[DEBUG] Executing action callback for {action}")
 
         try:
-            self.__action_cb_dict[action](msg)
+            self.__action_cb_dict[action](msg.decode("utf-8"))
         except Exception as e:
             print(f"[WARNING] action callback {self.__action_cb_dict[action].__name__} failed to execute: {e}")
 
@@ -175,10 +157,25 @@ class SSA():
         if _with_registration:
             self.__mqtt.publish(self.REGISTRATION_TOPIC,
                                 json.dumps(CONFIG["self-id"]), retain=True, qos=1)
+            print("[INFO] Registration message sent")
 
     def __publish(self, subtopic:str, msg:str, qos: int = 0):
         print(f"Publishing {msg} to {subtopic}")
         self.__mqtt.publish(f"{self.BASE_TOPIC}/{subtopic}", msg, qos=qos)
+
+    def __handle_firmware_update(self, firmware: str):
+        print(f"[INFO] Firmware update received with size {len(firmware)}")
+        if "user" not in os.listdir():
+            os.mkdir("user")
+
+        with open("user/app.py", "w") as f:
+            f.write(firmware)
+
+        print("[INFO] Firmware write complete. Restarting device.")
+        machine.soft_reset()
+
+    def __handle_config_change(self, config: str):
+        raise Exception(f"[TODO] ssa.__handle_config_change not implemented")
 
     #TODO: improve main loop periodicity by taking into account the time taken by message processing
     async def __main_loop(self, _blocking: bool = False):
@@ -189,11 +186,11 @@ class SSA():
                               Blocking mode is an not meant for user code and is used as part of the bootstrap process
                               to wait fo incoming firmware updates.
         """
-        self.action_callback("config", self.__handle_firmware_update)
+        self.action_callback("firmware", self.__handle_firmware_update)
+        self.action_callback("config", self.__handle_config_change)
 
         self.__mqtt.set_callback(self.__mqtt_sub_callback)
         self.__mqtt.subscribe(f"{self.BASE_ACTION_TOPIC}/#", qos=1)
-
 
         while True:
             if _blocking:
