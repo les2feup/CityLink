@@ -1,8 +1,5 @@
 """! Simple app demonstrating the use of the Smart Sensor Actuator Hardware Abstraction Layer."""
-
-import time
 import random
-
 from ssa.core import SSA
 from ssa.decorators import ssa_property_task, ssa_event_task, ssa_main
 

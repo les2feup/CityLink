@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any, Callable, Tuple
 from ssa.core import SSA, SSA_Property
 
 def ssa_property_task(property_name: str, period_ms: int, retain: bool = False, qos: int = 0):

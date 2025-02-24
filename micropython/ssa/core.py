@@ -14,7 +14,7 @@ class SSA_Property:
         self.value = value
         self.has_event = False
 
-    def set_event(self, name: str, trigger: Callable[[Any], Bool], transform: Callable[[Any], Any] | None):
+    def set_event(self, name: str, trigger: Callable[[Any], bool], transform: Callable[[Any], Any] | None):
         self.has_event = True
         self.event_name = name
         self.event_trigger = trigger
@@ -58,6 +58,7 @@ class SSA():
 
         self.__properties: Dict[str, SSA_Property] = {}
 
+    #TODO: Make this function return config and secrets as separate dictionaries this function return config and secrets as separate dictionaries
     def __load_config(self) -> Dict[str, Any]:
         CONFIG_FILE_PATH = "../config/config.json"
         SECRETS_FILE_PATH = "../config/secrets.json"
@@ -182,13 +183,14 @@ class SSA():
         if _with_registration:
             self.__mqtt.publish(self.REGISTRATION_TOPIC,
                                 json.dumps(CONFIG["self_id"]), retain=True, qos=1)
-            print("[INFO] Registration and Configuration published")
+            print("[INFO] Registration published")
 
         #NOTE: CONFIG is not handled as a true property, as it is not expected to change
         # This means that with retain, pushing the config after registration will comply
         # with the spec and remove the need to keep the CONFIG variable in memory
         self.__mqtt.publish(f"{self.BASE_TOPIC}/properties/ssa_hal/config",
                             json.dumps(CONFIG), retain=True, qos=1)
+        print("[INFO] Config published")
 
     def __publish(self, subtopic:str, msg:str, retain: bool = False, qos: int = 0):
         print(f"[DEBUG] Publishing `{msg}` to `{subtopic}`")
