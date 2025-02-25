@@ -56,7 +56,7 @@ def __bootstrap():
         app.init()
         print("[WARNING] User application terminated.")
     except ImportError as e:
-        print(f"[WARNING] No user code found: {e}")
+        print(f"[WARNING] Import error: {e}")
         __registration_bootstrap()
     except Exception as e:
         print(f"[ERROR] Failed to start user code: {e}")

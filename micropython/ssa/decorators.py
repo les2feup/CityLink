@@ -97,7 +97,7 @@ def ssa_main(init_func):
 
         example usage:
 
-            @ssa_property_handler("value", 2000)
+            @ssa_property_task("value", 2000)
             async def example_prop_handler():
                 return random.randint(0, 100)
 
