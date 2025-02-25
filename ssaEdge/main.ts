@@ -10,7 +10,7 @@ import assert from "node:assert";
 function loadThingModel(): ThingModel | undefined {
   const thingModel: ThingModel = JSON.parse(
     Deno.readTextFileSync(
-      "./things/Basic-Sensor-Thing-Model.json",
+      "./things/base_ssa_thing.json",
     ),
   );
   const validatedModel = ThingModelHelpers.validateThingModel(thingModel);
