@@ -1,0 +1,94 @@
+{
+    "@context": "https://www.w3.org/2022/wot/td/v1.1",
+    "@type": "tm:ThingModel",
+    "title": "demo_ssa_thing",
+    "description": "Example thing with example affordances implemented with the Smart Sensor Actuator HAL to serve as a demo to the SSA framework",
+
+    "links" : [{
+        "rel": "tm:extends",
+        "href": "http://www.example.org/base_ssa_thing",
+        "type": "application/tm+json"
+    }],
+
+    "properties": {
+        "value":{
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "observable": true,
+            "forms": [{
+                "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                "mqv:topic": "{{THING_MODEL}}/{{THING_UUID_V4}}/properties/value",
+                "op": [
+                    "observeproperty",
+                    "unobserveproperty"
+                ],
+                "mqv:qos": 0,
+                "mqv:retain": false,
+                "contentType": "text/plain"
+            }]
+        }
+    },
+    "actions": {
+        "action": {
+            "title": "example_action",
+            "description": "A dummy action that just prints the received message to stdout",
+            "idempotent": true,
+            "safe": true,
+            "synchronous": true,
+            "input": {
+                "type": "string"
+            },
+            "forms": [{
+                "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                "mqv:topic": "{{THING_MODEL}}/{{THING_UUID_V4}}/actions/action",
+                "op": [
+                    "invokeaction"
+                ],
+                "mqv:qos": 0,
+                "mqv:retain": false,
+                "contentType": "text/plain"
+            }]
+        }
+    },
+    "events": {
+        "example_event":{
+            "title": "example_event",
+            "description": "A randomly triggered event that publishes a string to the event topic",
+            "data": {
+                "type": "string"
+            },
+            "forms": [
+                {
+                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                    "mqv:topic": "{{THING_MODEL}}/{{THING_UUID_V4}}/events/example_event",
+                    "op": [
+                        "subscribeevent",
+                        "unsubscribeevent"
+                    ],
+                    "mqv:qos": 0,
+                    "mqv:retain": false,
+                    "contentType": "text/plain"
+                }
+            ]
+        },
+        "example_prop_event":{
+            "title": "example_prop_event",
+            "description": "An event tied to the 'value' property. Triggers when 'value' is > 50",
+            "data": {
+                "type": "string"
+            },
+            "forms": [{
+                "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                "mqv:topic": "{{THING_MODEL}}/{{THING_UUID_V4}}/events/example_prop_event",
+                "op": [
+                    "subscribeevent",
+                    "unsubscribeevent"
+                ],
+                "mqv:qos": 0,
+                "mqv:retain": false,
+                "contentType": "text/plain"
+            }]
+        }
+    }
+}
