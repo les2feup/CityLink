@@ -30,13 +30,20 @@ jq -c < ./ssaHAL/config/secrets.json > "$CONFIG_DIR/secrets.json"
 
 python3 scripts/clean.py ./ssaHAL/ssa "$SSA_DIR"
 
+# Compile SSA module to frozen bytecode
+mkdir -p "$TEMP_DIR/compiled"
+for file in $SSA_DIR/*.py; do
+  mpy-cross "$file" -o "$TEMP_DIR/compiled/$(basename "$file" .py).mpy"
+done
+
 # Upload required files
 mpremote cp -r ./ssaHAL/lib/ :
-mpremote cp -r "$CONFIG_DIR/" :
-mpremote cp -r "$SSA_DIR/" :
+mpremote cp -r $CONFIG_DIR/ :
+mpremote mkdir :ssa
+mpremote cp -r $TEMP_DIR/compiled/* :./ssa/
 
 # Clean up
-rm -rf "$TEMP_DIR"
+rm -rf $TEMP_DIR
 
 # Conditionally upload boot.py
 if [ "$UPLOAD_BOOT" = true ]; then
@@ -53,3 +60,4 @@ if [ -n "$EXAMPLE_FILE" ]; then
     exit 1
   fi
 fi
+
