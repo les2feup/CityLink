@@ -4,7 +4,7 @@ result*
 # Misc
 .direnv
 
-micropython/config/secrets.json
+secrets.json
 
 node_modules/
 
