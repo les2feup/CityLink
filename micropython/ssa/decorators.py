@@ -59,7 +59,7 @@ def ssa_main(last_will: str = None):
                 try:
                     init_func(ssa_instance)
                 except Exception as e:
-                    raise Exception(f"[ERROR] Failed to run initial setup: {e}")
+                    raise Exception(f"[ERROR] Failed to run initial setup: {e}") from e
 
                 try:
                     ssa_instance.__connect(last_will)
