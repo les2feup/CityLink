@@ -1,7 +1,7 @@
 {
     "self_id": {
         "uuid": "87c4011c-21d4-443e-9cca-c264e18213c0",
-        "model": "simple_example",
+        "model": "simple_thing",
         "version": { "instance": "0.0.1", "model": "0.0.1" }
     },
     "broker": {
