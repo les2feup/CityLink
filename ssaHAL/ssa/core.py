@@ -5,7 +5,6 @@ import asyncio
 from time import sleep
 from network import WLAN, STA_IF
 from umqtt.simple import MQTTClient
-
 from typing import Any, Dict, List, Tuple, Callable, Awaitable
 
 def __singleton(cls):
@@ -17,6 +16,31 @@ def __singleton(cls):
             instance = cls(*args, **kwargs)
         return instance
     return getinstance
+
+def __fw_update_callback(_ssa: SSA, update_str: str):
+    print(f"[INFO] Firmware update received with size {len(update_str)}")
+    update = json.loads(update_str)
+
+    from binascii import crc32, a2b_base64
+
+    binary = a2b_base64(update["base64"])
+    expected_crc = int(update["crc32"], 16)
+    bin_crc = crc32(binary)
+
+    if bin_crc != expected_crc:
+        print(f"[ERROR] CRC32 mismatch: expected:{hex(expected_crc)}, got {hex(bin_crc)} Firmware update failed.")
+        return
+
+    if "user" not in os.listdir():
+        os.mkdir("user")
+
+    print("[INFO] Writing firmware to device")
+    with open("user/app.py", "w") as f:
+        f.write(binary.decode("utf-8"))
+
+    print("[INFO] Firmware write complete. Restarting device.")
+    from machine import soft_reset
+    soft_reset()
 
 @__singleton
 class SSA():
@@ -172,34 +196,6 @@ class SSA():
         print(f"[DEBUG] Publishing `{msg}` to `{subtopic}`")
         self.__mqtt.publish(f"{self.BASE_TOPIC}/{subtopic}", msg, retain=retain, qos=qos)
 
-    def __handle_fw_update(self, update_str: str):
-        print(f"[INFO] Firmware update received with size {len(update_str)}")
-        update = json.loads(update_str)
-
-        from binascii import crc32, a2b_base64
-
-        binary = a2b_base64(update["base64"])
-        expected_crc = int(update["crc32"], 16)
-        bin_crc = crc32(binary)
-
-        if bin_crc != expected_crc:
-            print(f"[ERROR] CRC32 mismatch: expected:{hex(expected_crc)}, got {hex(bin_crc)} Firmware update failed.")
-            return
-
-        if "user" not in os.listdir():
-            os.mkdir("user")
-
-        print("[INFO] Writing firmware to device")
-        with open("user/app.py", "w") as f:
-            f.write(binary.decode("utf-8"))
-
-        print("[INFO] Firmware write complete. Restarting device.")
-        from machine import soft_reset
-        soft_reset()
-
-    def __handle_user_config(self, config: str):
-        raise Exception("[TODO] ssa.__handle_config_change not implemented")
-
     #TODO: improve main loop periodicity by taking into account the time taken by message processing
     async def __main_loop(self, _blocking: bool = False):
         """! Run the main loop of the application
@@ -209,7 +205,7 @@ class SSA():
                               Blocking mode is an not meant for user code and is used as part of the bootstrap process
                               to wait fo incoming firmware updates.
         """
-        self.create_action_callback("ssa_hal/firmware", self.__handle_fw_update)
+        self.create_action_callback("ssa_hal/firmware", __fw_update_callback)
 
         self.__mqtt.set_callback(self.__mqtt_sub_callback)
         self.__mqtt.subscribe(f"{self.BASE_ACTION_TOPIC}/#", qos=1)
