@@ -228,6 +228,8 @@ class SSA():
             @param name: The name of the property
             @param value: The initial value of the property
         """
+        if name in self.__properties:
+            raise Exception(f"[ERROR] Property `{name}` already exists. Use `set_property` to update it.")
         self.__properties[name] = value
 
     def get_property(self, name: str) -> Any:
@@ -235,6 +237,8 @@ class SSA():
             @param name: The name of the property
             @returns Any: The value of the property
         """
+        if name not in self.__properties:
+            raise Exception(f"[ERROR] Property `{name}` does not exist. Create it using `create_property` before getting it.")
         return self.__properties[name]
 
     def set_property(self, name: str, value: Any, retain: bool = False, qos: int = 0):
@@ -276,7 +280,7 @@ class SSA():
 
         self.__tasks.append(asyncio.create_task(wrapped_task()))
 
-    def create_action_callback(self, action: str, callback_func: Callable[[SSa, str], None], qos: int = 0):
+    def create_action_callback(self, action: str, callback_func: Callable[[SSA, str], None], qos: int = 0):
         """! Register a callback function to be executed when an action message is received
             @param action: The name of the action to register the callback for
             @param callback_func: The function to be called when the action message is received
