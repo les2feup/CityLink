@@ -27,39 +27,16 @@
           sudo systemctl reload firewall
         '';
 
-        upload = pkgs.writeShellScriptBin "upload" ''
-          mkdir -p ./micropython/.temp
-          mkdir -p ./micropython/.temp/config
-
-          cat ./micropython/config/config.json | jq -c > ./micropython/.temp/config/config.json
-          cat ./micropython/config/secrets.json | jq -c > ./micropython/.temp/config/secrets.json
-
-          python3 ./micropython/dev_utils/clean.py ./micropython/user/ ./micropython/.temp/user
-          python3 ./micropython/dev_utils/clean.py ./micropython/ssa ./micropython/.temp/ssa
-
-          mpremote cp -r ./micropython/.temp/config/ :
-          mpremote cp -r ./micropython/.temp/user/ :
-          mpremote cp -r ./micropython/.temp/ssa/ :
-
-          rm -rf ./micropython/.temp
-        '';
-
         run = pkgs.writeShellScriptBin "run" ''
-          mpremote run ./micropython/ssa/bootstrap.py
+          mpremote run ./ssaHAL/ssa/bootstrap.py
         '';
 
         flash = pkgs.writeShellScriptBin "flash" ''
-          upload
-          mpremote cp -r ./micropython/boot.py :
+          ${builtins.readFile ./scripts/flash.sh}
         '';
 
-        nuke = pkgs.writeShellScriptBin "nuke" ''
-          mpremote run ./micropython/dev_utils/nuke.py
-        '';
-
-        del_user = pkgs.writeShellScriptBin "del_user" ''
-          mpremote rm :./user/app.py
-          mpremote rmdir :./user
+        fw2json = pkgs.writeShellScriptBin "fw2json" ''
+        ${builtins.readFile ./scripts/fw2json.sh}
         '';
       in
       {
@@ -67,6 +44,7 @@
           shellHook = ''
             export PATH=$PATH:$(pwd)/api/node_modules/.bin
           '';
+
           nativeBuildInputs = with pkgs; [
             # helper scripts
 
@@ -74,21 +52,18 @@
             openfw
             closefw
 
-            # micropython utils
+            # micropython development
             run
-            nuke
             flash
-            upload
-            del_user
+            fw2json
 
             jq # json cli parser
             rsbkb # for crc32 package
 
             mpremote # micropython remote tool
+            micropython # micropython runtime and cross compiler
             mosquitto # mqtt broker
 
-            # to install asyncapi cli
-            nodejs_23
             # edge node development
             deno # dev tools and runtime
 

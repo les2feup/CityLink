@@ -7,7 +7,7 @@
 import os
 
 
-def _delete_all(directory='.', remove_lib=False, keep_this=True):
+def _delete_all(directory='.', keep_this=True):
     try:
         import machine
     except:
@@ -19,9 +19,6 @@ def _delete_all(directory='.', remove_lib=False, keep_this=True):
         if keep_this and fn == '_nuke.py':
             continue
         fp = '%s/%s' % (directory, fn)
-        if fp == './lib' and not remove_lib:
-            print('Skipping /lib')
-            continue
         print('removing %s' % fp) 
         if ft == 0x8000:
             os.remove(fp)
