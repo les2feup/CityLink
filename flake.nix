@@ -34,6 +34,10 @@
         flash = pkgs.writeShellScriptBin "flash" ''
           ${builtins.readFile ./scripts/flash.sh}
         '';
+
+        fw2json = pkgs.writeShellScriptBin "fw2json" ''
+        ${builtins.readFile ./scripts/fw2json.sh}
+        '';
       in
       {
         devShells.default = pkgs.mkShell {
@@ -51,6 +55,7 @@
             # micropython development
             run
             flash
+            fw2json
 
             jq # json cli parser
             rsbkb # for crc32 package
