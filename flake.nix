@@ -28,7 +28,7 @@
         '';
 
         run = pkgs.writeShellScriptBin "run" ''
-          mpremote run ./micropython/ssa/bootstrap.py
+          mpremote run ./ssaHAL/ssa/bootstrap.py
         '';
 
         flash = pkgs.writeShellScriptBin "flash" ''
