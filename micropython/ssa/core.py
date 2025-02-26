@@ -8,30 +8,6 @@ from umqtt.simple import MQTTClient
 
 from typing import Any, Dict, List, Tuple, Callable, Awaitable
 
-
-class SSA_Property:
-    def __init__(self, value: Any):
-        self.value = value
-        self.has_event = False
-
-    def set_event(self, name: str, trigger: Callable[[Any], bool], transform: Callable[[Any], Any] | None):
-        self.has_event = True
-        self.event_name = name
-        self.event_trigger = trigger
-        self.event_callback = transform
-
-    def check_event(self) -> Tuple[bool, Any]:
-        if not self.has_event:
-            return False, None
-
-        if self.event_trigger(self.value):
-            if self.event_callback is not None:
-                return True, self.event_callback(self.value)
-            else:
-                return True, self.value
-        else:
-            return False, None
-
 def __singleton(cls):
     instance = None
     def getinstance(*args, **kwargs):
@@ -53,10 +29,10 @@ class SSA():
         self.__wlan: WLAN | None = None
         self.__mqtt: MQTTClient | None = None
 
-        self.__action_cb_dict: Dict[str, Callable[[str], None]] = {}
         self.__tasks: List[asyncio.Task] = []
+        self.__action_cb_dict: Dict[str, Callable[[SSA, str], None]] = {}
 
-        self.__properties: Dict[str, SSA_Property] = {}
+        self.__properties: Dict[str, Any] = {}
 
     #TODO: Make this function return config and secrets as separate dictionaries this function return config and secrets as separate dictionaries
     def __load_config(self) -> Dict[str, Any]:
@@ -158,7 +134,7 @@ class SSA():
         print(f"[DEBUG] Executing action callback for {action}")
 
         try:
-            self.__action_cb_dict[action](msg.decode("utf-8"))
+            self.__action_cb_dict[action](self, msg.decode("utf-8"))
         except Exception as e:
             print(f"[WARNING] action callback {self.__action_cb_dict[action].__name__} failed to execute: {e}")
 
@@ -233,7 +209,7 @@ class SSA():
                               Blocking mode is an not meant for user code and is used as part of the bootstrap process
                               to wait fo incoming firmware updates.
         """
-        self.action_callback("ssa_hal/firmware", self.__handle_fw_update)
+        self.create_action_callback("ssa_hal/firmware", self.__handle_fw_update)
 
         self.__mqtt.set_callback(self.__mqtt_sub_callback)
         self.__mqtt.subscribe(f"{self.BASE_ACTION_TOPIC}/#", qos=1)
@@ -247,28 +223,44 @@ class SSA():
                 self.__mqtt.check_msg()
                 await asyncio.sleep_ms(200)
 
-    ######## ######## ####### ###### ###### Public API ####### ####### ####### ####### ####### 
-
-    def set_property_event(self,
-                           prop_name: str,
-                           event_name: str,
-                           trigger: Callable[[Any], bool],
-                           transform: Callable[[Any], Any] | None):
-        """! Set an event for a property, previously registered with @ssa_property_task
-            @param prop_name: The name of the property to set the event for
-            @param event_name: The name of the event to set
-            @param trigger: A function that takes the property value as an argument and returns a boolean
-                            indicating whether the event has occurred
-            @param transform: A function that takes the property value as an argument and returns the value to publish
-                              to the broker in case of event occurrence
+    def create_property(self, name: str, value: Any):
+        """! Create a property for the device
+            @param name: The name of the property
+            @param value: The initial value of the property
         """
-        if not event_name or '/' in event_name or '#' in event_name or '+' in event_name:
-            raise ValueError("Invalid event name. Must not be empty or contain MQTT wildcards ('/', '#', '+')")
+        if name in self.__properties:
+            raise Exception(f"[ERROR] Property `{name}` already exists. Use `set_property` to update it.")
+        self.__properties[name] = value
 
-        if prop_name not in self.__properties:
-            self.__properties[prop_name] = SSA_Property(None)
+    def get_property(self, name: str) -> Any:
+        """! Get the value of a property
+            @param name: The name of the property
+            @returns Any: The value of the property
+        """
+        if name not in self.__properties:
+            raise Exception(f"[ERROR] Property `{name}` does not exist. Create it using `create_property` before getting it.")
+        return self.__properties[name]
 
-        self.__properties[prop_name].set_event(event_name, trigger, transform)
+    def set_property(self, name: str, value: Any, retain: bool = False, qos: int = 0):
+        """! Set the value of a property.
+            Properties are published to the broker when set, if the value has changed
+            @param name: The name of the property
+            @param value: The new value of the property
+        """
+        if name not in self.__properties:
+            raise Exception(f"[ERROR] Property `{name}` does not exist. Create it using `create_property` before setting it.")
+
+        prev_value = self.__properties[name]
+        if prev_value != value:
+            self.__properties[name] = value
+            self.__publish(f"properties/{name}", str(value), retain=retain, qos=qos)
+    def trigger_event(self, name: str, value: Any, retain: bool = False, qos: int = 0):
+        """! Trigger an event
+            Events are published to the broker when triggered
+            @param name: The name of the event
+            @param value: The value of the event
+        """
+        self.__publish(f"events/{name}", str(value), retain=retain, qos=qos)
 
     def create_task(self, task: Callable[[], Awaitable[None]]):
         """! Register a task to be executed as part of the main loop
@@ -280,14 +272,14 @@ class SSA():
             try:
                 await task()
             except Exception as e:
-                print(f"[ERROR] Task {task.__name__} failed: {e}")
+                print(f"[WARNING] Task failed: {e}")
             finally:
                 if task in self.__tasks:
                     self.__tasks.remove(task)
 
         self.__tasks.append(asyncio.create_task(wrapped_task()))
 
-    def action_callback(self, action: str, callback_func: Callable[[str], None], qos: int = 0):
+    def create_action_callback(self, action: str, callback_func: Callable[[SSA, str], None], qos: int = 0):
         """! Register a callback function to be executed when an action message is received
             @param action: The name of the action to register the callback for
             @param callback_func: The function to be called when the action message is received

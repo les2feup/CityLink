@@ -1,35 +1,30 @@
-"""! Simple app demonstrating the use of the Smart Sensor Actuator Hardware Abstraction Layer."""
+"""! Simple example app demonstrating the use of the Smart Sensor Actuator Hardware Abstraction Layer."""
 import random
-from ssa.core import SSA
-from ssa.decorators import ssa_property_task, ssa_event_task, ssa_main
-from typing import Tuple
+from ssa import SSA, ssa_task, ssa_main
 
-def example_action_callback(msg: str):
-    """! Example action callback that prints the received message payload."""
-    print(f"Action triggered with message: {msg}")
+@ssa_task(2000)
+async def random_event(ssa: SSA) -> None:
+    """! Example event handler that triggers randomly."""
+    if random.randint(0, 1):
+        ssa.trigger_event("random_event", "Event triggered")
 
-@ssa_property_task("value", 2000)
-async def example_prop_handler() -> int:
-    """! Example property handler that updates randomly.
-    @returns int: A random integer value between 0 and 100.
-    """
-    return random.randint(0, 100)
+@ssa_task(1000)
+async def random_property_with_event(ssa: SSA) -> None:
+    """! Example task that sets a random value to a property and triggers an event if the value is greater than 70."""
+    new_value: int = random.randint(0, 100)
+    ssa.set_property("random_value", new_value)
+    if new_value > 70:
+        ssa.trigger_event("random_value_event", "Random value is greater than 70")
 
-@ssa_event_task("example_event", 2000)
-async def example_event_handler() -> Tuple[bool, str]:
-    """! Example event handler that triggers randomly.
-    @returns Tuple[bool, str]: A tuple containing a boolean indicating whether the event occurred and a string message.
-    """
-    return random.randint(0, 100) > 50, "Standalone event occurred"
+def print_action(_ssa: SSA, msg: str) -> None:
+    """! Example action that prints the received message payload."""
+    print(f"Simple action triggered with message: {msg}")
 
-@ssa_main
+@ssa_main(last_will = "Simple app exited unexpectedly")
 def init(ssa: SSA):
-    ssa.set_property_event("value",
-                           "example_prop_event",
-                           lambda x: x > 50,
-                           lambda x: f"Prop event! {x}")
+    ssa.create_property("random_value", 0)
 
-    ssa.create_task(example_prop_handler)
-    ssa.create_task(example_event_handler)
+    ssa.create_task(random_event)
+    ssa.create_task(random_property_with_event)
 
-    ssa.action_callback("action", example_action_callback)
+    ssa.create_action_callback("print_action", print_action)

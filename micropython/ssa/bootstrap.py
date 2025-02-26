@@ -59,7 +59,7 @@ def __bootstrap():
         print(f"[WARNING] Import error: {e}")
         __registration_bootstrap()
     except Exception as e:
-        print(f"[ERROR] Failed to start user code: {e}")
+        raise Exception(f"[FATAL] Failed to start user code: {e}") from e
 
 if __name__ == "__main__":
     __bootstrap()
