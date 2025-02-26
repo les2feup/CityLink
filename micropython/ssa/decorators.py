@@ -4,27 +4,15 @@ from ssa.core import SSA
 from typing import Callable, Awaitable
 
 def ssa_task(period_ms: int = 0):
-    """! Decorator to handle the publication of a property to the broker
-        @param property: The property to publish
-        @param period_ms: The period in milliseconds to publish the property (0 for one shot properties)
-        @param retain: Whether the property should be retained by the broker
-        @param qos: The MQTT quality of service level for the property
+    """! Decorator to create a task function that will be executed
+         @param period_ms: The period in milliseconds at which the task should be executed.
 
-        The decorated function will be called in a loop, sleeping for the specified period
-        after each call.
-        The result of the decorated function will be published (on change) to the broker
-        with the specified property name.
-        If the property has an event associated with it, the event will be checked and published
-        (if triggered) each cycle after the property is published.
-
-        The decorated function should return the value to be published.
-        The decorated function signature should be:
-            async def func() -> Any
-
-        Note: See ssa_main decorator documentation for example usage
+         note: The decorated function should be an async function that takes an SSA instance as an argument.
+         The function signature should be:
+            async def func(ssa: SSA) -> None
     """
     def decorator(func: Awaitable[[SSA], None]):
-        def ssa_task_wrapper():
+        async def ssa_task_wrapper():
             ssa_instance = SSA()
             while True:
                 next_wake_time = time.ticks_add(time.ticks_ms(), period_ms)
@@ -46,23 +34,22 @@ def ssa_task(period_ms: int = 0):
 
 def ssa_main(last_will: str = None):
     """! Decorator to create the main function of the application
-        @param init_func: A function that takes an SSA instance as an argument
-        and sets up the application property/event handlers and action callbacks.
-        The function signature should be:
-            def func(ssa: SSA) -> None
+        @param last_will: The last will message to be sent if the application exits unexpectedly.
 
         The decorated function will be wrapped in an async function that will
         create an SSA instance, run the init function, connect to the broker
         and start the main loop.
 
-        The code flow will be:
+        The execution flow is as follows:
         1. Create an SSA instance
         2. Run the init function
         3. Connect to the broker
         4. Execute the SSA Network Registration process
-        5. Start the main loop and service incoming messages and run the registered handlershandlers
+        5. Start the main loop, service incoming messages and run tasks
 
-        example usage:
+        note: The decorated function should be a function that takes an SSA instance as an argument.
+        The function signature should be:
+            def init(ssa: SSA) -> None
     """
     def decorator(init_func: Callable[[SSA], None]):
         def main_wrapper():
