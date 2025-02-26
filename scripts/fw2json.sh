@@ -1,9 +1,22 @@
 #!/usr/bin/env bash
 
+# Check if required commands exist
+for cmd in base64 crc32; do
+  if ! command -v "$cmd" &> /dev/null; then
+    echo "Error: $cmd command not found" >&2
+    exit 1
+  fi
+done
+
 # Check if arguments are provided
 if [ "$#" -eq 2 ]; then
     INPUT_FILE="$1"
     OUTPUT_JSON="$2"
+    # Validate input file exists
+    if [ ! -f "$INPUT_FILE" ]; then
+        echo "Error: Input file '$INPUT_FILE' not found" >&2
+        exit 1
+    fi
 elif [ "$#" -eq 0 ]; then
     INPUT_FILE="/dev/stdin"
     OUTPUT_JSON="/dev/stdout"

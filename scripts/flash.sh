@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# Check if the device is connected
+if ! mpremote ls > /dev/null 2>&1; then
+  echo "Error: Device not connected or mpremote not working properly"
+  exit 1
+fi
+
 # Parse command-line options
 UPLOAD_BOOT=false
 NUKE_BOARD=false
@@ -9,7 +15,7 @@ while getopts "bne:" opt; do
     b) UPLOAD_BOOT=true ;;
     n) NUKE_BOARD=true ;;
     e) EXAMPLE_FILE="$OPTARG" ;;
-    *) echo "Usage: $0 [-b] [-e example_file]"; exit 1 ;;
+    *) echo "Usage: $0 [-b] [-n] [-e example_file]"; exit 1 ;;
   esac
 done
 
