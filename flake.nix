@@ -85,10 +85,9 @@
             rsbkb # for crc32 package
 
             mpremote # micropython remote tool
+            micropython # micropython runtime and cross compiler
             mosquitto # mqtt broker
 
-            # to install asyncapi cli
-            nodejs_23
             # edge node development
             deno # dev tools and runtime
 
