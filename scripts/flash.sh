@@ -28,16 +28,16 @@ fi
 TEMP_DIR="./ssaHAL/.temp"
 CONFIG_DIR="$TEMP_DIR/config"
 SSA_DIR="$TEMP_DIR/ssa"
-mkdir -p "$CONFIG_DIR"
+mkdir -p "$CONFIG_DIR" || { echo "Error: Failed to create directory $CONFIG_DIR"; exit 1; }
 
 # Process configuration files
-jq -c < ./ssaHAL/config/config.json > "$CONFIG_DIR/config.json"
-jq -c < ./ssaHAL/config/secrets.json > "$CONFIG_DIR/secrets.json"
+jq -c < ./ssaHAL/config/config.json > "$CONFIG_DIR/config.json" || { echo "Error: Failed to process config.json"; exit 1; }
+[ -f ./ssaHAL/config/secrets.json ] && jq -c < ./ssaHAL/config/secrets.json > "$CONFIG_DIR/secrets.json" || echo "Warning: secrets.json not found or processing failed"
 
-python3 scripts/clean.py ./ssaHAL/ssa "$SSA_DIR"
+python3 scripts/clean.py ./ssaHAL/ssa "$SSA_DIR" || { echo "Error: Failed to clean SSA directory"; exit 1; }
 
 # Compile SSA module to frozen bytecode
-mkdir -p "$TEMP_DIR/compiled"
+mkdir -p "$TEMP_DIR/compiled" || { echo "Error: Failed to create directory $TEMP_DIR/compiled"; exit 1; }
 for file in $SSA_DIR/*.py; do
   mpy-cross "$file" -o "$TEMP_DIR/compiled/$(basename "$file" .py).mpy"
 done
