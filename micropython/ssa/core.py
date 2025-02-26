@@ -243,6 +243,9 @@ class SSA():
             @param name: The name of the property
             @param value: The new value of the property
         """
+        if name not in self.__properties:
+            raise Exception(f"[ERROR] Property `{name}` does not exist. Create it using `create_property` before setting it.")
+
         prev_value = self.__properties[name]
         if prev_value != value:
             self.__properties[name] = value
@@ -266,7 +269,7 @@ class SSA():
             try:
                 await task()
             except Exception as e:
-                print(f"[ERROR] Task {task.__name__} failed: {e}")
+                print(f"[WARNING] Task failed: {e}")
             finally:
                 if task in self.__tasks:
                     self.__tasks.remove(task)

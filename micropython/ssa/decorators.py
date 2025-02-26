@@ -24,20 +24,24 @@ def ssa_task(period_ms: int = 0):
         Note: See ssa_main decorator documentation for example usage
     """
     def decorator(func: Awaitable[[SSA], None]):
-        def wrapper():
+        def ssa_task_wrapper():
             ssa_instance = SSA()
             while True:
-                next_wake_time = ticks_add(time.ticks_ms(), period_ms)
+                next_wake_time = time.ticks_add(time.ticks_ms(), period_ms)
+                
+                try:
+                    await func(ssa_instance)
+                except Exception as e:
+                    raise Exception(f"[ERROR] Failed to run {func.__name__}: {e}") from e
 
-                await func(ssa_instance)
                 if period_ms == 0: # one shot task
                     break
 
-                sleep_time = ticks_diff(next_wake_time, time.ticks_ms())
+                sleep_time = time.ticks_diff(next_wake_time, time.ticks_ms())
                 if sleep_time > 0:
                     await asyncio.sleep_ms(sleep_time)
 
-        return wrapper
+        return ssa_task_wrapper
     return decorator
 
 def ssa_main(last_will: str = None):

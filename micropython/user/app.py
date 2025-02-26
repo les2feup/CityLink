@@ -26,7 +26,7 @@ def print_action(_ssa: SSA, msg: str) -> None:
 
 @ssa_main(last_will = "Simple app exited unexpectedly")
 def init(ssa: SSA):
-    ssa.create_property("simple_prop", 0)
+    ssa.create_property("random_value", 0)
 
     ssa.create_task(random_event)
     ssa.create_task(random_property_with_event)
