@@ -42,6 +42,10 @@ def __fw_update_callback(_ssa: SSA, update_str: str):
     from machine import soft_reset
     soft_reset()
 
+# Recursive type definition for complex action callbacks
+type action_callback = Callable[[SSA, ], None]
+type acb_dict = Dict[str, 'acb_dict' | Tuple[List[str], action_callback] | action_callback] 
+
 @__singleton
 class SSA():
     def __init__(self):
@@ -54,7 +58,7 @@ class SSA():
         self.__mqtt: MQTTClient | None = None
 
         self.__tasks: List[asyncio.Task] = []
-        self.__action_cb_dict: Dict[str, Callable[[SSA, str], None]] = {}
+        self.__action_cb_dict: acb_dict = {}
 
         self.__properties: Dict[str, Any] = {}
 
@@ -138,11 +142,56 @@ class SSA():
         self.__mqtt.connect()
         print("Connected to MQTT broker")
 
-    def __mqtt_get_subtopic(self, topic: str) -> str:
+    def __extract_action_path(self, topic: str) -> str:
         topic = topic.decode("utf-8")
         if topic.startswith(self.BASE_ACTION_TOPIC):
             return topic[len(self.BASE_ACTION_TOPIC) + 1:] # +1 to remove the trailing '/'
         return None
+
+    def __internal_action_handler(self, action: str, msg: str):
+        if action == "firmware":
+            __fw_update_callback(msg)
+            return
+
+        if action.startswith("set/") and action[len("set/"):] in self.__properties:
+            self.set_property(action[len("set/"):], msg)
+            return
+        
+        print(f"[WARNING] Received trigger for unknown internal action: {action}")
+
+    def __handle_composite_action(self, action: str | None, msg: str):
+        if action is None:
+            print("[WARNING] Received message from invalid topic. Ignoring.")
+            return
+
+        action_base = action[:action.find("/")]
+        if action_base in self.__action_cb_dict:
+            cb_dict_value = self.__action_cb_dict[action_base]
+            if cb_dict_value.isinstance(dict):
+                self.__handle_composite_action(action[action.find("/") + 1:], msg)
+                return
+
+            if cb_dict_value.isinstance(tuple):
+                remaining_parts = action[action.find("/") + 1:].split("/")
+                if len(remaining_parts) != len(cb_dict_value[0]):
+                    raise Exception(f"[ERROR] Action {action_base} expected {len(cb_dict_value[0])} parts, got {len(remaining_parts)}")
+                try:
+                    kwarg_keys = cb_dict_value[0]
+                    kwarg_values = remaining_parts
+                    kwargs = dict(zip(kwarg_keys, kwarg_values))
+                    # signature of the callback function should be such that the remaining parts are mapped to the kwargs in the list
+                    func = cb_dict_value[1]
+                    func(self, msg, **kwargs)
+                except Exception as e:
+                    print(f"[Error] action callback {cb_dict_value[1].__name__} failed to execute with kwargs {kwargs}: {e}")
+
+            try:
+                cb_dict_value(self, msg)
+            except Exception as e:
+                print(f"[Error] action callback {cb_dict_value.__name__} failed to execute: {e}")
+
+        else:
+            raise Exception(f"[ERROR] Action {action_base} not found in action callback dictionary")
 
     def __mqtt_sub_callback(self, topic: bytes, msg: bytes):
         print(f"[DEBUG] Received message from {topic}: {msg}")
@@ -150,17 +199,29 @@ class SSA():
             print("[WARNING] Received message from invalid topic. Ignoring.")
             return
 
-        action = self.__mqtt_get_subtopic(topic)
-        if action is None or action not in self.__action_cb_dict:
-            print(f"[WARNING] Received message for unregistered action: {action}. Ignoring.")
+        action = self.__extract_action_path(topic)
+        if action is None or len(action) == 0:
+            print("[WARNING Received message from invalid topic. Ignoring.")
             return
 
-        print(f"[DEBUG] Executing action callback for {action}")
+        if action in self.__action_cb_dict:
+            try:
+                print(f"[DEBUG] Executing action callback for {action}")
+                self.__action_cb_dict[action](self, msg.decode("utf-8"))
+            except Exception as e:
+                print(f"[WARNING] action callback {self.__action_cb_dict[action].__name__} failed to execute: {e}")
+            finally:
+                return
+
+        action_parts = action.split("/")
+        if len(action_parts) > self.MAX_ACTION_DEPTH:
+            print(f"[WARNING] Action depth exceeded. Ignoring message.")
+            return
 
         try:
-            self.__action_cb_dict[action](self, msg.decode("utf-8"))
+            self.__handle_composite_action(action , msg)
         except Exception as e:
-            print(f"[WARNING] action callback {self.__action_cb_dict[action].__name__} failed to execute: {e}")
+            print(f"[WARNING] Error handling action {action}: {e}")
 
     def __connect(self, last_will: str | None = None, _with_registration: bool = False):
         CONFIG = self.__load_config()
@@ -205,8 +266,6 @@ class SSA():
                               Blocking mode is an not meant for user code and is used as part of the bootstrap process
                               to wait fo incoming firmware updates.
         """
-        self.create_action_callback("ssa_hal/firmware", __fw_update_callback)
-
         self.__mqtt.set_callback(self.__mqtt_sub_callback)
         self.__mqtt.subscribe(f"{self.BASE_ACTION_TOPIC}/#", qos=1)
 
@@ -250,6 +309,7 @@ class SSA():
         if prev_value != value:
             self.__properties[name] = value
             self.__publish(f"properties/{name}", str(value), retain=retain, qos=qos)
+
     def trigger_event(self, name: str, value: Any, retain: bool = False, qos: int = 0):
         """! Trigger an event
             Events are published to the broker when triggered
@@ -275,11 +335,90 @@ class SSA():
 
         self.__tasks.append(asyncio.create_task(wrapped_task()))
 
-    def create_action_callback(self, action: str, callback_func: Callable[[SSA, str], None], qos: int = 0):
+    def create_action_callback(self, uri: str, callback_func: action_callback):
         """! Register a callback function to be executed when an action message is received
             @param action: The name of the action to register the callback for
-            @param callback_func: The function to be called when the action message is received
-                                  The function should take a single str argument, the received message payload
-            @param qos: The QoS level to use for the subscription, default is 0
+            @param callback_func: The function to be called when the action message is received The function should take two arguments: the SSA instance and the message
+                                  If the action has URI parameters, the function should take three arguments: the SSA instance, the sub-action and the message
+            Usage: 
+            URI parameters are defined using curly braces in the action name. For example, an action `foo/{bar}` has a URI parameter `bar`
+            Sub-actions are defined using a forward slash in the action name. For example, an action `foo/bar` has a sub-action `bar`
+            The first component of an action cannot be a URI parameter (i.e. an action `foo/{bar}` is valid, but an action `{foo}/bar` is not)
+            There can be multiple URI parameters in an action name. For example, an action `foo/{bar}/baz/{qux}` has two URI parameters `bar` and `qux`
+            The callback function signature should match the URI parameters in the action name. The first 2 arguments are always the SSA instance and the received message
+
+            There is tecnically no limit to the number of URI parameters in an action name, so the limiting factor becomes device memory and processing power when parsing the action name
+
+            example with no URI parameters:
+                # For action `foo`
+                def callback1(ssa: SSA, msg: str) -> None:
+                    print(f"Action foo triggered with message: {msg}")
+
+                ssa.register_action_callback("foo", callback)
+
+            example with a sub-action:
+                # For action `foo/bar`
+                def callback2(ssa: SSA, msg: str) -> None:
+                    print(f"Action foo/bar triggered with message: {msg}")
+
+            example with URI parameters:
+                # For action `foo/{bar}`
+                def callback3(ssa: SSA, msg: str, bar: str) -> None:
+                    print(f"Action foo/{bar}: {msg}")
+
+            example with URI parameters and sub-actions:
+                # For actions `foo/{bar}/baz/qux/{quux}`
+                def callback4(ssa: SSA, msg: str, bar: str, quux: str) -> None:
+                    print(f"Action foo/{bar}/baz/qux/{quux}: {msg}")
+
+            example with adjacent URI parameters:
+                # For action `foo/{bar}/{baz}`
+                def callback5(ssa: SSA, msg: str, bar: str, baz: str) -> None:
+                    print(f"Action foo/{bar}/{baz}: {msg}")
+
+            Implementation details:
+            Internally the action names, variables and callbacks are stored in a recursive dictionary structure
+            The dictionary is structured such that the keys are the action names.
+            The there are no URI parameters in an action name, the entired action name is used as a key in the dictionary.
+            If there are URI parameters in an action name, the longest common prefix of the action name is used as a key in the dictionary 
+            and the remaining parts are stored as a tuple of the variable names and a dictionary of the next parts
+
+            The resulting dictionary structure for the examples above would be:
+            {
+                "": [None, [None, None]] # This is the root of the dictionary and is not used
+                "foo": [callback1, 
+                            ["bar", 
+                                {
+                                    "": [callback3,
+                                            [baz, {
+                                                "": [callback5, [None, None]]
+                                                }
+                                             ]
+                                         ],
+                                    "baz/qux": [callback4, [None, None]]
+                                }
+                            ]
+                        ]
+                "foo/bar":  [callback2, [None, None]],
+            }
         """
-        self.__action_cb_dict[action] = callback_func
+        if uri in self.__action_cb_dict:
+            raise Exception(f"[ERROR] callback for `{uri}` already exists")
+
+        if uri.find("{") == -1: # no URI parameters
+            if uri not in self.__action_cb_dict:
+                self.__action_cb_dict[uri] = [callback_func, [None, None]]
+            else:
+                self.__action_cb_dict[uri][0] = callback_func
+            return
+
+        parts = uri.split("/")
+        root = parts[0]
+        if root.find("{") != -1:
+            raise Exception(f"[ERROR] Invalid action name: {uri}")
+
+        if root not in self.__action_cb_dict:
+            self.__action_cb_dict[root] = [None, [None, None]]
+
+        # TODO: Implement recursive dictionary insertion
+        return
