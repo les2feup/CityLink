@@ -47,7 +47,7 @@ fi
 if [ -n "$EXAMPLE_FILE" ]; then
   if [ -f ./ssaHAL/examples/$EXAMPLE_FILE ]; then
     mpremote mkdir :user
-    premote cp ./ssaHAL/examples/$EXAMPLE_FILE :user/app.py
+    mpremote cp ./ssaHAL/examples/$EXAMPLE_FILE :user/app.py
   else
     echo "Error: Example file '$EXAMPLE_FILE' not found."
     exit 1
