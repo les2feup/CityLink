@@ -253,8 +253,7 @@ class SSA():
         prev_value = self.__properties[name]
         if prev_value != value:
             self.__properties[name] = value
-            self.__publish(f"properties/{name}", str(value), retain=True, qos=1)
-
+            self.__publish(f"properties/{name}", str(value), retain=retain, qos=qos)
     def trigger_event(self, name: str, value: Any, retain: bool = False, qos: int = 0):
         """! Trigger an event
             Events are published to the broker when triggered
