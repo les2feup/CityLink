@@ -30,7 +30,7 @@ class SSA():
         self.__mqtt: MQTTClient | None = None
 
         self.__tasks: List[asyncio.Task] = []
-        self.__action_cb_dict: Dict[str, Callable[[str], None]] = {}
+        self.__action_cb_dict: Dict[str, Callable[[SSA, str], None]] = {}
 
         self.__properties: Dict[str, Any] = {}
 
