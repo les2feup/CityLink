@@ -1,20 +1,16 @@
 """! Simple example app demonstrating the use of the Smart Sensor Actuator Hardware Abstraction Layer."""
 import random
-from ssa import * # Import the SSA class, @ssa_task and @ssa_main decorators
+from ssa import SSA, ssa_task, ssa_main
 
 @ssa_task(2000)
 async def random_event(ssa: SSA) -> None:
-    """! Example event handler that triggers randomly.
-    @returns Tuple[bool, str]: A tuple containing a boolean indicating whether the event occurred and a string message.
-    """
+    """! Example event handler that triggers randomly."""
     if random.randint(0, 1):
         ssa.trigger_event("random_event", "Event triggered")
 
 @ssa_task(1000)
 async def random_property_with_event(ssa: SSA) -> None:
-    """! Example property handler that updates randomly.
-    @returns int: A random integer value between 0 and 100.
-    """
+    """! Example task that sets a random value to a property and triggers an event if the value is greater than 70."""
     new_value: int = random.randint(0, 100)
     ssa.set_property("random_value", new_value)
     if new_value > 70:
