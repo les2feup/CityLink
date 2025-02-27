@@ -230,9 +230,8 @@ class SSA():
         try:
             func(self, msg, **kwargs)
         except Exception as e:
-            print(f"[ERROR] Action callback `{func.__name__}` with kwargs `{kwargs}` failed to execute: {e}")
             func_name = func.__name__ if hasattr(func, "__name__") else "unknown"
-            print(f"[ERROR] Action callback `{func_name}` with kwargs `{kwargs}` failed to execute:
+            print(f"[ERROR] Action callback `{func_name}` with kwargs `{kwargs}` failed to execute: {e}")
 
     def __connect(self, last_will: str | None = None, _with_registration: bool = False):
         CONFIG = self.__load_config()
