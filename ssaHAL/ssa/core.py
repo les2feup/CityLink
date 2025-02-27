@@ -352,7 +352,7 @@ class SSA():
 
         self.__tasks.append(asyncio.create_task(wrapped_task()))
 
-    def create_action_callback(self, uri: str, callback_func: Callable[[SSA, str, ...], None]):
+    def create_action_callback(self, uri: str, callback_func: Callable[['SSA', str, ...], None]):
         """
         Register a callback function to be executed when an action message is received
         @param action: The name of the action to register the callback for
