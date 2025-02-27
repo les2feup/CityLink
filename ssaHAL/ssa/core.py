@@ -7,7 +7,6 @@ from network import WLAN, STA_IF
 from umqtt.simple import MQTTClient
 
 from typing import Any, Dict, List, Tuple, Callable, Awaitable, Optional
-from typing_extensions import Unpack
 
 def __singleton(cls):
     instance = None
@@ -52,21 +51,20 @@ def __property_update_action(ssa: SSA, msg: string, property: string):
     value = json.loads(msg)
     ssa.set_property(property, value)
 
-type action_callback = Callable[[SSA, str, Unpack[str]], None]
-type action_dict = Dict[str, 'ActDictElement']
-
 class ActDictElement():
-    self.callback: Optional[action_callback]
+    # NOTE: The correct type here should have been `Callable[[SSA, str, Unpack[str]], None]`
+    # but the Unpack type is not yet supported in the typing module for MicroPython
+    self.callback: Optional[Callable[[SSA, str, Any], None]]
     self.variable: Optional[str]
     self.children: Optional[Dict[str, ActDictElement]]
 
     def __init__(self,
-                 callback: Optional[Callable[[SSA, str, Unpack[str]], None]] = None,
+                 callback: Optional[Callable[[SSA, str, Any], None]] = None,
                  node_name: Optional[str] = None,
                  children: Optional[Dict[str, ActDictElement]] = None):
         self.callback = callback
         self.node_name = node_name
-        self.children = children
+        self.children = children if children is not None else {}
 
 @__singleton
 class SSA():
@@ -80,7 +78,7 @@ class SSA():
         self.__mqtt: MQTTClient | None = None
 
         self.__tasks: List[asyncio.Task] = []
-        self.__action_cb_dict: action_dict = {}
+        self.__action_cb_dict: Dict[str, ActDictElement] = {}
 
         self.__properties: Dict[str, Any] = {}
 
@@ -164,13 +162,13 @@ class SSA():
         self.__mqtt.connect()
         print("Connected to MQTT broker")
 
-    def __extract_action_path(self, topic: str) -> str:
+    def __extract_action_path(self, topic: str) -> Optional[str]:
         topic = topic.decode("utf-8")
         if topic.startswith(self.BASE_ACTION_TOPIC):
             return topic[len(self.BASE_ACTION_TOPIC) + 1:] # +1 to remove the trailing '/'
         return None
 
-    def __find_action_callback(self, action: str, msg: str) -> Optional[Tuple[action_callback, Dict[str, str]]]:
+    def __find_action_callback(self, action: str, msg: str) -> Optional[Tuple[Callable[[SSA, str, Any], Dict[str, str]]]]:
         """
         Walks the action callback tree using the given action string.
         Returns a tuple (callback_function, kwargs) if a callback is found,
@@ -204,10 +202,10 @@ class SSA():
                 # No matching branch found.
                 return None
 
-    # If we have reached a node that has a callback, return it along with the kwargs.
-    if current_node.callback is not None:
-        return current_node.callback, kwargs
-    return None
+        #If we have reached a node that has a callback, return it along with the kwargs.
+        if current_node.callback is not None:
+            return current_node.callback, kwargs
+        return None
 
     def __mqtt_sub_callback(self, topic: bytes, msg: bytes):
         print(f"[DEBUG] Received message from {topic}: {msg}")
@@ -284,7 +282,7 @@ class SSA():
         to wait fo incoming firmware updates.
         """
         self.create_action_callback("ssa_hal/set/{property}", __property_update_action)
-        self.create_action_callback("ssa_hal/firmware", __fw_update)
+        self.create_action_callback("ssa_hal/firmware", __fw_update_callback)
         self.__mqtt.set_callback(self.__mqtt_sub_callback)
         self.__mqtt.subscribe(f"{self.BASE_ACTION_TOPIC}/#", qos=1)
 
