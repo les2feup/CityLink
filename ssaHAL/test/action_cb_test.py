@@ -13,6 +13,30 @@ class DummySSA:
         # The internal dictionary storing actions.
         self.__action_cb_dict = {}
 
+    def __find_action_callback(self, action: str, msg: str):
+        parts = action.split("/")
+        if parts[0] not in self.__action_cb_dict:
+            return None
+
+        current_node = self.__action_cb_dict[parts[0]]
+        kwargs = {}
+
+        for part in parts[1:]:
+            if current_node.children is None:
+                return None
+            if part in current_node.children:
+                current_node = current_node.children[part]
+            elif "*" in current_node.children:
+                current_node = current_node.children["*"]
+                if current_node.node_name is not None:
+                    kwargs[current_node.node_name] = part
+            else:
+                return None
+
+        if current_node.callback is not None:
+            return current_node.callback, kwargs
+        return None
+
     def create_action_callback(self, uri: str, callback_func):
         # Case 1: No URI parameters (literal action)
         if "{" not in uri:
@@ -174,7 +198,58 @@ class TestSSAActionCallback(unittest.TestCase):
             self.ssa.create_action_callback("foo/{bar}", callback6)
         self.assertIn("callback for `foo/{bar}` already exists", str(context.exception))
 
+# Unit tests for the __find_action_callback functionality
+class TestFindActionCallback(unittest.TestCase):
+    def setUp(self):
+        self.ssa = DummySSA()
+
+    def test_parameter_action(self):
+        # Register an action with one URI parameter: foo/{bar}
+        def callback(ssa, msg, bar):
+            return f"bar: {bar}"
+        self.ssa.create_action_callback("foo/{bar}", callback)
+        result = self.ssa._DummySSA__find_action_callback("foo/1123", "test message")
+        self.assertIsNotNone(result)
+        cb, kwargs = result
+        self.assertEqual(cb, callback)
+        self.assertEqual(kwargs, {"bar": "1123"})
+
+    def test_parameter_subaction(self):
+        # Register an action with a URI parameter and additional literal segments.
+        # Example: foo/{bar}/baz/qux/{quux}
+        def callback(ssa, msg, bar, quux):
+            return f"{bar} and {quux}"
+        self.ssa.create_action_callback("foo/{bar}/baz/qux/{quux}", callback)
+        result = self.ssa._DummySSA__find_action_callback("foo/123/baz/qux/456", "test message")
+        self.assertIsNotNone(result)
+        cb, kwargs = result
+        self.assertEqual(cb, callback)
+        self.assertEqual(kwargs, {"bar": "123", "quux": "456"})
+
+    def test_adjacent_parameters(self):
+        # Register an action with adjacent URI parameters: foo/{bar}/{baz}
+        def callback(ssa, msg, bar, baz):
+            return f"{bar} and {baz}"
+        self.ssa.create_action_callback("foo/{bar}/{baz}", callback)
+        result = self.ssa._DummySSA__find_action_callback("foo/111/222", "test message")
+        self.assertIsNotNone(result)
+        cb, kwargs = result
+        self.assertEqual(cb, callback)
+        self.assertEqual(kwargs, {"bar": "111", "baz": "222"})
+
+    def test_incomplete_action(self):
+        # Register an action that requires more segments and test that an incomplete action returns None.
+        def callback(ssa, msg, bar):
+            return "complete"
+        self.ssa.create_action_callback("foo/{bar}/baz", callback)
+        # "foo/1123" is incomplete because the full action is "foo/{bar}/baz"
+        result = self.ssa._DummySSA__find_action_callback("foo/1123", "test message")
+        self.assertIsNone(result)
+
+    def test_nonexistent_action(self):
+        # Test that an action that does not exist returns None.
+        result = self.ssa._DummySSA__find_action_callback("nonexistent", "test message")
+        self.assertIsNone(result)
 
 if __name__ == '__main__':
     unittest.main()
-

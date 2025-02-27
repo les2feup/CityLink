@@ -162,52 +162,44 @@ class SSA():
             return topic[len(self.BASE_ACTION_TOPIC) + 1:] # +1 to remove the trailing '/'
         return None
 
-    def __internal_action_handler(self, action: str, msg: str):
-        if action == "firmware":
-            __fw_update_callback(msg)
-            return
-
-        if action.startswith("set/") and action[len("set/"):] in self.__properties:
-            self.set_property(action[len("set/"):], msg)
-            return
+    def __find_action_callback(self, action: str, msg: str) -> Optional[Tuple[action_callback, Dict[str, str]]]:
+        """
+        Walks the action callback tree using the given action string.
+        Returns a tuple (callback_function, kwargs) if a callback is found,
+        or None if no callback matches the action.
         
-        print(f"[WARNING] Received trigger for unknown internal action: {action}")
+        The kwargs dictionary maps URI parameter names to their corresponding values.
+        For example, if the action "foo/{bar}/baz" is called with "foo/1123/baz",
+        then kwargs will be {"bar": "1123"}.
+        """
+        parts = action.split("/")
+        # The first part must be a literal.
+        if parts[0] not in self.__action_cb_dict:
+            return None
 
-    def __handle_composite_action(self, action: str | None, msg: str):
-        if action is None:
-            print("[WARNING] Received message from invalid topic. Ignoring.")
-            return
+        current_node = self.__action_cb_dict[parts[0]]
+        kwargs = {}  # dictionary to hold parameter values mapped by their node_name
 
-        action_base = action[:action.find("/")]
-        if action_base in self.__action_cb_dict:
-            cb_dict_value = self.__action_cb_dict[action_base]
-            if cb_dict_value.isinstance(dict):
-                self.__handle_composite_action(action[action.find("/") + 1:], msg)
-                return
+        for part in parts[1:]:
+            if current_node.children is None:
+                return None
+            # Check for a literal match first.
+            if part in current_node.children:
+                current_node = current_node.children[part]
+            # If no literal match, try a parameter match.
+            elif "*" in current_node.children:
+                current_node = current_node.children["*"]
+                # Use the stored node_name as the parameter key.
+                if current_node.node_name is not None:
+                    kwargs[current_node.node_name] = part
+            else:
+                # No matching branch found.
+                return None
 
-            if cb_dict_value.isinstance(tuple):
-                remaining_parts = action[action.find("/") + 1:].split("/")
-                if len(remaining_parts) != len(cb_dict_value[0]):
-                    raise Exception(f"[ERROR] Action {action_base} expected {len(cb_dict_value[0])} parts, got {len(remaining_parts)}")
-                try:
-                    kwarg_keys = cb_dict_value[0]
-                    kwarg_values = remaining_parts
-                    kwargs = dict(zip(kwarg_keys, kwarg_values))
-                    # signature of the callback function should be such that the remaining parts are mapped to the kwargs in the list
-                    func = cb_dict_value[1]
-                    func(self, msg, **kwargs)
-                except Exception as e:
-                    print(f"[Error] action callback {cb_dict_value[1].__name__} failed to execute with kwargs {kwargs}: {e}")
-
-            try:
-                cb_dict_value(self, msg)
-            except Exception as e:
-                print(f"[Error] action callback {cb_dict_value.__name__} failed to execute: {e}")
-
-        else:
-            raise Exception(f"[ERROR] Action {action_base} not found in action callback dictionary")
-
-    def __mqtt_sub_callback(self, topic: bytes, msg: bytes):
+    # If we have reached a node that has a callback, return it along with the kwargs.
+    if current_node.callback is not None:
+        return current_node.callback, kwargs
+    return None    def __mqtt_sub_callback(self, topic: bytes, msg: bytes):
         print(f"[DEBUG] Received message from {topic}: {msg}")
         if topic is None:
             print("[WARNING] Received message from invalid topic. Ignoring.")
@@ -219,23 +211,23 @@ class SSA():
             return
 
         if action in self.__action_cb_dict:
+            func = self.__action_cb_dict[action].callback
             try:
-                print(f"[DEBUG] Executing action callback for {action}")
-                self.__action_cb_dict[action](self, msg.decode("utf-8"))
+                func(self, msg)
             except Exception as e:
-                print(f"[WARNING] action callback {self.__action_cb_dict[action].__name__} failed to execute: {e}")
+                print(f"[ERROR] Action callback `{func.__name__}` failed: {e}")
             finally:
                 return
 
-        action_parts = action.split("/")
-        if len(action_parts) > self.MAX_ACTION_DEPTH:
-            print(f"[WARNING] Action depth exceeded. Ignoring message.")
+        found = self.__find_action_callback(action, msg)
+        if found is None:
+            print(f"[ERROR] No action callback found for `{action}`")
             return
-
+        func, kwargs = found
         try:
-            self.__handle_composite_action(action , msg)
+            func(self, msg, **kwargs)
         except Exception as e:
-            print(f"[WARNING] Error handling action {action}: {e}")
+            print(f"[ERROR] Action callback `{func.__name__}` with kwargs `{kwargs}` failed to execute: {e}")
 
     def __connect(self, last_will: str | None = None, _with_registration: bool = False):
         CONFIG = self.__load_config()
