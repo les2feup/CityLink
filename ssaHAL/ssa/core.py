@@ -5,6 +5,7 @@ import asyncio
 from time import sleep
 from network import WLAN, STA_IF
 from umqtt.simple import MQTTClient
+
 from typing import Any, Dict, List, Tuple, Callable, Awaitable, Optional
 from typing_extensions import Unpack
 
@@ -49,7 +50,7 @@ type action_dict = Dict[str, 'ActDictElement']
 class ActDictElement():
     self.callback: Optional[action_callback]
     self.variable: Optional[str]
-    self.next: Optional[Dict[str, ActDictElement]]
+    self.children: Optional[Dict[str, ActDictElement]]
 
     def __init__(self,
                  callback: Optional[Callable[[SSA, str, Unpack[str]], None]] = None,
@@ -348,7 +349,7 @@ class SSA():
 
         self.__tasks.append(asyncio.create_task(wrapped_task()))
 
-    def create_action_callback(self, uri: str, callback_func: action_callback):
+    def create_action_callback(self, uri: str, callback_func):
         """! Register a callback function to be executed when an action message is received
             @param action: The name of the action to register the callback for
             @param callback_func: The function to be called when the action message is received The function should take two arguments: the SSA instance and the message
@@ -399,52 +400,73 @@ class SSA():
             The resulting dictionary structure for the examples above would be:
             {
                 "*": None # Special case for the root node of the tree. This entry does not exist in the dictionary, but is used to represent the root node
-            "foo": ActDictElement(callback=callback1, variable="bar", next=dict2)
-            "foo/bar": ActDictElement(callback=callback2, variable=None, next=None)
-        }
-        dict2:
-        {
-            "*": ActDictElement(callback=callback3, variable="baz", next=dict3)
-            "baz/qux": ActDictElement(callback=None, variable="quux", next=dict4)
-        }
-        dict3:
-        {
-            "*": ActDictElement(callback=callback5, variable=None, next=None)
-        }
-        dict4:
-        {
-            "*": ActDictElement(callback=callback4, variable=None, next=None)
-        }
-    """
-    if uri in self.__action_cb_dict:
-        raise Exception(f"[ERROR] callback for `{uri}` already exists")
+            "foo": ActDictElement(callback=callback1, variable="bar", children=dict2)
+            "foo/bar": ActDictElement(callback=callback2, variable=None, children=None)
+            }
+            dict2:
+            {
+                "*": ActDictElement(callback=callback3, variable="baz", children=dict3)
+                "baz": ActDictElement(callback=None, variable=None, children=dict4)
+            }
+            dict3:
+            {
+                "*": ActDictElement(callback=callback5, variable=None, children=None)
+            }
+            dict4:
+            {
+                "qux": ActDictElement(callback=None, variable="quux", children=dict5)
+            }
+            dict5:
+            {
+                "*": ActDictElement(callback=callback4, variable=None, children=None)
+            }
+        """
+        # Case 1: No URI parameters (literal action)
+        if "{" not in uri:
+            if uri in self.__action_cb_dict:
+                raise Exception(f"[ERROR] callback for `{uri}` already exists")
+            self.__action_cb_dict[uri] = ActDictElement(callback=callback_func, node_name=None, children={})
+            return
 
-    if uri.find("{") == -1: # no URI parameters
-        if uri not in self.__action_cb_dict:
-            self.__action_cb_dict[uri] = ActDictElement(callback=callback_func)
-        else:
-            self.__action_cb_dict[uri].callback = callback_func
-        return
+        # Split the URI into parts.
+        uri_parts = uri.split("/")
+        # The first part must be a literal.
+        if uri_parts[0].startswith("{"):
+            raise Exception(f"[ERROR] URI parameter cannot be the first part of an action name")
 
-    uri_parts = uri.split("/")
-    if uri_parts[0].find("{") != -1:
-        raise Exception(f"[ERROR] URI parameter cannot be the first part of an action name")
+        # Process the first literal part.
+        first_part = uri_parts[0]
+        if first_part not in self.__action_cb_dict:
+            self.__action_cb_dict[first_part] = ActDictElement(callback=None, node_name=None, children={})
+        current_node = self.__action_cb_dict[first_part]
+        current_dict = current_node.children
 
-    part_acc = uri_parts[0]
-    current_dict = self.__action_cb_dict
+        # Process each subsequent part.
+        for part in uri_parts[1:]:
+            if part.startswith("{") and part.endswith("}"):
+                # This is a URI parameter.
+                var_name = part[1:-1]
+                key = "*"
+                if key not in current_dict:
+                    current_dict[key] = ActDictElement(callback=None, node_name=var_name, children={})
+                else:
+                    if current_dict[key].node_name is None:
+                        current_dict[key].node_name = var_name
+                current_node = current_dict[key]
+            else:
+                # This is a literal segment.
+                key = part
+                if key not in current_dict:
+                    current_dict[key] = ActDictElement(callback=None, node_name=None, children={})
+                current_node = current_dict[key]
 
-    for i in range(1, len(uri_parts)):
-        if uri_parts[i].find("{") != -1:
-            part_acc += f"/{uri_parts[i]}"
-        else:
-            node_name = uri_parts[i][1:-1],
-            if part_acc not in current_dict and i == len(uri_parts) - 1:
-                # URI variable is the final element of the uri and the node does not exist
-                # Insert the parent Node with no callback and the variable set to the URI variable
-                # The catchall node of the next node will have the callback function
-                current_dict[part_acc] = ActDictElement(node_name=node_name, next={"*":ActDictElement(callback=callback_func)})
-            elif part_acc not in current_dict:
-                current_dict[part_acc] = ActDictElement(node_name=node_name, next={})
-                current_dict = current_dict[part_acc].next
-            ## TODO:
+            # If not at the last segment, prepare for the next level.
+            if part != uri_parts[-1]:
+                if current_node.children is None:
+                    current_node.children = {}
+                current_dict = current_node.children
 
+        # At the final node, set the callback.
+        if current_node.callback is not None:
+            raise Exception(f"[ERROR] callback for `{uri}` already exists")
+        current_node.callback = callback_func
