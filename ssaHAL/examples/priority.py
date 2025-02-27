@@ -1,8 +1,8 @@
 """
-@brief Simple app that demonstrates how to trigger events based on a property that is updated from an action.
-In this example, a sensor value is generated randomly and an event is triggered based on the priority level of the sensor value.
-A broker can subscribe to the events and take actions based on the priority level.
-The priority level can be updated using an action, based on external decisions from the network.
+This is a simple SSA application that simulates a sensor that generates random values.
+The sensor value is then sent to different topics based on the priority of the sensor.
+The priority of the sensor is set by the user and can be "low", "medium", or "high".
+Setting the priority is handled by the user through the SSA HAL API (topic is mqtt://{...}/actions/ssa_hal/set/priority)
 """
 import random
 from ssa import SSA, ssa_task, ssa_main

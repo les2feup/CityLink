@@ -18,7 +18,7 @@ def __singleton(cls):
         return instance
     return getinstance
 
-def __fw_update_callback(_ssa: SSA, update_str: str):
+def __fw_update_callback(_ssa: 'SSA', update_str: str):
     print(f"[INFO] Firmware update received with size {len(update_str)}")
     update = json.loads(update_str)
 
@@ -43,25 +43,20 @@ def __fw_update_callback(_ssa: SSA, update_str: str):
     from machine import soft_reset
     soft_reset()
 
-def __property_update_action(ssa: SSA, msg: string, property: string):
-    if property not in ssa.__properties:
-        print(f"[ERROR] Property `{property}` does not exist. Create it using `create_property` before setting it.")
+def __property_update_action(ssa: 'SSA', msg: str, prop: str):
+    if prop not in ssa.__properties:
+        print(f"[ERROR] Property `{prop}` does not exist. Create it using `create_property` before setting it.")
         return
 
     value = json.loads(msg)
-    ssa.set_property(property, value)
+    ssa.set_property(prop, value)
 
 class ActDictElement():
-    # NOTE: The correct type here should have been `Callable[[SSA, str, Unpack[str]], None]`
-    # but the Unpack type is not yet supported in the typing module for MicroPython
-    self.callback: Optional[Callable[[SSA, str, Any], None]]
-    self.variable: Optional[str]
-    self.children: Optional[Dict[str, ActDictElement]]
-
     def __init__(self,
-                 callback: Optional[Callable[[SSA, str, Any], None]] = None,
+                 callback: Optional[Callable[['SSA', str, ...], None]] = None,
                  node_name: Optional[str] = None,
                  children: Optional[Dict[str, ActDictElement]] = None):
+
         self.callback = callback
         self.node_name = node_name
         self.children = children if children is not None else {}
@@ -224,8 +219,8 @@ class SSA():
                 func(self, msg)
             except Exception as e:
                 print(f"[ERROR] Action callback `{func.__name__}` failed: {e}")
-            finally:
-                return
+           
+            return
 
         found = self.__find_action_callback(action, msg)
         if found is None:
@@ -281,7 +276,7 @@ class SSA():
         Blocking mode is an not meant for user code and is used as part of the bootstrap process
         to wait fo incoming firmware updates.
         """
-        self.create_action_callback("ssa_hal/set/{property}", __property_update_action)
+        self.create_action_callback("ssa_hal/set/{prop}", __property_update_action)
         self.create_action_callback("ssa_hal/firmware", __fw_update_callback)
         self.__mqtt.set_callback(self.__mqtt_sub_callback)
         self.__mqtt.subscribe(f"{self.BASE_ACTION_TOPIC}/#", qos=1)
@@ -357,7 +352,7 @@ class SSA():
 
         self.__tasks.append(asyncio.create_task(wrapped_task()))
 
-    def create_action_callback(self, uri: str, callback_func):
+    def create_action_callback(self, uri: str, callback_func: Callable[[SSA, str, ...], None]):
         """
         Register a callback function to be executed when an action message is received
         @param action: The name of the action to register the callback for
