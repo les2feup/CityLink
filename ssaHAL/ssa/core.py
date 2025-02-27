@@ -55,7 +55,7 @@ class ActDictElement():
     def __init__(self,
                  callback: Optional[Callable[['SSA', str, ...], None]] = None,
                  node_name: Optional[str] = None,
-                 children: Optional[Dict[str, ActDictElement]] = None):
+                 children: Optional[Dict[str, 'ActDictElement']] = None):
 
         self.callback = callback
         self.node_name = node_name
@@ -163,7 +163,7 @@ class SSA():
             return topic[len(self.BASE_ACTION_TOPIC) + 1:] # +1 to remove the trailing '/'
         return None
 
-    def __find_action_callback(self, action: str, msg: str) -> Optional[Tuple[Callable[[SSA, str, Any], Dict[str, str]]]]:
+    def __find_action_callback(self, action: str, msg: str) -> Optional[Tuple[Callable[['SSA', str, ...], None], Dict[str, str]]]:
         """
         Walks the action callback tree using the given action string.
         Returns a tuple (callback_function, kwargs) if a callback is found,
