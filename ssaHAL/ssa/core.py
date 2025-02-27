@@ -44,6 +44,14 @@ def __fw_update_callback(_ssa: SSA, update_str: str):
     from machine import soft_reset
     soft_reset()
 
+def __property_update_action(ssa: SSA, msg: string, property: string):
+    if property not in ssa.__properties:
+        print(f"[ERROR] Property `{property}` does not exist. Create it using `create_property` before setting it.")
+        return
+
+    value = json.loads(msg)
+    ssa.set_property(property, value)
+
 type action_callback = Callable[[SSA, str, Unpack[str]], None]
 type action_dict = Dict[str, 'ActDictElement']
 
@@ -199,7 +207,9 @@ class SSA():
     # If we have reached a node that has a callback, return it along with the kwargs.
     if current_node.callback is not None:
         return current_node.callback, kwargs
-    return None    def __mqtt_sub_callback(self, topic: bytes, msg: bytes):
+    return None
+
+    def __mqtt_sub_callback(self, topic: bytes, msg: bytes):
         print(f"[DEBUG] Received message from {topic}: {msg}")
         if topic is None:
             print("[WARNING] Received message from invalid topic. Ignoring.")
@@ -263,6 +273,7 @@ class SSA():
         print(f"[DEBUG] Publishing `{msg}` to `{subtopic}`")
         self.__mqtt.publish(f"{self.BASE_TOPIC}/{subtopic}", msg, retain=retain, qos=qos)
 
+        
     #TODO: improve main loop periodicity by taking into account the time taken by message processing
     async def __main_loop(self, _blocking: bool = False):
         """
@@ -272,6 +283,8 @@ class SSA():
         Blocking mode is an not meant for user code and is used as part of the bootstrap process
         to wait fo incoming firmware updates.
         """
+        self.create_action_callback("ssa_hal/set/{property}", __property_update_action)
+        self.create_action_callback("ssa_hal/firmware", __fw_update)
         self.__mqtt.set_callback(self.__mqtt_sub_callback)
         self.__mqtt.subscribe(f"{self.BASE_ACTION_TOPIC}/#", qos=1)
 

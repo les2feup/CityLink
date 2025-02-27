@@ -6,9 +6,6 @@
 import random
 from ssa import SSA, ssa_task, ssa_main
 
-def change_priority(ssa: SSA, priority: str) -> None:
-    ssa.set_property("priority", priority)
-
 @ssa_task(1000) # Poll sensor every 1 second
 async def simulate_random_sensor(ssa: SSA) -> None:
     sensor_value = random.randint(0, 100)
