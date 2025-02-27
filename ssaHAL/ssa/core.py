@@ -273,12 +273,12 @@ class SSA():
 
     #TODO: improve main loop periodicity by taking into account the time taken by message processing
     async def __main_loop(self, _blocking: bool = False):
-        """! Run the main loop of the application
-            @param _blocking: If True, the loop will block until a message is received.
-                              If False, the loop will run in the background and periodically check for incoming messages
-
-                              Blocking mode is an not meant for user code and is used as part of the bootstrap process
-                              to wait fo incoming firmware updates.
+        """
+        Run the main loop of the application
+        @param _blocking: If True, the loop will block until a message is received.
+        If False, the loop will run in the background and periodically check for incoming messages
+        Blocking mode is an not meant for user code and is used as part of the bootstrap process
+        to wait fo incoming firmware updates.
         """
         self.__mqtt.set_callback(self.__mqtt_sub_callback)
         self.__mqtt.subscribe(f"{self.BASE_ACTION_TOPIC}/#", qos=1)
@@ -293,28 +293,31 @@ class SSA():
                 await asyncio.sleep_ms(200)
 
     def create_property(self, name: str, value: Any):
-        """! Create a property for the device
-            @param name: The name of the property
-            @param value: The initial value of the property
+        """
+        Create a property for the device
+        @param name: The name of the property
+        @param value: The initial value of the property
         """
         if name in self.__properties:
             raise Exception(f"[ERROR] Property `{name}` already exists. Use `set_property` to update it.")
         self.__properties[name] = value
 
     def get_property(self, name: str) -> Any:
-        """! Get the value of a property
-            @param name: The name of the property
-            @returns Any: The value of the property
+        """
+        Get the value of a property
+        @param name: The name of the property
+        @returns Any: The value of the property
         """
         if name not in self.__properties:
             raise Exception(f"[ERROR] Property `{name}` does not exist. Create it using `create_property` before getting it.")
         return self.__properties[name]
 
     def set_property(self, name: str, value: Any, retain: bool = False, qos: int = 0):
-        """! Set the value of a property.
-            Properties are published to the broker when set, if the value has changed
-            @param name: The name of the property
-            @param value: The new value of the property
+        """
+        Set the value of a property.
+        Properties are published to the broker when set, if the value has changed
+        @param name: The name of the property
+        @param value: The new value of the property
         """
         if name not in self.__properties:
             raise Exception(f"[ERROR] Property `{name}` does not exist. Create it using `create_property` before setting it.")
@@ -325,18 +328,20 @@ class SSA():
             self.__publish(f"properties/{name}", str(value), retain=retain, qos=qos)
 
     def trigger_event(self, name: str, value: Any, retain: bool = False, qos: int = 0):
-        """! Trigger an event
-            Events are published to the broker when triggered
-            @param name: The name of the event
-            @param value: The value of the event
+        """
+        Trigger an event
+        Events are published to the broker when triggered
+        @param name: The name of the event
+        @param value: The value of the event
         """
         self.__publish(f"events/{name}", str(value), retain=retain, qos=qos)
 
     def create_task(self, task: Callable[[], Awaitable[None]]):
-        """! Register a task to be executed as part of the main loop
-            @param task: The task to be executed
-                         The task should be an async function decorated with @ssa_property_task or @ssa_event_task
-                         See the ssa.decorators.py documentation for more information
+        """
+        Register a task to be executed as part of the main loop
+        @param task: The task to be executed
+        The task should be an async function decorated with @ssa_property_task or @ssa_event_task
+        See the ssa.decorators.py documentation for more information
         """
         async def wrapped_task():
             try:
@@ -350,76 +355,73 @@ class SSA():
         self.__tasks.append(asyncio.create_task(wrapped_task()))
 
     def create_action_callback(self, uri: str, callback_func):
-        """! Register a callback function to be executed when an action message is received
-            @param action: The name of the action to register the callback for
-            @param callback_func: The function to be called when the action message is received The function should take two arguments: the SSA instance and the message
-                                  If the action has URI parameters, the function should take three arguments: the SSA instance, the sub-action and the message
-            Usage: 
-            URI parameters are defined using curly braces in the action name. For example, an action `foo/{bar}` has a URI parameter `bar`
-            Sub-actions are defined using a forward slash in the action name. For example, an action `foo/bar` has a sub-action `bar`
-            The first component of an action cannot be a URI parameter (i.e. an action `foo/{bar}` is valid, but an action `{foo}/bar` is not)
-            There can be multiple URI parameters in an action name. For example, an action `foo/{bar}/baz/{qux}` has two URI parameters `bar` and `qux`
-            The callback function signature should match the URI parameters in the action name. The first 2 arguments are always the SSA instance and the received message
+        """
+        Register a callback function to be executed when an action message is received
+        @param action: The name of the action to register the callback for
+        @param callback_func: The function to be called when the action message is received The function should take two arguments: the SSA instance and the message
+        If the action has URI parameters, the function should take three arguments: the SSA instance, the sub-action and the message
 
-            There is tecnically no limit to the number of URI parameters in an action name, so the limiting factor becomes device memory and processing power when parsing the action name
+        Usage: 
+        URI parameters are defined using curly braces in the action name. For example, an action `foo/{bar}` has a URI parameter `bar`
+        Sub-actions are defined using a forward slash in the action name. For example, an action `foo/bar` has a sub-action `bar`
+        The first component of an action cannot be a URI parameter (i.e. an action `foo/{bar}` is valid, but an action `{foo}/bar` is not)
+        There can be multiple URI parameters in an action name. For example, an action `foo/{bar}/baz/{qux}` has two URI parameters `bar` and `qux`
+        The callback function signature should match the URI parameters in the action name. The first 2 arguments are always the SSA instance and the received message
 
-            example with no URI parameters:
-                # For action `foo`
-                def callback1(ssa: SSA, msg: str) -> None:
-                    print(f"Action foo triggered with message: {msg}")
+        There is tecnically no limit to the number of URI parameters in an action name, so the limiting factor becomes device memory and processing power when parsing the action name
 
-                ssa.register_action_callback("foo", callback)
+        example with no URI parameters:
+        # For action `foo`
+        def callback1(ssa: SSA, msg: str) -> None:
+            print(f"Action foo triggered with message: {msg}")
 
-            example with a sub-action:
-                # For action `foo/bar`
-                def callback2(ssa: SSA, msg: str) -> None:
-                    print(f"Action foo/bar triggered with message: {msg}")
+        ssa.register_action_callback("foo", callback)
 
-            example with URI parameters:
-                # For action `foo/{bar}`
-                def callback3(ssa: SSA, msg: str, bar: str) -> None:
-                    print(f"Action foo/{bar}: {msg}")
+        example with a sub-action:
+        # For action `foo/bar`
+        def callback2(ssa: SSA, msg: str) -> None:
+            print(f"Action foo/bar triggered with message: {msg}")
 
-            example with URI parameters and sub-actions:
-                # For actions `foo/{bar}/baz/qux/{quux}`
-                def callback4(ssa: SSA, msg: str, bar: str, quux: str) -> None:
-                    print(f"Action foo/{bar}/baz/qux/{quux}: {msg}")
+        example with URI parameters:
+        # For action `foo/{bar}`
+        def callback3(ssa: SSA, msg: str, bar: str) -> None:
+            print(f"Action foo/{bar}: {msg}")
 
-            example with adjacent URI parameters:
-                # For action `foo/{bar}/{baz}`
-                def callback5(ssa: SSA, msg: str, bar: str, baz: str) -> None:
-                    print(f"Action foo/{bar}/{baz}: {msg}")
+        example with URI parameters and sub-actions:
+        # For actions `foo/{bar}/baz/qux/{quux}`
+        def callback4(ssa: SSA, msg: str, bar: str, quux: str) -> None:
+            print(f"Action foo/{bar}/baz/qux/{quux}: {msg}")
 
-            Implementation details:
-            Internally, actions are stored in a tree-like dictionary structure, where each node is an instance of the ActDictElement class
-            The ActDictElement class has three attributes:
-                - callback: The callback function to be executed when the action for this node is triggered
-                - variable: The name of the URI parameter for this node, if it exists
-                - next: A dictionary of the children of this node, where the key is the name of the child node and the value is the ActDictElement instance for the child node
+        example with adjacent URI parameters:
+        # For action `foo/{bar}/{baz}`
+        def callback5(ssa: SSA, msg: str, bar: str, baz: str) -> None:
+            print(f"Action foo/{bar}/{baz}: {msg}")
+
+        Implementation details:
+        Internally, actions are stored in a tree-like dictionary structure, where each node is an instance of the ActDictElement class
+        The ActDictElement class has three attributes:
+        - callback: The callback function to be executed when the action for this node is triggered
+        - node_name: The name of the URI parameter for this node, if it exists
+        - children: A dictionary of the children of this node, where the key is the name of the child node and the value is the ActDictElement instance for the child node
             
-            The resulting dictionary structure for the examples above would be:
-            {
-                "*": None # Special case for the root node of the tree. This entry does not exist in the dictionary, but is used to represent the root node
+        The resulting dictionary structure for the examples above would be:
+        {
+            "*": None # Special case for the root node of the tree. This entry does not exist in the dictionary, but is used to represent the root node
             "foo": ActDictElement(callback=callback1, variable="bar", children=dict2)
             "foo/bar": ActDictElement(callback=callback2, variable=None, children=None)
-            }
-            dict2:
-            {
-                "*": ActDictElement(callback=callback3, variable="baz", children=dict3)
-                "baz": ActDictElement(callback=None, variable=None, children=dict4)
-            }
-            dict3:
-            {
-                "*": ActDictElement(callback=callback5, variable=None, children=None)
-            }
-            dict4:
-            {
-                "qux": ActDictElement(callback=None, variable="quux", children=dict5)
-            }
-            dict5:
-            {
-                "*": ActDictElement(callback=callback4, variable=None, children=None)
-            }
+        }
+
+        dict2:
+        {
+            "*": ActDictElement(callback=callback3, variable="baz", children=dict3)
+            "baz": ActDictElement(callback=None, variable=None, children=dict4)
+        }
+
+        dict3: { "*": ActDictElement(callback=callback5, variable=None, children=None) }
+
+        dict4: { "qux": ActDictElement(callback=None, variable="quux", children=dict5) }
+
+        dict5: { "*": ActDictElement(callback=callback4, variable=None, children=None) }
         """
         # Case 1: No URI parameters (literal action)
         if "{" not in uri:
