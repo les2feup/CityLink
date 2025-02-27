@@ -49,7 +49,7 @@ class DummySSA:
         uri_parts = uri.split("/")
         # The first part must be a literal.
         if uri_parts[0].startswith("{"):
-            raise Exception(f"[ERROR] URI parameter cannot be the first part of an action name")
+            raise Exception("[ERROR] URI parameter cannot be the first part of an action name")
 
         # Process the first literal part.
         first_part = uri_parts[0]

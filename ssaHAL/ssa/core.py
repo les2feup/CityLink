@@ -210,7 +210,7 @@ class SSA():
 
         action = self.__extract_action_path(topic)
         if action is None or len(action) == 0:
-            print("[WARNING Received message from invalid topic. Ignoring.")
+            print("[WARNING] Received message from invalid topic. Ignoring.")
             return
 
         if action in self.__action_cb_dict:
@@ -432,7 +432,7 @@ class SSA():
         uri_parts = uri.split("/")
         # The first part must be a literal.
         if uri_parts[0].startswith("{"):
-            raise Exception(f"[ERROR] URI parameter cannot be the first part of an action name")
+            raise Exception("[ERROR] URI parameter cannot be the first part of an action name")
 
         # Process the first literal part.
         first_part = uri_parts[0]
