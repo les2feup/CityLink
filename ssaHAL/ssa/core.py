@@ -5,7 +5,8 @@ import asyncio
 from time import sleep
 from network import WLAN, STA_IF
 from umqtt.simple import MQTTClient
-from typing import Any, Dict, List, Tuple, Callable, Awaitable
+from typing import Any, Dict, List, Tuple, Callable, Awaitable, Optional
+from typing_extensions import Unpack
 
 def __singleton(cls):
     instance = None
@@ -42,9 +43,21 @@ def __fw_update_callback(_ssa: SSA, update_str: str):
     from machine import soft_reset
     soft_reset()
 
-# Recursive type definition for complex action callbacks
-type action_callback = Callable[[SSA, ], None]
-type acb_dict = Dict[str, 'acb_dict' | Tuple[List[str], action_callback] | action_callback] 
+type action_callback = Callable[[SSA, str, Unpack[str]], None]
+type action_dict = Dict[str, 'ActDictElement']
+
+class ActDictElement():
+    self.callback: Optional[action_callback]
+    self.variable: Optional[str]
+    self.next: Optional[Dict[str, ActDictElement]]
+
+    def __init__(self,
+                 callback: Optional[Callable[[SSA, str, Unpack[str]], None]] = None,
+                 node_name: Optional[str] = None,
+                 children: Optional[Dict[str, ActDictElement]] = None):
+        self.callback = callback
+        self.node_name = node_name
+        self.children = children
 
 @__singleton
 class SSA():
@@ -58,7 +71,7 @@ class SSA():
         self.__mqtt: MQTTClient | None = None
 
         self.__tasks: List[asyncio.Task] = []
-        self.__action_cb_dict: acb_dict = {}
+        self.__action_cb_dict: action_dict = {}
 
         self.__properties: Dict[str, Any] = {}
 
@@ -377,48 +390,61 @@ class SSA():
                     print(f"Action foo/{bar}/{baz}: {msg}")
 
             Implementation details:
-            Internally the action names, variables and callbacks are stored in a recursive dictionary structure
-            The dictionary is structured such that the keys are the action names.
-            The there are no URI parameters in an action name, the entired action name is used as a key in the dictionary.
-            If there are URI parameters in an action name, the longest common prefix of the action name is used as a key in the dictionary 
-            and the remaining parts are stored as a tuple of the variable names and a dictionary of the next parts
-
+            Internally, actions are stored in a tree-like dictionary structure, where each node is an instance of the ActDictElement class
+            The ActDictElement class has three attributes:
+                - callback: The callback function to be executed when the action for this node is triggered
+                - variable: The name of the URI parameter for this node, if it exists
+                - next: A dictionary of the children of this node, where the key is the name of the child node and the value is the ActDictElement instance for the child node
+            
             The resulting dictionary structure for the examples above would be:
             {
-                "": [None, [None, None]] # This is the root of the dictionary and is not used
-                "foo": [callback1, 
-                            ["bar", 
-                                {
-                                    "": [callback3,
-                                            [baz, {
-                                                "": [callback5, [None, None]]
-                                                }
-                                             ]
-                                         ],
-                                    "baz/qux": [callback4, [None, None]]
-                                }
-                            ]
-                        ]
-                "foo/bar":  [callback2, [None, None]],
-            }
-        """
-        if uri in self.__action_cb_dict:
-            raise Exception(f"[ERROR] callback for `{uri}` already exists")
+                "*": None # Special case for the root node of the tree. This entry does not exist in the dictionary, but is used to represent the root node
+            "foo": ActDictElement(callback=callback1, variable="bar", next=dict2)
+            "foo/bar": ActDictElement(callback=callback2, variable=None, next=None)
+        }
+        dict2:
+        {
+            "*": ActDictElement(callback=callback3, variable="baz", next=dict3)
+            "baz/qux": ActDictElement(callback=None, variable="quux", next=dict4)
+        }
+        dict3:
+        {
+            "*": ActDictElement(callback=callback5, variable=None, next=None)
+        }
+        dict4:
+        {
+            "*": ActDictElement(callback=callback4, variable=None, next=None)
+        }
+    """
+    if uri in self.__action_cb_dict:
+        raise Exception(f"[ERROR] callback for `{uri}` already exists")
 
-        if uri.find("{") == -1: # no URI parameters
-            if uri not in self.__action_cb_dict:
-                self.__action_cb_dict[uri] = [callback_func, [None, None]]
-            else:
-                self.__action_cb_dict[uri][0] = callback_func
-            return
-
-        parts = uri.split("/")
-        root = parts[0]
-        if root.find("{") != -1:
-            raise Exception(f"[ERROR] Invalid action name: {uri}")
-
-        if root not in self.__action_cb_dict:
-            self.__action_cb_dict[root] = [None, [None, None]]
-
-        # TODO: Implement recursive dictionary insertion
+    if uri.find("{") == -1: # no URI parameters
+        if uri not in self.__action_cb_dict:
+            self.__action_cb_dict[uri] = ActDictElement(callback=callback_func)
+        else:
+            self.__action_cb_dict[uri].callback = callback_func
         return
+
+    uri_parts = uri.split("/")
+    if uri_parts[0].find("{") != -1:
+        raise Exception(f"[ERROR] URI parameter cannot be the first part of an action name")
+
+    part_acc = uri_parts[0]
+    current_dict = self.__action_cb_dict
+
+    for i in range(1, len(uri_parts)):
+        if uri_parts[i].find("{") != -1:
+            part_acc += f"/{uri_parts[i]}"
+        else:
+            node_name = uri_parts[i][1:-1],
+            if part_acc not in current_dict and i == len(uri_parts) - 1:
+                # URI variable is the final element of the uri and the node does not exist
+                # Insert the parent Node with no callback and the variable set to the URI variable
+                # The catchall node of the next node will have the callback function
+                current_dict[part_acc] = ActDictElement(node_name=node_name, next={"*":ActDictElement(callback=callback_func)})
+            elif part_acc not in current_dict:
+                current_dict[part_acc] = ActDictElement(node_name=node_name, next={})
+                current_dict = current_dict[part_acc].next
+            ## TODO:
+
