@@ -163,7 +163,7 @@ class SSA():
             return topic[len(self.BASE_ACTION_TOPIC) + 1:] # +1 to remove the trailing '/'
         return None
 
-    def __find_action_callback(self, action: str, msg: str) -> Optional[Tuple[Callable[['SSA', str, ...], None], Dict[str, str]]]:
+    def __find_parameterized_callback(self, action: str, msg: str) -> Optional[Tuple[Callable[['SSA', str, ...], None], Dict[str, str]]]:
         """
         Walks the action callback tree using the given action string.
         Returns a tuple (callback_function, kwargs) if a callback is found,
@@ -222,7 +222,7 @@ class SSA():
            
             return
 
-        found = self.__find_action_callback(action, msg)
+        found = self.__find_parameterized_callback(action, msg)
         if found is None:
             print(f"[ERROR] No action callback found for `{action}`")
             return
@@ -231,6 +231,8 @@ class SSA():
             func(self, msg, **kwargs)
         except Exception as e:
             print(f"[ERROR] Action callback `{func.__name__}` with kwargs `{kwargs}` failed to execute: {e}")
+            func_name = func.__name__ if hasattr(func, "__name__") else "unknown"
+            print(f"[ERROR] Action callback `{func_name}` with kwargs `{kwargs}` failed to execute:
 
     def __connect(self, last_will: str | None = None, _with_registration: bool = False):
         CONFIG = self.__load_config()
