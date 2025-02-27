@@ -373,27 +373,35 @@ class SSA():
         def callback1(ssa: SSA, msg: str) -> None:
             print(f"Action foo triggered with message: {msg}")
 
-        ssa.register_action_callback("foo", callback)
+        ssa.create_action_callback("foo", callback1)
 
         example with a sub-action:
         # For action `foo/bar`
         def callback2(ssa: SSA, msg: str) -> None:
             print(f"Action foo/bar triggered with message: {msg}")
 
+        ssa.create_action_callback("foo/bar", callback2)
+
         example with URI parameters:
         # For action `foo/{bar}`
         def callback3(ssa: SSA, msg: str, bar: str) -> None:
             print(f"Action foo/{bar}: {msg}")
+
+        ssa.create_action_callback("foo/{bar}", callback3)
 
         example with URI parameters and sub-actions:
         # For actions `foo/{bar}/baz/qux/{quux}`
         def callback4(ssa: SSA, msg: str, bar: str, quux: str) -> None:
             print(f"Action foo/{bar}/baz/qux/{quux}: {msg}")
 
+        ssa.create_action_callback("foo/{bar}/baz/qux/{quux}", callback4)
+
         example with adjacent URI parameters:
         # For action `foo/{bar}/{baz}`
         def callback5(ssa: SSA, msg: str, bar: str, baz: str) -> None:
             print(f"Action foo/{bar}/{baz}: {msg}")
+
+        ssa.create_action_callback("foo/{bar}/{baz}", callback5)
 
         Implementation details:
         Internally, actions are stored in a tree-like dictionary structure, where each node is an instance of the ActDictElement class
