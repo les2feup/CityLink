@@ -39,15 +39,16 @@ class SSARuntime():
     def __init__(self, ssa_instance, id, config):
         pass
 
-    def launch(self, user_entry=None):
+    def launch(self, setup_func):
         """Launch the SSA runtime by connecting to the network 
         and sending registration messages.
 
         If the connection is successful, start running registered tasks
         and wait for incoming messages.
 
-        @param user_entry: The entry point for the user code. If not provided,
-        the runtime will wait for incoming messages.
+        @param setup_func: A setup function to run before starting the
+        runtime. This is where the user code is initialized and 
+        registered with the runtime.
         """
         pass
 

@@ -3,9 +3,41 @@ from ssa.interfaces import SSARuntime
 
 class Runtime(SSARuntime):
     def __init__(self, ssa_instance, id, config):
-        pass
+        keepalive = 0 if config.get("keepalive") is None \
+                else config.get("keepalive")
+        port = 0 if config.get("port") is None \
+                else config.get("port")
 
-    def launch(self, user_entry=None):
+        server = config.get("server")
+        if server is None:
+            raise Exception("Server address not found in configuration")
+
+        self._client = UMQTTClient(id,
+                                   server,
+                                   port,
+                                   config.get("user"),
+                                   config.get("password"),
+                                   keepalive,
+                                   config.get("ssl"))
+        
+        self._clean_session = True if config.get("clean_session") is None \
+                else config.get("clean_session")
+        self._lw_topic = config.get("lw_topic")
+        self._lw_msg = config.get("lw_msg")
+
+        if self._lw_topic is not None:
+            self._client.set_last_will(self._lw_topic, self._lw_msg)
+        elif self._lw_msg is not None:
+            default_topic = f"last_will/{id}"
+            self._client.set_last_will(default_topic, self._lw_msg)
+
+        self._subscription_topic = config.get("subscription_topic")
+        self._connection_retries = config.get("connection_retries")
+        self._connection_timeout = config.get("connection_timeout")
+
+        self._ssa = ssa_instance
+
+    def launch(self, setup=None):
         pass
 
     def sync_property(self,
