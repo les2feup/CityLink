@@ -17,11 +17,24 @@ async def random_property_with_event(ssa: SSA) -> None:
         ssa.trigger_event("random_value_event", "Random value is greater than 70")
 
 def print_action(_ssa: SSA, msg: str) -> None:
-    """! Example action that prints the received message payload."""
+    """
+    Prints a formatted action message.
+    
+    This function outputs a message prefixed with a static identifier, indicating that an action has been triggered. The SSA instance parameter is provided by the framework and is not used within the function.
+    
+    Args:
+        msg: The message payload to display.
+    """
     print(f"Simple action triggered with message: {msg}")
 
 @ssa_main()
 def main(ssa: SSA):
+    """
+    Main entry point for the SSA application.
+    
+    Initializes periodic tasks for generating random events and updating a random property,
+    and registers the print action callback.
+    """
     ssa.create_task(random_event)
     ssa.create_task(random_property_with_event)
 

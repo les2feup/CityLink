@@ -1,24 +1,48 @@
 class ActDictElement():
     def __init__(self, callback = None, node_name = None, children = {}):
+        """
+        Initialize an ActDictElement instance.
+        
+        Args:
+            callback: Optional function called when the action associated with this node is triggered.
+            node_name: Optional string representing a URI parameter for this node.
+            children: Optional dictionary mapping child names to ActDictElement instances.
+        """
         self.callback = callback
         self.node_name = node_name
         self.children = children
 
 class ActionHandler():
     def __init__(self, ssa_instance):
+        """
+        Initializes the ActionHandler with the given SSA instance.
+        
+        Stores the provided SSA instance and initializes an empty action registry.
+        
+        Args:
+            ssa_instance: The SSA instance used for integrating action handling into the system.
+        """
         self._ssa = ssa_instance
         self.actions = {}
 
     def _find_dedicated_handler(self, action_uri, msg):
-        """Walks the action tree using the given action uri string.
-        Returns a tuple (callback_function, kwargs) if a callback is found,
-        or None if no callback matches the action.
-
-        The kwargs dictionary maps URI parameter names to their corresponding
-        values.
-
-        For example, if the action "foo/{bar}/baz" is called with
-        "foo/1123/baz", then kwargs will be {"bar": "1123"}.
+        """
+        Traverse the action tree to locate a callback matching the given action URI.
+        
+        This method splits the URI into segments and walks through the hierarchical action tree
+        stored in self.actions. It first evaluates literal matches before considering parameterized
+        segments using a wildcard key ("*"). For parameterized segments, the corresponding URI
+        value is stored in a dictionary under the node's parameter name. If a node with a valid
+        callback is reached, the method returns the callback along with the extracted parameters.
+        
+        For example, matching "foo/1123/baz" against a route "foo/{bar}/baz" produces kwargs {"bar": "1123"}.
+        
+        Args:
+            action_uri: A string representing the action URI to resolve.
+            msg: An extra message context parameter (currently unused).
+        
+        Returns:
+            A tuple (callback_function, kwargs) if a matching callback is found, or None otherwise.
         """
         parts = action_uri.split("/")
         # The first part must be a literal.
@@ -53,10 +77,19 @@ class ActionHandler():
         return None
 
     def global_handler(self, action_uri, payload):
-        """Global action handler for all actions.
-        This handler is called when an action is invoked by the WoT servient.
-        @param uri: The URI of the action (relative to the base action URI)
-        @param payload: The payload of the action.
+        """
+        Handles global action invocations by invoking a registered callback.
+        
+        This method is called when an action is triggered by the WoT servient. It first checks
+        if the provided action URI matches a top-level action and calls its callback if found.
+        If no matching top-level handler exists, it searches the action tree for a dedicated
+        handler that supports URI parameter matching. If the action URI is invalid or no
+        suitable handler is found, a warning or error is logged. Any exceptions raised during
+        callback execution are caught and logged.
+        
+        Args:
+            action_uri: The action's URI relative to the base action URI.
+            payload: The data payload associated with the action invocation.
         """
 
         if action_uri is None or len(action_uri) == 0:
@@ -87,117 +120,14 @@ class ActionHandler():
                     `{kwargs}` failed to execute: {e}")
 
     def register_action(self, action_uri, handler_func):
-        """Register a callback function to be executed when an action message
-        is received
-        @param action_uri: The name of the action to register the callback for
-        @param handler_func: The function to be called when the action message
-        is received.
-
-        Usage:
-        URI parameters are defined using curly braces in the action name.
-        For example, an action `foo/{bar}` has a URI parameter `bar`
-
-        Sub-actions are defined using a forward slash in the action name.
-        For example, an action `foo/bar` has a sub-action `bar`
-
-        The first component of an action cannot be a URI parameter
-        (i.e. an action `foo/{bar}` is valid, but an action `{foo}/bar` is not)
-
-        There can be multiple URI parameters in an action name.
-        For example, an action `foo/{bar}/baz/{qux}` has two URI parameters
-        `bar` and `qux`
-
-        The handler function signature should match the URI parameters in the
-        action name. The first 2 arguments are always the SSA instance and the
-        received message.
-
-        There is tecnically no limit to the number of URI parameters in an
-        action name, so the limiting factor becomes device memory and
-        processing power when parsing the action name
-
-        example with no URI parameters:
-        # For action `foo`
-        def callback1(ssa: SSA, msg: str) -> None:
-            print(f"Action foo triggered with message: {msg}")
-
-        ssa.create_action_callback("foo", callback1)
-
-        example with a sub-action:
-        # For action `foo/bar`
-        def callback2(ssa: SSA, msg: str) -> None:
-            print(f"Action foo/bar triggered with message: {msg}")
-
-        ssa.create_action_callback("foo/bar", callback2)
-
-        example with URI parameters:
-        # For action `foo/{bar}`
-        def callback3(ssa: SSA, msg: str, bar: str) -> None:
-            print(f"Action foo/{bar}: {msg}")
-
-        ssa.create_action_callback("foo/{bar}", callback3)
-
-        example with URI parameters and sub-actions:
-        # For actions `foo/{bar}/baz/qux/{quux}`
-        def callback4(ssa: SSA, msg: str, bar: str, quux: str) -> None:
-            print(f"Action foo/{bar}/baz/qux/{quux}: {msg}")
-
-        ssa.create_action_callback("foo/{bar}/baz/qux/{quux}", callback4)
-
-        example with adjacent URI parameters:
-        # For action `foo/{bar}/{baz}`
-        def callback5(ssa: SSA, msg: str, bar: str, baz: str) -> None:
-            print(f"Action foo/{bar}/{baz}: {msg}")
-
-        ssa.create_action_callback("foo/{bar}/{baz}", callback5)
-
-        Implementation details:
-        Internally, actions are stored in a tree-like dictionary structure,
-        where each node is an instance of the ActDictElement class
-
-        The ActDictElement class has three attributes:
-        - callback: The callback function to be executed when the action for
-        this node is triggered
-        - node_name: The name of the URI parameter for this node, if it exists
-        - children: A dictionary of the children of this node, where the key is
-        the name of the child node and the value is the ActDictElement instance
-        for the child node
-
-        The resulting dictionary structure for the examples above would be:
-        root: {
-                "foo": ActDictElement(callback=callback1,
-                                  node_name="bar",
-                                  children=dict2)
-                "foo/bar": ActDictElement(callback=callback2,
-                                      node_name=None,
-                                      children={})
-                }
-
-        dict2: {
-                "*": ActDictElement(callback=callback3,
-                                node_name="baz",
-                                children=dict3)
-                "baz": ActDictElement(callback=None,
-                                  node_name=None,
-                                  children=dict4)
-                }
-
-        dict3: {
-                "*": ActDictElement(callback=callback5,
-                                     node_name=None,
-                                     children={})
-                }
-
-        dict4: {
-                "qux": ActDictElement(callback=None,
-                                       node_name="quux",
-                                       children=dict5)
-                }
-
-        dict5: {
-                "*": ActDictElement(callback=callback4,
-                                     node_name=None,
-                                     children={})
-                }
+        """
+        Register a callback for the specified action URI.
+        
+        The action URI may be a literal string or include segments with parameters (enclosed in curly braces)
+        and sub-actions (separated by slashes). The first segment must be a literal. The callback should accept
+        at least two arguments (the SSA instance and the received message) and additional arguments corresponding
+        to any URI parameters. An exception is raised if the action URI is invalid or if a callback for the URI
+        already exists.
         """
         # Case 1: No URI parameters (literal action)
         if "{" not in action_uri:

@@ -4,14 +4,30 @@ class NetworkDriver():
     @param config: Configuration dictionary.
     """
     def __init__(self, config):
+        """
+        Initializes the NetworkDriver with the provided configuration.
+        
+        Args:
+            config: A dictionary of network configuration options.
+        """
         pass
 
     def connect(self, retries, base_timeout, **kwargs):
-        """Connect to the network.
-        @param retries: Number of retries to attempt.
-        @param base_timeout: Base timeout (in seconds)
-        increases exponentially with each retry.
-        @raise Exception: If connection fails.
+        """
+        Attempts to establish a network connection with exponential backoff.
+        
+        This method attempts to connect to the network by performing the specified number
+        of retries. The timeout between retries starts at the given base timeout (in seconds)
+        and increases exponentially with each subsequent attempt. Additional keyword
+        arguments can be used to customize the connection behavior.
+        
+        Args:
+            retries: The number of connection attempts.
+            base_timeout: The initial timeout in seconds, which scales exponentially with each retry.
+            **kwargs: Additional parameters to modify the connection process.
+        
+        Raises:
+            Exception: If the connection fails after all retry attempts.
         """
         pass
 
@@ -20,8 +36,11 @@ class NetworkDriver():
         pass
 
     def get_ip(self):
-        """Get the IP address of the device.
-        @return The IP address as a string or None if not connected.
+        """
+        Retrieves the device's IP address.
+        
+        Returns:
+            str or None: The device's IP address if connected, or None otherwise.
         """
         pass
 
@@ -40,43 +59,67 @@ class SSARuntime():
     WoT servient or other devices. Must support at least the core ssa actions.
     """
     def __init__(self, ssa_instance, id, config, action_handler):
+        """Initialize an SSARuntime instance.
+        
+        Sets up the runtime interface for managing task scheduling and communication with the
+        WoT servient using the provided SSA instance, identifier data, configuration, and action handler.
+        
+        Args:
+            ssa_instance: The SSA instance to be used by the runtime.
+            id: A dictionary containing identification details for the runtime.
+            config: A dictionary with configuration settings for the runtime.
+            action_handler: A callable responsible for handling actions triggered by the runtime.
+        """
         pass
 
     def launch(self, setup_func):
-        """Launch the SSA runtime by connecting to the network 
-        and sending registration messages.
-
-        If the connection is successful, start running registered tasks
-        and wait for incoming messages.
-
-        @param setup_func: A setup function to run before starting the
-        runtime. This is where the user code is initialized and 
-        registered with the runtime.
+        """Launches the SSA runtime.
+        
+        Connects to the network and sends registration messages. If the connection is
+        successful, it starts running registered tasks and waits for incoming messages.
+        
+        Args:
+            setup_func: A function to initialize and register user code before the runtime starts.
         """
         pass
 
     def sync_property(self, property_name, value, **kwargs):
-        """Synchronize a property with the WoT servient.
-        @param property_name: The name of the property.
-        @param value: The value of the property.
+        """
+        Synchronizes a property with the WoT servient.
+        
+        Args:
+            property_name: The name of the property to update.
+            value: The new value to assign to the property.
+            **kwargs: Optional keyword arguments for additional synchronization parameters.
         """
         pass
 
     def trigger_event(self, event_name, payload, **kwargs):
-        """Trigger an event, sending it to the WoT servient.
-        @param event_name: The name of the event.
-        @param payload: The payload of the event.
-        @param special_args: Special arguments for the event.
-        Like with properties, these are runtime dependend and are 
-        ignored if not understood.
-
-        @return True if the event was triggered successfully, False otherwise.
+        """
+        Triggers an event by sending it to the WoT servient.
+        
+        Notifies the WoT servient of an event identified by its name and associated payload.
+        Additional keyword arguments may provide runtime-specific options and are ignored
+        if not recognized.
+        
+        Args:
+            event_name: The event's name.
+            payload: The data to be sent with the event.
+            **kwargs: Optional runtime-specific parameters.
+        
+        Returns:
+            True if the event was triggered successfully, False otherwise.
         """
         pass
 
     def create_task(self, task_func):
-        """Create a task to be executed by the runtime.
-        @param task_func: The function to execute.
-        @param task_name: The name of the task.
+        """
+        Registers a task for execution by the runtime.
+        
+        This method schedules the provided task function for asynchronous execution
+        during the runtime's operation.
+        
+        Args:
+            task_func: A callable representing the task to be executed.
         """
         pass

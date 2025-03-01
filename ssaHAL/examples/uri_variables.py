@@ -15,6 +15,14 @@ def print_hello_world(_ssa: SSA, msg: str, name1: str) -> None:
 
 @ssa_main(last_will = "Simple app exited unexpectedly")
 def main(ssa: SSA):
+    """
+    Registers URI-based action callbacks with the provided SSA instance.
+    
+    This function maps three URI patterns to their corresponding callback functions:
+    - "print_action" is registered with the simple action callback.
+    - "print_hello/{name1}/{name2}" is registered with the greeting action that incorporates two names.
+    - "print_hello/{name1}/world" is registered with the greeting action that includes "Hello World!".
+    """
     ssa.register_action("print_action", print_action)
     ssa.register_action("print_hello/{name1}/{name2}", print_hello)
     ssa.register_action("print_hello/{name1}/world", print_hello_world)
