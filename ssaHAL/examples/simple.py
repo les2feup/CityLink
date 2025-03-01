@@ -20,11 +20,9 @@ def print_action(_ssa: SSA, msg: str) -> None:
     """! Example action that prints the received message payload."""
     print(f"Simple action triggered with message: {msg}")
 
-@ssa_main(last_will = "Simple app exited unexpectedly")
-def init(ssa: SSA):
-    ssa.create_property("random_value", 0)
-
+@ssa_main()
+def main(ssa: SSA):
     ssa.create_task(random_event)
     ssa.create_task(random_property_with_event)
 
-    ssa.create_action_callback("print_action", print_action)
+    ssa.register_action("print_action", print_action)

@@ -1,9 +1,9 @@
-from ._utils import singleton
 from ._config import ConfigLoader
-from ._actions import ActionHandler
+from ._action_handler import ActionHandler
+from ._actions import firmware_update, property_update
+
 from .interfaces import NetworkDriver, SSARuntime
 
-@singleton
 class SSA():
     """The SSA class is the main class for the Smart Sensor Actuator framework
     @param NetDriver The NetworkDriver implementation to use
@@ -12,24 +12,23 @@ class SSA():
     def __init__(self, nic_class: NetworkDriver, runtime_class: SSARuntime):
         config_handler = ConfigLoader(["/config/config.json",
                                        "/config/secrets.json"])
-        action_handler = ActionHandler(self)
+        self._action_handler = ActionHandler(self)
         try:
             # Configuration Module
             config = config_handler.load_config()
-            self._config = config["ssa"]
+            global_handler = self._action_handler.global_handler
             self._nic = nic_class(config["network"])
             self._runtime: SSARuntime = runtime_class(self,
-                                                      self.config["id"],
-                                                      config["runtime"])
-            self._runtime.register_action_handler(
-                    self.action_handler.global_handler)
+                                                      config["id"],
+                                                      config["runtime"],
+                                                      global_handler)
 
         except Exception as e:
             raise Exception(f"[ERROR] Failed to init SSA instance: {e}") from e
 
         self._properties = {}
 
-    def launch(self):
+    def launch(self, user_main=None):
         """Launch the SSA runtime by connecting to the network and sending 
         registration messages.
         if the connection is successful, the main loop is started.
@@ -39,28 +38,23 @@ class SSA():
         if user code is present, the device will run the user code.
         """
         try:
-            import user.app as app
-            print("[INFO] User code found. Starting application.")
-            try:
-                self._runtime.launch(app.main)
-                print("[INFO] User code completed. Resetting device.")
-            except Exception as e:
-                raise Exception(f"[ERROR] User code failed: {e}") from e
-
-        except ImportError as e:
-            print("[INFO] No user code found. Waiting to receive firmware.")
-            self._runtime.launch()
+            self._action_handler.register_action("/ssa/firmware_update",
+                                                 firmware_update),
+            self._action_handler.register_action("/ssa/set/{prop}",
+                                                 property_update),
+            self._runtime.launch(user_main)
         except Exception as e:
-            raise Exception(f"[ERROR] Launch failed: {e}") from e
+            raise Exception(f"[ERROR] Runtime failed: {e}") from e
+        print("[INFO] Runtime exited.")
 
-     def get_property(self, name):
+    def get_property(self, name):
         """Get the value of a property
         @param name: The name of the property
         @returns: The value of the property
         """
         if name not in self._properties:
             raise Exception(f"[ERROR] Property `{name}` does not exist. \
-                            Set it using `set_property` first.")
+                    Set it using `set_property` first.")
         return self._properties[name]
 
     def _set_and_sync_property(self, name, value, **kwargs):

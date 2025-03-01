@@ -2,43 +2,131 @@ import asyncio
 from ssa.interfaces import SSARuntime
 
 class Runtime(SSARuntime):
-    def __init__(self, ssa_instance, id, config):
-        keepalive = 0 if config.get("keepalive") is None \
-                else config.get("keepalive")
-        port = 0 if config.get("port") is None \
-                else config.get("port")
+    def __init__(self, ssa_instance, id, config, action_handler):
+        assert ssa_instance is not None, "SSA instance should not be None"
+        self._ssa= ssa_instance
+        self._tasks = {}
 
-        server = config.get("server")
-        if server is None:
-            raise Exception("Server address not found in configuration")
+        assert action_handler is not None, "Action handler should not be None"
+        self._action_handler = action_handler
 
-        self._client = UMQTTClient(id,
-                                   server,
-                                   port,
-                                   config.get("user"),
-                                   config.get("password"),
+        assert id is not None, "ID configuration should not be None"
+        assert isinstance(id, dict), "ID configuration should be a dictionary"
+
+        uuid = id.get("uuid")
+        assert uuid is not None, "UUID not found in configuration"
+        model = id.get("model")
+        assert model is not None, "Model not found in configuration"
+
+        version = id.get("version")
+        assert version is not None, "Version not found in configuration"
+        assert isinstance(version, dict), "Version should be a dictionary"
+        assert version.get("instance") is not None, "instance version not found"
+        assert version.get("model") is not None, "model version not found"
+
+        assert config is not None, "Runtime configuration should not be None"
+        assert isinstance(config, dict), "Runtime configuration should\
+                be a dictionary"
+
+        broker = config.get("broker")
+        assert server is not None, "broker config not found"
+        assert isinstance(server, dict), "broker config should be a dictionary"
+
+        broker_addr = broker.get("addr")
+        assert broker_addr is not None, "broker address not found"
+
+        broker_port = 0 if broker.get("port") is None else broker.get("port")
+        keepalive = 0 if broker.get("keepalive") is None \
+                else broker.get("keepalive")
+
+        connection_opts = config.get("connection")
+        assert connection_opts is not None, "Connection config not found"
+        assert isinstance(connection_opts, dict), "Connection config should\
+                be a dictionary"
+
+        self._retries = connection_opts.get("retries")
+        self._timeout = connection_opts.get("timeout_ms")
+        assert self._retries is not None, "Retries not found in connection config"
+        assert self._timeout is not None, "Timeout not found in connection config"
+
+        self.registration_topic = f"/registration/{uuid}"
+        self.registration_payload = json.dumps(id)
+
+        self.base_topic = f"{model}/{uuid}"
+        self._client = UMQTTClient(uuid,
+                                   broker_addr,
+                                   broker_port,
+                                   broker.get("user"),
+                                   broker.get("password"),
                                    keepalive,
-                                   config.get("ssl"))
-        
+                                   broker.get("ssl"))
+
         self._clean_session = True if config.get("clean_session") is None \
                 else config.get("clean_session")
-        self._lw_topic = config.get("lw_topic")
-        self._lw_msg = config.get("lw_msg")
+        self._action_qos = 0 if config.get("action_qos") is None \
+                else config.get("action_qos")
 
-        if self._lw_topic is not None:
-            self._client.set_last_will(self._lw_topic, self._lw_msg)
-        elif self._lw_msg is not None:
-            default_topic = f"last_will/{id}"
-            self._client.set_last_will(default_topic, self._lw_msg)
+        last_will = config.get("last_will")
+        if last_will is not None:
+            lw_msg = last_will.get("message")
+            lw_qos = last_will.get("qos")
+            lw_retain = last_will.get("retain")
 
-        self._subscription_topic = config.get("subscription_topic")
-        self._connection_retries = config.get("connection_retries")
-        self._connection_timeout = config.get("connection_timeout")
+            assert lw_msg is not None, "Last will message not found"
+            assert lw_qos is not None, "Last will QoS not found"
+            assert lw_retain is not None, "Last will retain not found"
 
-        self._ssa = ssa_instance
+            topic = f"{self.base_topic}/last_will"
+            self._client.set_last_will(topic, lw_msg, lw_retain, lw_qos)
+
+    async def _main_loop(self):
+        self._client.set_callback(self._action_handler)
+        self._client.subscribe(f"{self.base_topic}/actions/#")
+        self._client.publish(self.registration_topic,
+                             self.registration_payload,
+                             qos=1,
+                             retain=True)
+
+        while True:
+            blocking = len(self._tasks) == 0
+            if blocking:
+                print("[INFO] No tasks to run. Blocking on MQTT messages.")
+                self._client.wait_msg()
+            else:
+                self._client.check_msg()
+                await asyncio.sleep_ms(200)
+
+    def _connect(self):
+        for i in range(self._retries):
+            try:
+                self._client.connect(self._clean_session, self._timeout)
+                return
+            except Exception as e:
+                print(f"[ERROR] Failed to connect to broker: {e}")
+                print(f"[INFO] Retrying in {2 ** i} seconds")
+                await asyncio.sleep(2 ** i)
+
+        raise Exception(f"[ERROR] Failed to connect to broker after\
+                {self._retries} retries")
 
     def launch(self, setup=None):
-        pass
+        async def runtime_entry():
+            if setup is not None:
+                try:
+                    setup(self._ssa);
+                except Exception as e:
+                    raise Exception(f"[ERROR] Failed to run user setup: {e}") \
+                            from e
+
+            try:
+                self._connect()
+            except Exception as e:
+                raise Exception(f"[ERROR] MQTT Runtime failed to connect\
+                        to broker: {e}") from e
+
+            await self._main_loop()
+
+        asyncio.run(runtime_entry())
 
     def sync_property(self,
                       property_name,
@@ -49,8 +137,18 @@ class Runtime(SSARuntime):
         """Synchronize a property with the WoT servient.
         @param property_name: The name of the property.
         @param value: The value of the property.
+        @param qos: The QoS level to use when sending the property.
+        @param retain: Whether the property should be retained by the broker.
+
+        @return True if the property was synced successfully, False otherwise.
         """
-        pass
+        try:
+            topic = f"{self.base_topic}/properties/{property_name}"
+            self._client.publish(topic, json.dumps(value), retain, qos)
+        except Exception as e:
+            print(f"[WARNING] Failed to sync property '{property_name}': {e}")
+            return False
+        return True
 
     def trigger_event(self,
                       event_name,
@@ -61,29 +159,34 @@ class Runtime(SSARuntime):
         """Trigger an event, sending it to the WoT servient.
         @param event_name: The name of the event.
         @param payload: The payload of the event.
-        @param special_args: Special arguments for the event.
-        Like with properties, these are runtime dependend and are 
-        ignored if not understood.
+        @param qos: The QoS level to use when sending the event.
+        @param retain: Whether the event should be retained by the broker.
 
         @return True if the event was triggered successfully, False otherwise.
         """
-        pass
-
-    def register_action_handler(self, handler_func):
-        """Register callback to execute when an action is invoked
-        by the WoT servient
-
-        @param handler_func: The callback function to execute
-        must accept two arguments: action URI and message payload
-        
-        def handler_func(uri, payload):
-            pass
-        """
-        pass
+        try:
+            topic = f"{self.base_topic}/events/{event_name}"
+            self._client.publish(topic, json.dumps(payload), retain, qos)
+        except Exception as e:
+            print(f"[WARNING] Failed to trigger event '{event_name}': {e}")
+            return False
+        return True
 
     def create_task(self, task_func, task_name):
         """Create a task to be executed by the runtime.
         @param task_func: The function to execute.
         @param task_name: The name of the task.
         """
-        pass
+        assert task_func is not None, "Task function should not be None"
+        assert task_name is not None, "Task name should not be None"
+        async def wrapped_task():
+            try:
+                await task(self._ssa)
+                print(f"[INFO] Task '{task_name}' finished executing.")
+            except Exception as e:
+                print(f"[WARNING] Task '{task_name}' failed: {e}")
+            finally:
+                if task in self._tasks:
+                    self._tasks.remove(task)
+
+        self._tasks.append(asyncio.create_task(wrapped_task()))

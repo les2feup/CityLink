@@ -34,9 +34,12 @@ class SSARuntime():
     pass it to the user code.
 
     @param ssa_instance: The SSA instance.
+    @param id: ID dictionary.
     @param config: Configuration dictionary.
+    @param action_handler: The action handler for actions invoked by the
+    WoT servient or other devices. Must support at least the core ssa actions.
     """
-    def __init__(self, ssa_instance, id, config):
+    def __init__(self, ssa_instance, id, config, action_handler):
         pass
 
     def launch(self, setup_func):
@@ -68,18 +71,6 @@ class SSARuntime():
         ignored if not understood.
 
         @return True if the event was triggered successfully, False otherwise.
-        """
-        pass
-
-    def register_action_handler(self, handler_func):
-        """Register callback to execute when an action is invoked
-        by the WoT servient
-
-        @param handler_func: The callback function to execute
-        must accept two arguments: action URI and message payload
-        
-        def handler_func(uri, payload):
-            pass
         """
         pass
 

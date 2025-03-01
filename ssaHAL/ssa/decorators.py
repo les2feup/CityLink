@@ -1,26 +1,28 @@
 import time
 import asyncio
-from ssa.core import SSA
-from typing import Callable, Awaitable
+
+from ssa_modules import AsyncioMQTTRuntime, GenericWLANDriver
 
 def ssa_task(period_ms: int = 0):
-    """! Decorator to create a task function that will be executed
-         @param period_ms: The period in milliseconds at which the task should be executed.
+    """Decorator to create a task function that will be executed
+    @param period_ms: The period in milliseconds at which the task
+    should be executed.
 
-         note: The decorated function should be an async function that takes an SSA instance as an argument.
-         The function signature should be:
-            async def func(ssa: SSA) -> None
+    note: The decorated function should be an async function that
+    takes an SSA instance as an argument.
+    The function signature should be:
+        async def func(ssa: SSA) -> None
     """
-    def decorator(func: Awaitable[[SSA], None]):
-        async def ssa_task_wrapper():
-            ssa_instance = SSA()
+    def decorator(func):
+        async def ssa_task_wrapper(ssa_instance):
             while True:
                 next_wake_time = time.ticks_add(time.ticks_ms(), period_ms)
-                
+
                 try:
                     await func(ssa_instance)
                 except Exception as e:
-                    raise Exception(f"[ERROR] Failed to run {func.__name__}: {e}") from e
+                    raise Exception(f"[ERROR] Failed to run\
+                            {func.__name__}: {e}") from e
 
                 if period_ms == 0: # one shot task
                     break
@@ -32,43 +34,16 @@ def ssa_task(period_ms: int = 0):
         return ssa_task_wrapper
     return decorator
 
-def ssa_main(last_will: str = None):
+def ssa_main(network_driver_class = GenericWLANDriver,
+             runtime_class = AsyncioMQTTRuntime):
     """! Decorator to create the main function of the application
-        @param last_will: The last will message to be sent if the application exits unexpectedly.
-
-        The decorated function will be wrapped in an async function that will
-        create an SSA instance, run the init function, connect to the broker
-        and start the main loop.
-
-        The execution flow is as follows:
-        1. Create an SSA instance
-        2. Run the init function
-        3. Connect to the broker
-        4. Execute the SSA Network Registration process
-        5. Start the main loop, service incoming messages and run tasks
-
-        note: The decorated function should be a function that takes an SSA instance as an argument.
-        The function signature should be:
-            def init(ssa: SSA) -> None
+    @param network_driver_class: The network driver class to use.
+    @param runtime_class: The runtime class to use.
     """
-    def decorator(init_func: Callable[[SSA], None]):
+    def decorator(main):
         def main_wrapper():
-            async def ssa_entry_point():
-                ssa_instance = SSA()
-
-                try:
-                    init_func(ssa_instance)
-                except Exception as e:
-                    raise Exception(f"[ERROR] Failed to run initial setup: {e}") from e
-
-                try:
-                    ssa_instance.__connect(last_will)
-                except Exception as e:
-                    raise Exception(f"[ERROR] SSA connection failed: {e}") from e
-
-                await ssa_instance.__main_loop()
-
-            asyncio.run(ssa_entry_point())
+            ssa_instance = SSA(network_driver_class, runtime_class)
+            ssa_instance.launch(main)
 
         return main_wrapper
     return decorator
