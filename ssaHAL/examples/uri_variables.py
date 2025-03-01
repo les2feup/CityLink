@@ -14,7 +14,7 @@ def print_hello_world(_ssa: SSA, msg: str, name1: str) -> None:
     print(f"Hello World! {name1} is sent this message: {msg}")
 
 @ssa_main(last_will = "Simple app exited unexpectedly")
-def init(ssa: SSA):
-    ssa.create_action_callback("print_action", print_action)
-    ssa.create_action_callback("print_hello/{name1}/{name2}", print_hello)
-    ssa.create_action_callback("print_hello/{name1}/world", print_hello_world)
+def main(ssa: SSA):
+    ssa.register_action("print_action", print_action)
+    ssa.register_action("print_hello/{name1}/{name2}", print_hello)
+    ssa.register_action("print_hello/{name1}/world", print_hello_world)

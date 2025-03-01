@@ -37,11 +37,11 @@ class SSA():
         for updates.
         if user code is present, the device will run the user code.
         """
+        self._action_handler.register_action("/ssa/firmware_update",
+                                             firmware_update),
+        self._action_handler.register_action("/ssa/set/{prop}",
+                                             property_update),
         try:
-            self._action_handler.register_action("/ssa/firmware_update",
-                                                 firmware_update),
-            self._action_handler.register_action("/ssa/set/{prop}",
-                                                 property_update),
             self._runtime.launch(user_main)
         except Exception as e:
             raise Exception(f"[ERROR] Runtime failed: {e}") from e
@@ -76,6 +76,20 @@ class SSA():
         if prev_value != value:
             return self._set_and_sync_property(name, value, **kwargs)
 
+    def create_property(self, name, default):
+        """Set the value of a property.
+        Properties are synced to the WoT servient on change.
+        @param name: The name of the property
+        @param value: The new value of the property
+        @param kwargs: Additional arguments to pass to the runtime.
+        Unkown arguments are ignored
+        """
+        if name not in self._properties:
+            self._properties[name] = default
+        else:
+            raise Exception(f"[ERROR] Property `{name}` already exists. \
+                    Use `set_property` to change it.")
+
     def trigger_event(self, name, value, **kwargs):
         """Trigger an event
         Properties are sent to the events uri when set
@@ -106,9 +120,9 @@ class SSA():
         """
         self._action_handler.register_action(uri_template, callback)
 
-    def create_task(self, name: str, task):
+    def create_task(self, task):
         """Create a task
         @param name: The name of the task
         @param task: The task to create
         """
-        self._runtime.create_task(name, task)
+        self._runtime.create_task(task)

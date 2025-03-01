@@ -2,9 +2,7 @@ import json
 import machine
 import binascii
 
-from .core import SSA
-
-def firmware_update(_ssa: SSA, update_str):
+def firmware_update(_ssa, update_str):
     print(f"[INFO] Firmware update received with size {len(update_str)}")
     update = json.loads(update_str)
 
@@ -28,14 +26,10 @@ def firmware_update(_ssa: SSA, update_str):
     from machine import soft_reset
     soft_reset()
 
-def property_update(ssa: SSA, value, prop):
+def property_update(ssa, value, prop):
     try:
-        _ = ssa.get_property(prop)
-    except Exception as e:
-        print(f"[ERROR] Property '{prop}' does not exist.")
-
-    try:
+        _ = ssa.get_property(prop) # Check if property exists
         value = json.loads(value)
         ssa.set_property(prop, value)
     except Exception as e:
-        print(f"[ERROR] Failed to set property '{prop}': {e}")
+        print(f"[ERROR] Failed to update property '{prop}': {e}")

@@ -55,6 +55,7 @@ mpremote cp -r ./ssaHAL/lib/ :
 mpremote cp -r $CONFIG_DIR/ :
 mpremote mkdir :ssa
 mpremote cp -r $SSA_DIR/compiled/* :./ssa/
+mpremote mkdir :ssa_modules
 mpremote cp -r $SSA_MODULES_DIR/compiled/* :./ssa_modules/
 
 # Clean up

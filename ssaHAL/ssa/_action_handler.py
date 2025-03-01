@@ -1,4 +1,3 @@
-
 class ActDictElement():
     def __init__(self, callback = None, node_name = None, children = {}):
         self.callback = callback
@@ -10,7 +9,7 @@ class ActionHandler():
         self._ssa = ssa_instance
         self.actions = {}
 
-    def _find_dedicated_handler(self, uri, msg):
+    def _find_dedicated_handler(self, action_uri, msg):
         """Walks the action tree using the given action uri string.
         Returns a tuple (callback_function, kwargs) if a callback is found,
         or None if no callback matches the action.
@@ -21,7 +20,7 @@ class ActionHandler():
         For example, if the action "foo/{bar}/baz" is called with
         "foo/1123/baz", then kwargs will be {"bar": "1123"}.
         """
-        parts = action.split("/")
+        parts = action_uri.split("/")
         # The first part must be a literal.
         if parts[0] not in self.actions:
             return None
@@ -53,24 +52,20 @@ class ActionHandler():
 
         return None
 
-    def global_handler(self, uri, payload):
+    def global_handler(self, action_uri, payload):
         """Global action handler for all actions.
         This handler is called when an action is invoked by the WoT servient.
         @param uri: The URI of the action (relative to the base action URI)
         @param payload: The payload of the action.
         """
 
-        if topic is None:
-            print("[WARNING] Received message from invalid topic. Ignoring.")
-            return
-
-        if uri is None or len(uri) == 0:
+        if action_uri is None or len(action_uri) == 0:
             print("[WARNING] Received message from invalid topic. Ignoring.")
             return
 
         # Check if the uri matches a top-level action
-        if uri in self.actions:
-            handler = self.actions[uri].callback
+        if action_uri in self.actions:
+            handler = self.actions[action_uri].callback
             try:
                 handler(self._ssa, msg) # Invoke the action handler
             except Exception as e:
@@ -78,9 +73,9 @@ class ActionHandler():
                         failed to execute: {e}")
             return
 
-        found = self._find_dedicated_handler(uri, msg)
+        found = self._find_dedicated_handler(action_uri, msg)
         if found is None:
-            print(f"[ERROR] No action handler found for `{uri}`")
+            print(f"[ERROR] No action handler found for `{action_uri}`")
             return
         handler, kwargs = found
         try:
@@ -205,14 +200,15 @@ class ActionHandler():
                 }
         """
         # Case 1: No URI parameters (literal action)
-        if "{" not in uri:
-            if uri in self.actions:
-                raise Exception(f"[ERROR] callback for `{uri}` already exists")
-            self.actions[uri] = ActDictElement(callback=callback_func)
+        if "{" not in action_uri:
+            if action_uri in self.actions:
+                raise Exception(f"[ERROR] callback for `{action_uri}` \
+                        already exists")
+            self.actions[action_uri] = ActDictElement(callback=handler_func)
             return
 
         # Split the URI into parts.
-        uri_parts = uri.split("/")
+        uri_parts = action_uri.split("/")
         # The first part must be a literal.
         if uri_parts[0].startswith("{"):
             raise Exception("[ERROR] URI parameter cannot be the first part \
@@ -250,30 +246,6 @@ class ActionHandler():
 
         # At the final node, set the callback.
         if current_node.callback is not None:
-            raise Exception(f"[ERROR] callback for `{uri}` already exists")
-        current_node.callback = callback_func
-
-def firmware_update(_ssa, update_str):
-    print(f"[INFO] Firmware update received with size {len(update_str)}")
-    update = json.loads(update_str)
-
-
-    binary = a2b_base64(update["base64"])
-    expected_crc = int(update["crc32"], 16)
-    bin_crc = crc32(binary)
-
-    if bin_crc != expected_crc:
-        print(f"[ERROR] CRC32 mismatch: expected:{hex(expected_crc)},
-              got {hex(bin_crc)} Firmware update failed.")
-        return
-
-    if "user" not in os.listdir():
-        os.mkdir("user")
-
-    print("[INFO] Writing firmware to device")
-    with open("user/app.py", "w") as f:
-        f.write(binary.decode("utf-8"))
-
-    print("[INFO] Firmware write complete. Restarting device.")
-    from machine import soft_reset
-    soft_reset()
+            raise Exception(f"[ERROR] callback for `{action_uri}` \
+                    already exists")
+        current_node.callback = handler_func

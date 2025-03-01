@@ -13,7 +13,7 @@ async def simulate_random_sensor(ssa: SSA) -> None:
     priority = ssa.get_property("priority")
     ssa.trigger_event(f"sensor_value/{priority}_prio", sensor_value) #"low_prio", "medium_prio", "high_prio"
 
-@ssa_main(last_will = "Simple app exited unexpectedly")
-def init(ssa: SSA):
+@ssa_main()
+def main(ssa: SSA):
     ssa.create_property("priority", "low") # "low", "medium", "high"
     ssa.create_task(simulate_random_sensor)

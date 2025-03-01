@@ -74,7 +74,7 @@ class SSARuntime():
         """
         pass
 
-    def create_task(self, task_func, task_name):
+    def create_task(self, task_func):
         """Create a task to be executed by the runtime.
         @param task_func: The function to execute.
         @param task_name: The name of the task.

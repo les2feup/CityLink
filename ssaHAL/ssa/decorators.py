@@ -1,6 +1,7 @@
 import time
 import asyncio
 
+from .core import SSA
 from ssa_modules import AsyncioMQTTRuntime, GenericWLANDriver
 
 def ssa_task(period_ms: int = 0):
@@ -34,7 +35,7 @@ def ssa_task(period_ms: int = 0):
         return ssa_task_wrapper
     return decorator
 
-def ssa_main(network_driver_class = GenericWLANDriver,
+def ssa_main(nic_class = GenericWLANDriver,
              runtime_class = AsyncioMQTTRuntime):
     """! Decorator to create the main function of the application
     @param network_driver_class: The network driver class to use.
@@ -42,8 +43,7 @@ def ssa_main(network_driver_class = GenericWLANDriver,
     """
     def decorator(main):
         def main_wrapper():
-            ssa_instance = SSA(network_driver_class, runtime_class)
+            ssa_instance = SSA(nic_class, runtime_class)
             ssa_instance.launch(main)
-
         return main_wrapper
     return decorator
