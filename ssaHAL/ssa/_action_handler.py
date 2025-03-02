@@ -25,17 +25,22 @@ class ActionHandler():
         self._ssa = ssa_instance
         self.actions = {}
 
-    def _find_dedicated_handler(self, action_uri, msg):
+    def _find_dedicated_handler(self, action_uri):
         """
         Traverse the action tree to locate a callback matching the given action URI.
         
-        This method splits the URI into segments and walks through the hierarchical action tree
-        stored in self.actions. It first evaluates literal matches before considering parameterized
-        segments using a wildcard key ("*"). For parameterized segments, the corresponding URI
-        value is stored in a dictionary under the node's parameter name. If a node with a valid
-        callback is reached, the method returns the callback along with the extracted parameters.
+        This method splits the URI into segments and walks through the 
+        hierarchical action tree stored in self.actions. It first evaluates 
+        literal matches before considering parameterized segments using a 
+        wildcard key ("*"). 
+
+        For parameterized segments, the corresponding URI value is stored in a
+        dictionary under the node's parameter name. If a node with a valid 
+        callback is reached, the method returns the callback along with the 
+        extracted parameters.
         
-        For example, matching "foo/1123/baz" against a route "foo/{bar}/baz" produces kwargs {"bar": "1123"}.
+        For example, matching "foo/1123/baz" against a route "foo/{bar}/baz"
+        produces kwargs {"bar": "1123"}.
         
         Args:
             action_uri: A string representing the action URI to resolve.
@@ -80,12 +85,14 @@ class ActionHandler():
         """
         Handles global action invocations by invoking a registered callback.
         
-        This method is called when an action is triggered by the WoT servient. It first checks
-        if the provided action URI matches a top-level action and calls its callback if found.
-        If no matching top-level handler exists, it searches the action tree for a dedicated
-        handler that supports URI parameter matching. If the action URI is invalid or no
-        suitable handler is found, a warning or error is logged. Any exceptions raised during
-        callback execution are caught and logged.
+        This method is called when an action is triggered by the WoT servient.
+        It first checks if the provided action URI matches a top-level action 
+        and calls its callback if found. If no matching top-level handler exists,
+        it searches the action tree for a dedicated handler that supports URI 
+        parameter matching. 
+        If the action URI is invalid or no suitable handler is found,
+        a warning or error is logged.
+        Any exceptions raised during callback execution are caught and logged.
         
         Args:
             action_uri: The action's URI relative to the base action URI.
@@ -100,19 +107,19 @@ class ActionHandler():
         if action_uri in self.actions:
             handler = self.actions[action_uri].callback
             try:
-                handler(self._ssa, msg) # Invoke the action handler
+                handler(self._ssa, payload) # Invoke the action handler
             except Exception as e:
                 print(f"[ERROR] Action callback `{handler.__name__}` \
                         failed to execute: {e}")
             return
 
-        found = self._find_dedicated_handler(action_uri, msg)
+        found = self._find_dedicated_handler(action_uri)
         if found is None:
             print(f"[ERROR] No action handler found for `{action_uri}`")
             return
         handler, kwargs = found
         try:
-            handler(self._ssa, msg, **kwargs)
+            handler(self._ssa, payload, **kwargs)
         except Exception as e:
             func_name = handler.__name__ if hasattr(handler, "__name__") \
                     else "unknown"
@@ -123,11 +130,18 @@ class ActionHandler():
         """
         Register a callback for the specified action URI.
         
-        The action URI may be a literal string or include segments with parameters (enclosed in curly braces)
-        and sub-actions (separated by slashes). The first segment must be a literal. The callback should accept
-        at least two arguments (the SSA instance and the received message) and additional arguments corresponding
-        to any URI parameters. An exception is raised if the action URI is invalid or if a callback for the URI
-        already exists.
+        The action URI may be a literal string or include segments with parameters 
+        (enclosed in curly braces) and sub-actions (separated by slashes).
+        The first segment must be a literal. The callback should accept at least
+        two arguments (the SSA instance and the received message) and additional
+        arguments corresponding to any URI parameters.
+
+        Raises:
+            Exception: If the action URI is invalid or a callback for the URI already exists.
+
+        Args:
+            action_uri: A string representing the action URI to register.
+            handler_func: A function to be executed when the action is triggered.
         """
         # Case 1: No URI parameters (literal action)
         if "{" not in action_uri:
