@@ -5,18 +5,24 @@ from ._actions import firmware_update, property_update
 from .interfaces import NetworkDriver, SSARuntime
 
 class SSA():
-    """The SSA class is the main class for the Smart Sensor Actuator framework
-    @param NetDriver The NetworkDriver implementation to use
-    @param MsgClient The MessagingClient implementation to use
+    """
+    The SSA class is the main class for the Smart Sensor Actuator framework
     """
     def __init__(self, nic_class: NetworkDriver, runtime_class: SSARuntime):
         """
         Initializes a new SSA instance.
         
-        Loads configuration from predefined JSON files and sets up the network interface
-        and runtime components using the provided driver classes. Also initializes the
-        global action handler and the internal property storage. Raises an Exception
-        if configuration loading or component initialization fails.
+        Loads configuration from predefined JSON files and sets up the network 
+        interface and runtime components using the provided driver classes.
+        Also initializes the global action handler and the internal property
+        storage. 
+
+        Raises:
+            Exception: Configuration loading or component initialization fails.
+
+        Args:
+            nic_class: The NetworkDriver implementation to use
+            runtime_class: The SSARuntime implementation to use
         """
         config_handler = ConfigLoader(["/config/config.json",
                                        "/config/secrets.json"])
@@ -40,13 +46,15 @@ class SSA():
         """
         Launch the SSA runtime and execute optional user code.
         
-        This method registers actions for firmware and property updates, then launches
-        the runtime environment using an optional user-defined callback. If the runtime
-        fails to launch, the raised exception is propagated with additional context.
-        Upon successful termination, an informational message is printed.
+        This method registers actions for firmware and property updates, then
+        launches the runtime environment using an optional user-defined 
+        callback. If the runtime fails to launch, the raised exception i
+        propagated with additional context. Upon successful termination,
+        an informational message is printed.
         
         Args:
-            user_main: Optional callback function to execute as part of the runtime.
+            user_main: Optional callback function to execute as part of the
+            runtime.
         """
         self._action_handler.register_action("/ssa/firmware_update",
                                              firmware_update),
@@ -58,49 +66,17 @@ class SSA():
             raise Exception(f"[ERROR] Runtime failed: {e}") from e
         print("[INFO] Runtime exited.")
 
-    def get_property(self, name):
+    def has_property(self, name):
         """
-        Retrieves the value of the specified property.
-        
-        Raises:
-            Exception: If the property does not exist. Use `set_property` to create it first.
+        Check if a property with the specified name exists.
         
         Args:
             name: The name of the property.
         
         Returns:
-            The value associated with the property.
+            True if the property exists, False otherwise.
         """
-        if name not in self._properties:
-            raise Exception(f"[ERROR] Property `{name}` does not exist. \
-                    Set it using `set_property` first.")
-        return self._properties[name]
-
-    def _set_and_sync_property(self, name, value, **kwargs):
-        """
-        Sets a property value internally and synchronizes it with the runtime.
-        
-        This method updates the local property store with the given value for the specified
-        property name and then triggers synchronization with the runtime component. Additional
-        keyword arguments are forwarded to the runtime's synchronization method.
-        """
-        self._properties[name] = value
-        self._runtime.sync_property(name, value, **kwargs)
-
-    def set_property(self, name, value, **kwargs):
-        """
-        Set a property's value and synchronize it with the runtime.
-        
-        If the property does not exist or its value differs from the new one, update and
-        synchronize it with the runtime. Additional keyword arguments are passed to the
-        runtime; any unrecognized keys are ignored.
-        """
-        if name not in self._properties:
-            return self._set_and_sync_property(name, value, **kwargs)
-
-        prev_value = self._properties[name]
-        if prev_value != value:
-            return self._set_and_sync_property(name, value, **kwargs)
+        return name in self._properties
 
     def create_property(self, name, default):
         """
@@ -114,6 +90,47 @@ class SSA():
         else:
             raise Exception(f"[ERROR] Property `{name}` already exists. \
                     Use `set_property` to change it.")
+
+    def get_property(self, name):
+        """
+        Retrieves the value of the specified property.
+        
+        Raises:
+            Exception: If the property does not exist. Use `create_property` to
+            create it first.
+        
+        Args:
+            name: The name of the property.
+        
+        Returns:
+            The value associated with the property.
+        """
+        if name not in self._properties:
+            raise Exception(f"[ERROR] Property `{name}` does not exist. \
+                    Create it using `create_property` first.")
+        return self._properties[name]
+
+    def set_property(self, name, value, **kwargs):
+        """
+        Set a property's value and synchronize it with the runtime.
+        
+        If the property value changes update and have the runtime synchronize it
+        with the network. Additional keyword arguments are passed to the runtime
+        in order to costumize the synchronization process.
+        Any unrecognized keys are ignored.
+
+        Raises:
+            Exception: If the property does not exist. Use `create_property` to
+            create it first.
+        """
+        if name not in self._properties:
+            raise Exception(f"[ERROR] Property `{name}` does not exist. \
+                    Create it using `create_property` first.")
+
+        prev_value = self._properties[name]
+        if prev_value != value:
+            self._properties[name] = value
+            self._runtime.sync_property(name, value, **kwargs)
 
     def trigger_event(self, name, value, **kwargs):
         """
@@ -144,6 +161,10 @@ class SSA():
         Example:
             uri_template = "/actions/{action_id}"
             def callback(uri, payload, action_id):
+                pass
+
+            uri_template = "/actions/{action_id}/subactions/{subaction_id}"
+            def callback(uri, payload, action_id, subaction_id):
                 pass
         """
         self._action_handler.register_action(uri_template, callback)
