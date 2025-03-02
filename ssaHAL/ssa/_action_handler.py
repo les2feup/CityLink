@@ -2,7 +2,7 @@ class ActDictElement():
     def __init__(self, callback=None, node_name=None, children=None):
         """
         Initialize an ActDictElement instance.
-        
+
         Args:
             callback: Optional function called when the action associated with this node is triggered.
             node_name: Optional string representing a URI parameter for this node.
@@ -10,15 +10,15 @@ class ActDictElement():
         """
         self.callback = callback
         self.node_name = node_name
-        self.children = {} if children is None else children
+        self.children = children if children is not None else {}
 
 class ActionHandler():
     def __init__(self, ssa_instance):
         """
         Initializes the ActionHandler with the given SSA instance.
-        
+
         Stores the provided SSA instance and initializes an empty action registry.
-        
+
         Args:
             ssa_instance: The SSA instance used for integrating action handling into the system.
         """
@@ -28,7 +28,7 @@ class ActionHandler():
     def _find_dedicated_handler(self, action_uri):
         """
         Traverse the action tree to locate a callback matching the given action URI.
-        
+
         This method splits the URI into segments and walks through the 
         hierarchical action tree stored in self.actions. It first evaluates 
         literal matches before considering parameterized segments using a 
@@ -38,13 +38,13 @@ class ActionHandler():
         dictionary under the node's parameter name. If a node with a valid 
         callback is reached, the method returns the callback along with the 
         extracted parameters.
-        
+
         For example, matching "foo/1123/baz" against a route "foo/{bar}/baz"
         produces kwargs {"bar": "1123"}.
-        
+
         Args:
             action_uri: A string representing the action URI to resolve.
-        
+
         Returns:
             A tuple (callback_function, kwargs) if a matching callback is found, or None otherwise.
         """
@@ -58,8 +58,6 @@ class ActionHandler():
                      # mapped by their node_name
 
         for part in parts[1:]:
-            if current_node.children is None:
-                return None
             # Check for a literal match first.
             if part in current_node.children:
                 current_node = current_node.children[part]
@@ -83,7 +81,7 @@ class ActionHandler():
     def global_handler(self, action_uri, payload):
         """
         Handles global action invocations by invoking a registered callback.
-        
+
         This method is called when an action is triggered by the WoT servient.
         It first checks if the provided action URI matches a top-level action 
         and calls its callback if found. If no matching top-level handler exists,
@@ -92,7 +90,7 @@ class ActionHandler():
         If the action URI is invalid or no suitable handler is found,
         a warning or error is logged.
         Any exceptions raised during callback execution are caught and logged.
-        
+
         Args:
             action_uri: The action's URI relative to the base action URI.
             payload: The data payload associated with the action invocation.
@@ -108,8 +106,7 @@ class ActionHandler():
             try:
                 handler(self._ssa, payload) # Invoke the action handler
             except Exception as e:
-                print(f"[ERROR] Action callback `{handler.__name__}` \
-                        failed to execute: {e}")
+                print(f"[ERROR] Action callback `{handler.__name__}` failed to execute: {e}")
             return
 
         found = self._find_dedicated_handler(action_uri)
@@ -122,13 +119,12 @@ class ActionHandler():
         except Exception as e:
             func_name = handler.__name__ if hasattr(handler, "__name__") \
                     else "unknown"
-            print(f"[ERROR] Action callback `{func_name}` with kwargs \
-                    `{kwargs}` failed to execute: {e}")
+            print(f"[ERROR] Action callback `{func_name}` with kwargs `{kwargs}` failed to execute: {e}")
 
     def register_action(self, action_uri, handler_func):
         """
         Register a callback for the specified action URI.
-        
+
         The action URI may be a literal string or include segments with parameters 
         (enclosed in curly braces) and sub-actions (separated by slashes).
         The first segment must be a literal. The callback should accept at least
@@ -145,8 +141,7 @@ class ActionHandler():
         # Case 1: No URI parameters (literal action)
         if "{" not in action_uri:
             if action_uri in self.actions:
-                raise Exception(f"[ERROR] callback for `{action_uri}` \
-                        already exists")
+                raise Exception(f"[ERROR] callback for `{action_uri}` already exists")
             self.actions[action_uri] = ActDictElement(callback=handler_func)
             return
 
@@ -154,8 +149,7 @@ class ActionHandler():
         uri_parts = action_uri.split("/")
         # The first part must be a literal.
         if uri_parts[0].startswith("{"):
-            raise Exception("[ERROR] URI parameter cannot be the first part \
-                    of an action name")
+            raise Exception("[ERROR] URI parameter cannot be the first part of an action name")
 
         # Process the first literal part.
         first_part = uri_parts[0]
@@ -189,6 +183,5 @@ class ActionHandler():
 
         # At the final node, set the callback.
         if current_node.callback is not None:
-            raise Exception(f"[ERROR] callback for `{action_uri}` \
-                    already exists")
+            raise Exception(f"[ERROR] callback for `{action_uri}` already exists")
         current_node.callback = handler_func
