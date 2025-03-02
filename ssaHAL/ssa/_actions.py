@@ -1,15 +1,18 @@
+import os
 import json
-import machine
 import binascii
 
 def firmware_update(_ssa, update_str):
     """
     Updates the device firmware from a JSON update package.
     
-    This function decodes a firmware update provided as a JSON string that includes a base64‐encoded
-    firmware binary and its expected CRC32 checksum (in hexadecimal format). It verifies the integrity
-    of the decoded binary, writes it to "user/app.py" (creating the directory if necessary), and
-    initiates a device restart. If the checksum verification fails, the update is aborted.
+    This function decodes a firmware update provided as a JSON string that 
+    includes a base64‐encoded firmware binary and its expected CRC32 checksum 
+    (in hexadecimal format). It verifies the integrity of the decoded binary,
+    writes it to "user/app.py" (creating the directory if necessary), and
+    initiates a device restart.
+
+    If the checksum verification fails, the update is aborted.
     
     Args:
         _ssa: Device state or configuration object (unused in current implementation).
@@ -42,18 +45,26 @@ def property_update(ssa, value, prop):
     """
     Updates a property on the given SSA instance from a JSON string.
     
-    This function checks whether the specified property exists on the SSA object, parses
-    the provided JSON string to obtain the new value, and updates the property using the SSA
-    setter. If an error occurs during this process, an error message is printed with the details.
+    This function checks whether the specified property exists on the SSA 
+    object, parses the provided JSON string to obtain the new value, and 
+    updates the property using the SSA setter. If an error occurs during this 
+    process, an error message is printed with the details.
     
     Args:
         ssa: The object whose property is to be updated.
         value: A JSON-formatted string representing the new value for the property.
         prop: The name of the property to update.
     """
+    if not ssa.has_property(prop):
+        print(f"[ERROR] Property '{prop}' does not exist.")
+        return
+
     try:
-        _ = ssa.get_property(prop) # Check if property exists
         value = json.loads(value)
         ssa.set_property(prop, value)
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Failed to parse JSON value for '{prop}': {e}")
+    except TypeError as e:
+        print(f"[ERROR] Failed to update property '{prop}': {e}")
     except Exception as e:
         print(f"[ERROR] Failed to update property '{prop}': {e}")
