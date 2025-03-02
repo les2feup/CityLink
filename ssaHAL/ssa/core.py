@@ -57,9 +57,9 @@ class SSA():
             runtime.
         """
         self._action_handler.register_action("/ssa/firmware_update",
-                                             firmware_update),
+                                             firmware_update)
         self._action_handler.register_action("/ssa/set/{prop}",
-                                             property_update),
+                                             property_update)
         try:
             self._runtime.launch(user_main)
         except Exception as e:
