@@ -1,5 +1,5 @@
 class ActDictElement():
-    def __init__(self, callback = None, node_name = None, children = {}):
+    def __init__(self, callback=None, node_name=None, children=None):
         """
         Initialize an ActDictElement instance.
         
@@ -10,7 +10,7 @@ class ActDictElement():
         """
         self.callback = callback
         self.node_name = node_name
-        self.children = children
+        self.children = {} if children is None else children
 
 class ActionHandler():
     def __init__(self, ssa_instance):
@@ -44,7 +44,6 @@ class ActionHandler():
         
         Args:
             action_uri: A string representing the action URI to resolve.
-            msg: An extra message context parameter (currently unused).
         
         Returns:
             A tuple (callback_function, kwargs) if a matching callback is found, or None otherwise.
