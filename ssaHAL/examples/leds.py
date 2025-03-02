@@ -1,76 +1,77 @@
 from ssa import SSA, ssa_main
-
-class SimulatedLED():
-    def __init__(self):
-        self.is_on = False
-        self.brighness = 0
-        self.rgb = 0x000000
-
-    def set_is_on(self, is_on: bool):
-        self.is_on = is_on
-
-    def set_brightness(self, brightness: int):
-        self.brighness = brightness
-
-    def set_rgb(self, rgb: int):
-        self.rgb = rgb
+import json
 
 def valid_led_name(led_name: str):
     return led_name.startswith("led_") and int(led_name[4:]) in range(1, 9)
 
-def set_led_brightness(ssa: SSA, led_name: str, brightness: int):
+def set_led_brightness(ssa: SSA, _msg: str, led_name: str, brightness: str):
     if not valid_led_name(led_name):
         print("Invalid LED name")
         return
 
+    brightness = int(brightness)
     if brightness < 0 or brightness > 100:
         print("Brightness must be between 0 and 100")
         return
 
     led_strip = ssa.get_property("led_strip")
-    led_strip[led_name].set_brightness(brightness)
+    led_strip[led_name]["brightness"] = brightness
     ssa.set_property("led_strip", led_strip)
 
-def set_led_rgb(ssa: SSA, led_name: str, rgb: str):
+def set_led_color(ssa: SSA, _msg:str, led_name: str, color: str):
     if not valid_led_name(led_name):
         print("Invalid LED name")
         return
 
     try:
-        int(rgb, 16)
+        color = int(color, 16)
     except ValueError:
-        print("RGB value must be a hexadecimal string")
+        print("Color value must be an hexadecimal RGB string")
         return
 
-    if rgb < 0 or rgb > 0xFFFFFF:
+    if color < 0 or color > 0xFFFFFF:
         print("RGB value must be between 0 and 0xFFFFFF")
 
     led_strip = ssa.get_property("led_strip")
-    led_strip[led_name].set_rgb(rgb)
+    led_strip[led_name]["color"] = color
     ssa.set_property("led_strip", led_strip)
 
-def toggle_led(ssa: SSA, led_name: str, state: bool):
+def toggle_led(ssa: SSA, _msg: str, led_name: str, state: str):
     if not valid_led_name(led_name):
         print("Invalid LED name")
         return
 
+    if state not in ["on", "off"]:
+        print("Invalid state")
+        return
+
     led_strip = ssa.get_property("led_strip")
-    led_strip[led_name].set_is_on(state)
+    led_strip[led_name]["is_on"] = state == "on"
     ssa.set_property("led_strip", led_strip)
 
-def toggle_led_strip(ssa: SSA, state: bool):
+def toggle_led_strip(ssa: SSA, _msg: str, state: str):
+    if state not in ["on", "off"]:
+        print("Invalid state")
+        return
+
     led_strip = ssa.get_property("led_strip")
     for led in led_strip.values():
-        led.set_is_on(state)
+        led["is_on"] = state == "on"
+
     ssa.set_property("led_strip", led_strip)
 
 @ssa_main()
 def main(ssa: SSA):
     N_LEDS = 8
-    led_strip = {f"led_{i}": SimulatedLED() for i in range(1, N_LEDS + 1)}
+    simulated_led = {
+        "brightness": 100,
+        "color": 0xFFFFFF,
+        "is_on": False
+    }
+    led_strip = {f"led_{i}": simulated_led.copy() for i in range(1, N_LEDS + 1)}
     ssa.create_property("led_strip", led_strip)
 
     ssa.register_action("led_strip/toggle/{state}", toggle_led_strip)
     ssa.register_action("led_strip/{led_name}/toggle/{state}", toggle_led)
-    ssa.register_action("led_strip/{led_name}/set_color/{rgb}", set_led_rgb)
-    ssa.register_action("led_strip/{led_name}/set_brightness/{brighness}", set_led_brightness)
+    ssa.register_action("led_strip/{led_name}/set_color/{color}", set_led_color)
+    ssa.register_action("led_strip/{led_name}/set_brightness/{brightness}", set_led_brightness)

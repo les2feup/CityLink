@@ -10,7 +10,7 @@ class NetworkDriver():
         Args:
             config: A dictionary of network configuration options.
         """
-        pass
+        raise NotImplementedError
 
     def connect(self, retries, base_timeout, **kwargs):
         """
@@ -29,11 +29,11 @@ class NetworkDriver():
         Raises:
             Exception: If the connection fails after all retry attempts.
         """
-        pass
+        raise NotImplementedError
 
     def disconnect(self):
         """Disconnect from the network."""
-        pass
+        raise NotImplementedError
 
     def get_ip(self):
         """
@@ -42,7 +42,7 @@ class NetworkDriver():
         Returns:
             str or None: The device's IP address if connected, or None otherwise.
         """
-        pass
+        raise NotImplementedError
 
 class SSARuntime():
     """Interface for the SSA runtime.
@@ -70,7 +70,7 @@ class SSARuntime():
             config: A dictionary with configuration settings for the runtime.
             action_handler: A callable responsible for handling actions triggered by the runtime.
         """
-        pass
+        raise NotImplementedError
 
     def launch(self, setup_func):
         """Launches the SSA runtime.
@@ -81,7 +81,7 @@ class SSARuntime():
         Args:
             setup_func: A function to initialize and register user code before the runtime starts.
         """
-        pass
+        raise NotImplementedError
 
     def sync_property(self, property_name, value, **kwargs):
         """
@@ -92,7 +92,7 @@ class SSARuntime():
             value: The new value to assign to the property.
             **kwargs: Optional keyword arguments for additional synchronization parameters.
         """
-        pass
+        raise NotImplementedError
 
     def trigger_event(self, event_name, payload, **kwargs):
         """
@@ -110,7 +110,7 @@ class SSARuntime():
         Returns:
             True if the event was triggered successfully, False otherwise.
         """
-        pass
+        raise NotImplementedError
 
     def create_task(self, task_func):
         """
@@ -122,4 +122,4 @@ class SSARuntime():
         Args:
             task_func: A callable representing the task to be executed.
         """
-        pass
+        raise NotImplementedError

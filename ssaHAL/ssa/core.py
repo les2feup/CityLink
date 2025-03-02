@@ -127,10 +127,10 @@ class SSA():
             raise Exception(f"[ERROR] Property `{name}` does not exist. \
                     Create it using `create_property` first.")
 
-        prev_value = self._properties[name]
-        if prev_value != value:
-            self._properties[name] = value
-            self._runtime.sync_property(name, value, **kwargs)
+        if not self._runtime.sync_property(name, value, **kwargs):
+            raise Exception(f"[ERROR] Failed to synchronize property `{name}`.")
+
+        self._properties[name] = value
 
     def trigger_event(self, name, value, **kwargs):
         """
