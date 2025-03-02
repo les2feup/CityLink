@@ -10,6 +10,14 @@ class SSA():
     @param MsgClient The MessagingClient implementation to use
     """
     def __init__(self, nic_class: NetworkDriver, runtime_class: SSARuntime):
+        """
+        Initializes a new SSA instance.
+        
+        Loads configuration from predefined JSON files and sets up the network interface
+        and runtime components using the provided driver classes. Also initializes the
+        global action handler and the internal property storage. Raises an Exception
+        if configuration loading or component initialization fails.
+        """
         config_handler = ConfigLoader(["/config/config.json",
                                        "/config/secrets.json"])
         self._action_handler = ActionHandler(self)
@@ -29,13 +37,16 @@ class SSA():
         self._properties = {}
 
     def launch(self, user_main=None):
-        """Launch the SSA runtime by connecting to the network and sending 
-        registration messages.
-        if the connection is successful, the main loop is started.
-        if the connection fails, the device will reset.
-        if there is no user code, the device will enter boot mode and wait
-        for updates.
-        if user code is present, the device will run the user code.
+        """
+        Launch the SSA runtime and execute optional user code.
+        
+        This method registers actions for firmware and property updates, then launches
+        the runtime environment using an optional user-defined callback. If the runtime
+        fails to launch, the raised exception is propagated with additional context.
+        Upon successful termination, an informational message is printed.
+        
+        Args:
+            user_main: Optional callback function to execute as part of the runtime.
         """
         self._action_handler.register_action("/ssa/firmware_update",
                                              firmware_update),
@@ -48,9 +59,17 @@ class SSA():
         print("[INFO] Runtime exited.")
 
     def get_property(self, name):
-        """Get the value of a property
-        @param name: The name of the property
-        @returns: The value of the property
+        """
+        Retrieves the value of the specified property.
+        
+        Raises:
+            Exception: If the property does not exist. Use `set_property` to create it first.
+        
+        Args:
+            name: The name of the property.
+        
+        Returns:
+            The value associated with the property.
         """
         if name not in self._properties:
             raise Exception(f"[ERROR] Property `{name}` does not exist. \
@@ -58,16 +77,23 @@ class SSA():
         return self._properties[name]
 
     def _set_and_sync_property(self, name, value, **kwargs):
+        """
+        Sets a property value internally and synchronizes it with the runtime.
+        
+        This method updates the local property store with the given value for the specified
+        property name and then triggers synchronization with the runtime component. Additional
+        keyword arguments are forwarded to the runtime's synchronization method.
+        """
         self._properties[name] = value
         self._runtime.sync_property(name, value, **kwargs)
 
     def set_property(self, name, value, **kwargs):
-        """Set the value of a property.
-        Properties are synced to the WoT servient on change.
-        @param name: The name of the property
-        @param value: The new value of the property
-        @param kwargs: Additional arguments to pass to the runtime.
-        Unkown arguments are ignored
+        """
+        Set a property's value and synchronize it with the runtime.
+        
+        If the property does not exist or its value differs from the new one, update and
+        synchronize it with the runtime. Additional keyword arguments are passed to the
+        runtime; any unrecognized keys are ignored.
         """
         if name not in self._properties:
             return self._set_and_sync_property(name, value, **kwargs)
@@ -77,12 +103,11 @@ class SSA():
             return self._set_and_sync_property(name, value, **kwargs)
 
     def create_property(self, name, default):
-        """Set the value of a property.
-        Properties are synced to the WoT servient on change.
-        @param name: The name of the property
-        @param value: The new value of the property
-        @param kwargs: Additional arguments to pass to the runtime.
-        Unkown arguments are ignored
+        """
+        Creates a new property with the given default value.
+        
+        Raises:
+            Exception: If a property with the specified name already exists.
         """
         if name not in self._properties:
             self._properties[name] = default
@@ -91,38 +116,45 @@ class SSA():
                     Use `set_property` to change it.")
 
     def trigger_event(self, name, value, **kwargs):
-        """Trigger an event
-        Properties are sent to the events uri when set
-        @param name: The name of the event
-        @param value: The value of the event
-        @param kwargs: Additional arguments to pass to the runtime.
-        Unkown arguments are ignored
+        """
+        Triggers an event in the runtime.
+        
+        Forwards the event with the specified name and value to the runtime, along with any
+        additional keyword arguments (unrecognized arguments are ignored).
         """
         self._runtime.trigger_event(name, value, **kwargs)
 
     def register_action(self, uri_template: str, callback):
-        """Register an action to be called when invoked by the WoT servient
-        or other clients. 
-        @param uri_template: The URI template to register. It may contain
-        URI variabled in the form of {var_name}.
-        @param callback: The callback function to execute when the action is
-        invoked. 
-        The callback function must accept at least two arguments:
-            - uri: The URI of the action
-            - payload: The payload of the action
-        If the uri_template contains URI variables, the callback function
-        must accept the same number of arguments as the number of variables
-        in the URI template.
-        example:
+        """
+        Register an action with a URI template and its callback function.
+        
+        This method registers a callback to be executed when an action matching the specified
+        URI template is invoked by a WoT servient or other client. The URI template may include
+        variables enclosed in curly braces (e.g., {var_name}). The callback function must accept
+        at least two arguments: one for the action's URI and one for the payload. If the URI template
+        contains variables, the callback should also accept additional arguments corresponding to
+        those variables.
+        
+        Args:
+            uri_template: A string representing the URI template, which may include variables in the
+                form '{var_name}'.
+            callback: A function to be executed when the action is invoked. It should accept the URI,
+                payload, and additional arguments if the URI template includes variables.
+        
+        Example:
             uri_template = "/actions/{action_id}"
-            def callback(ssa_instance, payload, action_id):
+            def callback(uri, payload, action_id):
                 pass
         """
         self._action_handler.register_action(uri_template, callback)
 
     def create_task(self, task):
-        """Create a task
-        @param name: The name of the task
-        @param task: The task to create
+        """
+        Creates a task in the runtime.
+        
+        Delegates task creation to the underlying runtime instance.
+        
+        Args:
+            task: The task object to be created.
         """
         self._runtime.create_task(task)
