@@ -18,7 +18,7 @@ async def simulate_random_sensor(ssa: SSA) -> None:
     """
     sensor_value = random.randint(0, 100)
     priority = ssa.get_property("priority")
-    ssa.trigger_event(f"sensor_value/{priority}_prio", sensor_value) #"low_prio", "medium_prio", "high_prio"
+    await ssa.trigger_event(f"sensor_value/{priority}_prio", sensor_value) #"low_prio", "medium_prio", "high_prio"
 
 @ssa_main()
 def main(ssa: SSA):
