@@ -30,7 +30,7 @@ class GenericWLANDriver(NetworkDriver):
         
         Args:
             retries: The maximum number of connection attempts.
-            base_timeout: The initial wait time in milliseconds.
+            base_timeout_ms: The initial wait time in milliseconds.
         
         Raises:
             Exception: If the WLAN fails to connect after all retries.
