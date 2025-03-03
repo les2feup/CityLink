@@ -12,7 +12,7 @@ class NetworkDriver():
         """
         raise NotImplementedError
 
-    def connect(self, retries, base_timeout, **kwargs):
+    def connect(self, retries, base_timeout_ms, **kwargs):
         """
         Attempts to establish a network connection with exponential backoff.
         
@@ -83,7 +83,7 @@ class SSARuntime():
         """
         raise NotImplementedError
 
-    def sync_property(self, property_name, value, **kwargs):
+    async def sync_property(self, property_name, value, **kwargs):
         """
         Synchronizes a property with the WoT servient.
         
@@ -94,7 +94,7 @@ class SSARuntime():
         """
         raise NotImplementedError
 
-    def trigger_event(self, event_name, payload, **kwargs):
+    async def trigger_event(self, event_name, payload, **kwargs):
         """
         Triggers an event by sending it to the WoT servient.
         
@@ -112,7 +112,7 @@ class SSARuntime():
         """
         raise NotImplementedError
 
-    def create_task(self, task_func):
+    def rt_task_create(self, task_func):
         """
         Registers a task for execution by the runtime.
         
@@ -122,4 +122,11 @@ class SSARuntime():
         Args:
             task_func: A callable representing the task to be executed.
         """
+        raise NotImplementedError
+
+
+    async def rt_task_sleep_ms(self, ms):
+        raise NotImplementedError
+
+    async def rt_task_report_status(self, status):
         raise NotImplementedError

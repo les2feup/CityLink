@@ -1,8 +1,7 @@
 import os
-import json
 import binascii
 
-def firmware_update(_ssa, update_str):
+def firmware_update(_ssa, update):
     """
     Updates the device firmware from a JSON update package.
     
@@ -16,10 +15,9 @@ def firmware_update(_ssa, update_str):
     
     Args:
         _ssa: Device state or configuration object (unused in current implementation).
-        update_str: JSON string with keys "base64" for the firmware data and "crc32" for the expected checksum.
+        update: dictionary with keys "base64" for the firmware data and "crc32" for the expected checksum.
     """
     print(f"[INFO] Firmware update received with size {len(update_str)}")
-    update = json.loads(update_str)
 
     binary = binascii.a2b_base64(update["base64"])
     expected_crc = int(update["crc32"], 16)
@@ -60,10 +58,7 @@ def property_update(ssa, value, prop):
         return
 
     try:
-        value = json.loads(value)
         ssa.set_property(prop, value)
-    except json.JSONDecodeError as e:
-        print(f"[ERROR] Failed to parse JSON value for '{prop}': {e}")
     except TypeError as e:
         print(f"[ERROR] Failed to update property '{prop}': {e}")
     except Exception as e:

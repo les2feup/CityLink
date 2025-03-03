@@ -1,6 +1,6 @@
 from ssa import SSA, ssa_main
 
-def set_led_brightness(ssa: SSA, _msg: str, led_name: str, brightness: str):
+async def set_led_brightness(ssa: SSA, _msg: str, led_name: str, brightness: str):
     led_strip = ssa.get_property("led_strip")
     if led_name not in led_strip:
         print(f"Invalid LED name {led_name}")
@@ -12,9 +12,9 @@ def set_led_brightness(ssa: SSA, _msg: str, led_name: str, brightness: str):
         return
 
     led_strip[led_name]["brightness"] = brightness
-    ssa.set_property("led_strip", led_strip)
+    await ssa.set_property("led_strip", led_strip)
 
-def set_led_color(ssa: SSA, _msg: str, led_name: str, color: str):
+async def set_led_color(ssa: SSA, _msg: str, led_name: str, color: str):
     led_strip = ssa.get_property("led_strip")
     if led_name not in led_strip:
         print(f"Invalid LED name: {led_name}")
@@ -31,9 +31,9 @@ def set_led_color(ssa: SSA, _msg: str, led_name: str, color: str):
         return
 
     led_strip[led_name]["color"] = hex(color)
-    ssa.set_property("led_strip", led_strip)
+    await ssa.set_property("led_strip", led_strip)
 
-def toggle_led(ssa: SSA, _msg: str, led_name: str, state: str):
+async def toggle_led(ssa: SSA, _msg: str, led_name: str, state: str):
     led_strip = ssa.get_property("led_strip")
     if led_name not in led_strip:
         print("Invalid LED name")
@@ -44,9 +44,9 @@ def toggle_led(ssa: SSA, _msg: str, led_name: str, state: str):
         return
 
     led_strip[led_name]["is_on"] = state == "on"
-    ssa.set_property("led_strip", led_strip)
+    await ssa.set_property("led_strip", led_strip)
 
-def toggle_led_strip(ssa: SSA, _msg: str, state: str):
+async def toggle_led_strip(ssa: SSA, _msg: str, state: str):
     if state not in ["on", "off"]:
         print(f"Invalid state: {state}")
         return
@@ -55,7 +55,7 @@ def toggle_led_strip(ssa: SSA, _msg: str, state: str):
     for led in led_strip.values():
         led["is_on"] = state == "on"
 
-    ssa.set_property("led_strip", led_strip)
+    await ssa.set_property("led_strip", led_strip)
 
 @ssa_main()
 def main(ssa: SSA):

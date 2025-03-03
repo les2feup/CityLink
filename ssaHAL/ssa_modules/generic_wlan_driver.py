@@ -1,6 +1,6 @@
 from ssa.interfaces import NetworkDriver
 from network import WLAN, STA_IF
-from time import sleep
+from time import sleep_ms
 
 class GenericWLANDriver(NetworkDriver):
     """
@@ -19,7 +19,7 @@ class GenericWLANDriver(NetworkDriver):
         self._wlan.active(True)
         self._wlan.connect(config["ssid"], config["password"])
     
-    def connect(self, retries, base_timeout):
+    def connect(self, retries, base_timeout_ms, **_):
         """
         Attempts to connect to the WLAN using exponential backoff.
         
@@ -30,16 +30,18 @@ class GenericWLANDriver(NetworkDriver):
         
         Args:
             retries: The maximum number of connection attempts.
-            base_timeout: The initial wait time in seconds, which doubles with each retry.
+            base_timeout: The initial wait time in milliseconds.
         
         Raises:
             Exception: If the WLAN fails to connect after all retries.
         """
         for retry in range(retries):
+            print(f"[INFO] Attempting WLAN connection (retry {retry + 1}/{retries})")
             if self._wlan.isconnected():
+                print(f"[INFO] WLAN connected with IP: {self.get_ip()}")
                 return
-            sleep(base_timeout * 2**retry)
-        raise Exception("Failed to connect to WLAN")
+            sleep_ms(base_timeout_ms * 2**retry)
+        raise Exception("[FATAL] Failed to connect to WLAN")
     
     def disconnect(self):
         """

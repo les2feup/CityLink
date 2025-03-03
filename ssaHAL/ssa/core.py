@@ -56,6 +56,12 @@ class SSA():
             user_main: Optional callback function to execute as part of the
             runtime.
         """
+        try:
+            #TODO: extract this into the config
+            self._nic.connect(retries=5, base_timeout_ms=1000)
+        except Exception as e:
+            raise Exception(f"[ERROR] Failed to connect to network: {e}") from e
+
         self._action_handler.register_action("/ssa/firmware_update",
                                              firmware_update)
         self._action_handler.register_action("/ssa/set/{prop}",
@@ -110,7 +116,7 @@ class SSA():
                     Create it using `create_property` first.")
         return self._properties[name]
 
-    def set_property(self, name, value, **kwargs):
+    async def set_property(self, name, value, **kwargs):
         """
         Set a property's value and synchronize it with the runtime.
         
@@ -127,19 +133,19 @@ class SSA():
             raise Exception(f"[ERROR] Property `{name}` does not exist. \
                     Create it using `create_property` first.")
 
-        if not self._runtime.sync_property(name, value, **kwargs):
+        if not await self._runtime.sync_property(name, value, **kwargs):
             raise Exception(f"[ERROR] Failed to synchronize property `{name}`.")
 
         self._properties[name] = value
 
-    def trigger_event(self, name, value, **kwargs):
+    async def trigger_event(self, name, value, **kwargs):
         """
         Triggers an event in the runtime.
         
         Forwards the event with the specified name and value to the runtime, along with any
         additional keyword arguments (unrecognized arguments are ignored).
         """
-        self._runtime.trigger_event(name, value, **kwargs)
+        await self._runtime.trigger_event(name, value, **kwargs)
 
     def register_action(self, uri_template: str, callback):
         """
@@ -169,7 +175,7 @@ class SSA():
         """
         self._action_handler.register_action(uri_template, callback)
 
-    def create_task(self, task):
+    def create_task(self, task, *args, **kwargs):
         """
         Creates a task in the runtime.
         
@@ -178,4 +184,4 @@ class SSA():
         Args:
             task: The task object to be created.
         """
-        self._runtime.create_task(task)
+        self._runtime.rt_task_create(task, *args, **kwargs)

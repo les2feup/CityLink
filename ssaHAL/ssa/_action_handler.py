@@ -105,7 +105,7 @@ class ActionHandler():
             handler = self.actions[action_uri].callback
             try:
                 print(f"[DEBUG] Invoking action handler `{handler.__name__}`")
-                handler(self._ssa, payload) # Invoke the action handler
+                self._ssa.create_task(handler, payload) # Invoke the action handler
             except Exception as e:
                 print(f"[ERROR] Action callback `{handler.__name__}` failed to execute: {e}")
             return
@@ -117,7 +117,7 @@ class ActionHandler():
         handler, kwargs = found
         try:
             print(f"[DEBUG] Invoking action handler `{handler.__name__}` with kwargs `{kwargs}`")
-            handler(self._ssa, payload, **kwargs)
+            self._ssa.create_task(handler, payload, **kwargs) # Invoke the action handler
         except Exception as e:
             func_name = handler.__name__ if hasattr(handler, "__name__") \
                     else "unknown"
