@@ -66,9 +66,9 @@ class SSA():
         except Exception as e:
             raise Exception(f"[ERROR] Failed to connect to network: {e}") from e
 
-        self._action_handler.register_action("/ssa/firmware_update",
+        self._action_handler.register_action("ssa/firmware_update",
                                              firmware_update)
-        self._action_handler.register_action("/ssa/set/{prop}",
+        self._action_handler.register_action("ssa/set/{prop}",
                                              property_update)
         try:
             self._runtime.launch(user_main)
