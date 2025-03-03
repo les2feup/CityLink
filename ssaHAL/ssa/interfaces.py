@@ -32,7 +32,16 @@ class NetworkDriver():
         raise NotImplementedError
 
     def disconnect(self):
-        """Disconnect from the network."""
+        """
+        Disconnect from the network.
+        
+        This abstract method should be overridden by subclasses to implement the logic
+        for safely disconnecting from a network connection. In the base class, calling
+        this method always raises a NotImplementedError.
+        
+        Raises:
+            NotImplementedError: Always raised since the method is abstract.
+        """
         raise NotImplementedError
 
     def get_ip(self):

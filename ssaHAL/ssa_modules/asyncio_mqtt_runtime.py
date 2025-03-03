@@ -88,20 +88,32 @@ class AsyncioMQTTRuntime(SSARuntime):
         self._set_global_action_handler(action_handler)
 
     def _set_global_action_handler(self, global_handler):
+        """
+        Sets the global action handler for incoming MQTT messages.
+        
+        Wraps the provided handler in a callback that decodes the MQTT topic and payload
+        from bytes to strings, strips the base action topic from the decoded topic to form
+        an action URI, and then forwards the message to the global handler. If decoding
+        fails, an error is printed.
+        
+        Args:
+            global_handler: A callable that processes an action URI and payload as decoded strings.
+        """
         base_action_topic = f"{self.base_topic}/actions"
         print(f"[INFO] Setting global action handler for topic: {base_action_topic}")
 
         def handler_wrapper(topic: bytes, payload: bytes):
             """
-            Wrapper function to handle incoming MQTT messages.
+            Decodes an MQTT message and dispatches it to the global action handler.
             
-            This function is invoked by the MQTT client when a message is received.
-            It decodes the topic and payload, then forwards the message to the global
-            action handler for processing.
+            The function decodes the provided topic and payload using UTF-8, strips the base
+            action topic prefix to derive an action URI, and then passes the action URI along
+            with the decoded payload to the global action handler. If decoding fails, it logs
+            an error and aborts further processing.
             
             Args:
-                topic: The MQTT topic where the message was received.
-                payload: The message payload as a byte string.
+                topic: MQTT topic as a byte string.
+                payload: MQTT message payload as a byte string.
             """
 
             try:
@@ -121,11 +133,14 @@ class AsyncioMQTTRuntime(SSARuntime):
 
     async def _connect_to_broker(self):
         """
-        Attempts to connect to the MQTT broker with exponential backoff retries.
+        Connects to the MQTT broker using an exponential backoff retry strategy.
         
-        This coroutine makes up to a configured number of connection attempts. After each
-        failed attempt, it waits for an exponentially increasing delay before retrying.
-        If the connection cannot be established after all retries, an Exception is raised.
+        This coroutine attempts to establish a connection by performing a series of retries. After each
+        failed attempt, it waits for an exponentially increasing delay before trying again. If the connection
+        cannot be established after the maximum number of retries, an Exception is raised.
+        
+        Raises:
+            Exception: If the broker connection could not be established after all retries.
         """
         print("[INFO] Connecting to broker...")
         for i in range(self._retries):
@@ -144,12 +159,12 @@ class AsyncioMQTTRuntime(SSARuntime):
 
     async def _main_loop(self):
         """
-        Runs the main MQTT loop to process incoming messages and execute tasks.
+        Runs an infinite MQTT loop to process incoming messages and scheduled tasks.
         
-        Configures the MQTT client with an action callback, subscribes to the actions topic,
-        and publishes the registration payload with QoS 1 and retain flag. In an infinite loop,
-        if no tasks are scheduled, it blocks waiting for MQTT messages; otherwise, it checks for
-        messages and yields briefly to allow task execution.
+        Initializes the MQTT client by setting its action callback, subscribing to the 
+        actions topic, and publishing the registration payload with QoS 1 and retain flag.
+        If no tasks are scheduled, the loop blocks waiting for an MQTT message; otherwise,
+        it checks for messages and briefly sleeps to yield control for task execution.
         """
         self._client.set_callback(self._action_handler)
         self._client.subscribe(f"{self.base_topic}/actions/#")

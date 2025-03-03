@@ -112,16 +112,18 @@ class SSA():
 
     def set_property(self, name, value, **kwargs):
         """
-        Set a property's value and synchronize it with the runtime.
+        Set and synchronize an existing property's value.
         
-        If the property value changes update and have the runtime synchronize it
-        with the network. Additional keyword arguments are passed to the runtime
-        in order to costumize the synchronization process.
-        Any unrecognized keys are ignored.
-
+        This method updates a property with a new value and attempts to synchronize the change
+        with the runtime environment using any provided keyword arguments to customize the
+        synchronization process. The update is applied unconditionally after successful
+        synchronization.
+        
+        Args:
+            **kwargs: Additional options for the runtime's synchronization process.
+        
         Raises:
-            Exception: If the property does not exist. Use `create_property` to
-            create it first.
+            Exception: If the property does not exist or if synchronization fails.
         """
         if name not in self._properties:
             raise Exception(f"[ERROR] Property `{name}` does not exist. \
