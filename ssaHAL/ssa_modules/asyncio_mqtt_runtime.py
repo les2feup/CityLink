@@ -26,7 +26,7 @@ class AsyncioMQTTRuntime(SSARuntime):
         version = id.get("version")
         assert isinstance(version, dict), "Version should be a dictionary"
         assert isinstance(version.get("instance"), str), "instance version not found"
-        assert isinstance(version.get("instance"), str), "model version not found"
+        assert isinstance(version.get("model"), str), "model version not found"
 
         assert isinstance(config, dict), "Runtime configuration should be a dictionary"
 
