@@ -144,8 +144,12 @@ class SSA():
         
         Forwards the event with the specified name and value to the runtime, along with any
         additional keyword arguments (unrecognized arguments are ignored).
+        
+        Returns:
+            The result from the runtime's trigger_event operation, allowing the caller
+            to handle any potential failures.
         """
-        await self._runtime.trigger_event(name, value, **kwargs)
+        return await self._runtime.trigger_event(name, value, **kwargs)
 
     def register_action(self, uri_template: str, callback):
         """

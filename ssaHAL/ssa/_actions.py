@@ -3,7 +3,7 @@ import binascii
 
 async def firmware_update(_ssa, update):
     """
-    Updates the device firmware from a JSON update package.
+    Asynchronously updates the device firmware from a JSON update package.
     
     This function decodes a firmware update provided as a JSON string that 
     includes a base64‐encoded firmware binary and its expected CRC32 checksum 
@@ -17,7 +17,7 @@ async def firmware_update(_ssa, update):
         _ssa: Device state or configuration object (unused in current implementation).
         update: dictionary with keys "base64" for the firmware data and "crc32" for the expected checksum.
     """
-    print(f"[INFO] Firmware update received with size {len(update_str)}")
+    print(f"[INFO] Firmware update received with size {len(str(update))}")
 
     binary = binascii.a2b_base64(update["base64"])
     expected_crc = int(update["crc32"], 16)
@@ -41,16 +41,15 @@ async def firmware_update(_ssa, update):
 
 async def property_update(ssa, value, prop):
     """
-    Updates a property on the given SSA instance from a JSON string.
-    
+    Asynchronously updates a property on the given SSA instance.    
+
     This function checks whether the specified property exists on the SSA 
-    object, parses the provided JSON string to obtain the new value, and 
-    updates the property using the SSA setter. If an error occurs during this 
-    process, an error message is printed with the details.
+    object and updates the property using the SSA setter with the provided value.
+    If an error occurs during this process, an error message is printed with the details.
     
     Args:
         ssa: The object whose property is to be updated.
-        value: A JSON-formatted string representing the new value for the property.
+        value: The new value for the property.
         prop: The name of the property to update.
     """
     if not ssa.has_property(prop):

@@ -36,11 +36,11 @@ async def set_led_color(ssa: SSA, _msg: str, led_name: str, color: str):
 async def toggle_led(ssa: SSA, _msg: str, led_name: str, state: str):
     led_strip = ssa.get_property("led_strip")
     if led_name not in led_strip:
-        print("Invalid LED name")
+        print(f"Invalid LED name: {led_name}")
         return
 
     if state not in ["on", "off"]:
-        print("Invalid state")
+        print(f"Invalid state: {state}, must be 'on' or 'off'")
         return
 
     led_strip[led_name]["is_on"] = state == "on"
@@ -57,9 +57,12 @@ async def toggle_led_strip(ssa: SSA, _msg: str, state: str):
 
     await ssa.set_property("led_strip", led_strip)
 
+
+# Number of LEDs in the strip
+N_LEDS = 8
+
 @ssa_main()
 def main(ssa: SSA):
-    N_LEDS = 8
     simulated_led = {
             "brightness": 100,
             "color": hex(0xFFFFFF),

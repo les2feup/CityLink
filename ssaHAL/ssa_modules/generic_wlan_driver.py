@@ -41,8 +41,8 @@ class GenericWLANDriver(NetworkDriver):
                 print(f"[INFO] WLAN connected with IP: {self.get_ip()}")
                 return
             sleep_ms(base_timeout_ms * 2**retry)
-        raise Exception("[FATAL] Failed to connect to WLAN")
-    
+        raise Exception(f"[FATAL] Failed to connect to WLAN after {retries} attempts")    
+
     def disconnect(self):
         """
         Disconnects from the WLAN network.
