@@ -1,7 +1,7 @@
 import os
 import binascii
 
-def firmware_update(_ssa, update):
+async def firmware_update(_ssa, update):
     """
     Updates the device firmware from a JSON update package.
     
@@ -39,7 +39,7 @@ def firmware_update(_ssa, update):
     from machine import soft_reset
     soft_reset()
 
-def property_update(ssa, value, prop):
+async def property_update(ssa, value, prop):
     """
     Updates a property on the given SSA instance from a JSON string.
     
@@ -58,8 +58,6 @@ def property_update(ssa, value, prop):
         return
 
     try:
-        ssa.set_property(prop, value)
-    except TypeError as e:
-        print(f"[ERROR] Failed to update property '{prop}': {e}")
+        await ssa.set_property(prop, value)
     except Exception as e:
         print(f"[ERROR] Failed to update property '{prop}': {e}")
