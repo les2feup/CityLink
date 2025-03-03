@@ -51,6 +51,10 @@ class SSA():
         callback. If the runtime fails to launch, the raised exception i
         propagated with additional context. Upon successful termination,
         an informational message is printed.
+
+        Raises:
+            Exception: If the network connection fails.
+            Exception: If the runtime fails to launch.
         
         Args:
             user_main: Optional callback function to execute as part of the
@@ -119,15 +123,16 @@ class SSA():
     async def set_property(self, name, value, **kwargs):
         """
         Set a property's value and synchronize it with the runtime.
-        
-        If the property value changes update and have the runtime synchronize it
-        with the network. Additional keyword arguments are passed to the runtime
-        in order to costumize the synchronization process.
-        Any unrecognized keys are ignored.
 
         Raises:
             Exception: If the property does not exist. Use `create_property` to
             create it first.
+
+        Args:
+            name: The name of the property.
+            value: The new value for the property.
+            **kwargs: Additional keyword arguments to pass to the runtime's
+                synchronization operation. Unrecognized arguments are ignored.
         """
         if name not in self._properties:
             raise Exception(f"[ERROR] Property `{name}` does not exist. \
@@ -142,8 +147,13 @@ class SSA():
         """
         Triggers an event in the runtime.
         
-        Forwards the event with the specified name and value to the runtime, along with any
-        additional keyword arguments (unrecognized arguments are ignored).
+        Delegates event triggering to the underlying runtime instance.
+
+        Args:
+            name: The name of the event to trigger.
+            value: The value to associate with the event.
+            **kwargs: Additional keyword arguments to pass to the runtime's
+                event triggering operation. Unrecognized arguments are ignored.
         
         Returns:
             The result from the runtime's trigger_event operation, allowing the caller
@@ -187,5 +197,7 @@ class SSA():
         
         Args:
             task: The task object to be created.
+            *args: Variable length argument list to pass to the task.
+            **kwargs: Arbitrary keyword arguments to pass to the task.
         """
         self._runtime.rt_task_create(task, *args, **kwargs)
