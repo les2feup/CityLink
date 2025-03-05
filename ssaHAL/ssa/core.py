@@ -175,7 +175,7 @@ class SSA():
         if name not in self._properties:
             raise Exception(f"[ERROR] Property `{name}` does not exist. Create it using `create_property` first.")
 
-        if type(value) != type(self._properties[name]):
+        if not isinstance(type(value), type(self._properties[name])):
             raise TypeError(f"[ERROR] Property `{name}` must be of type {type(self._properties[name])}")
 
         if isinstance(value, dict) and use_dict_diff:

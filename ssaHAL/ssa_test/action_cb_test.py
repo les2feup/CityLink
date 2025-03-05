@@ -1,6 +1,6 @@
 import unittest
 
-from ssa._action_handler import ActDictElement, ActionHandler
+from ssa._action_handler import ActionHandler
 
 # Dummy SSA class to pass into ActionHandler.
 class DummySSA:
