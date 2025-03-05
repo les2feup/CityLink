@@ -9,17 +9,9 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Helper functions for logging
-error() {
-  echo -e "${RED}[ERROR]${NC} $1"
-}
-
-success() {
-  echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-info() {
-  echo -e "${YELLOW}[INFO]${NC} $1"
-}
+error() { echo -e "${RED}[ERROR]${NC} $1"; }
+success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+info() { echo -e "${YELLOW}[INFO]${NC} $1"; }
 
 # Global variables for command-line options
 UPLOAD_BOOT=false
@@ -32,7 +24,17 @@ CONFIG_DIR=""
 SSA_DIR=""
 SSA_MODULES_DIR=""
 
-# Phase 1: Check device connection
+# Phase 1: Ensure script is running from the project root
+check_project_root() {
+  if [[ ! -d "ssaHAL" || ! -d "scripts" || ! -f "ssaHAL/config/config.json" ]]; then
+    error "This script must be run from the project root directory."
+    error "Expected to find 'ssaHAL/' directory and 'scripts/' directory."
+    exit 1
+  fi
+  success "Running from the correct project directory."
+}
+
+# Phase 2: Check device connection
 check_device() {
   info "Checking if device is connected..."
   if ! mpremote ls > /dev/null 2>&1; then
@@ -42,7 +44,7 @@ check_device() {
   success "Device connected."
 }
 
-# Phase 2: Parse command-line options
+# Phase 3: Parse command-line options
 parse_options() {
   while getopts "bne:" opt; do
     case $opt in
@@ -55,7 +57,7 @@ parse_options() {
   info "Options parsed: UPLOAD_BOOT=$UPLOAD_BOOT, NUKE_BOARD=$NUKE_BOARD, EXAMPLE_FILE='$EXAMPLE_FILE'"
 }
 
-# Phase 3: Nuke board if requested
+# Phase 4: Nuke board if requested
 nuke_board() {
   if [ "$NUKE_BOARD" = true ]; then
     info "Cleaning board (nuke)..."
@@ -64,7 +66,7 @@ nuke_board() {
   fi
 }
 
-# Phase 4: Prepare temporary directories
+# Phase 5: Prepare temporary directories
 prepare_temp_dirs() {
   info "Preparing temporary directories..."
   TEMP_DIR="./ssaHAL/.temp"
@@ -75,7 +77,14 @@ prepare_temp_dirs() {
   success "Temporary directories created."
 }
 
-# Phase 5: Process configuration files
+# Phase 6: Remove __pycache__ directories
+remove_pycache() {
+  info "Removing all '__pycache__' directories..."
+  find ./ssaHAL -type d -name "__pycache__" -exec rm -rf {} + || { error "Failed to remove __pycache__ directories"; exit 1; }
+  success "__pycache__ directories removed."
+}
+
+# Phase 7: Process configuration files
 process_configs() {
   info "Processing configuration files..."
   jq -c < ./ssaHAL/config/config.json > "$CONFIG_DIR/config.json" || { error "Failed to process config.json"; exit 1; }
@@ -87,7 +96,7 @@ process_configs() {
   success "Configuration files processed."
 }
 
-# Phase 6: Clean SSA directories
+# Phase 8: Clean SSA directories
 clean_ssa_directories() {
   info "Cleaning SSA directories..."
   python3 scripts/clean.py ./ssaHAL/ssa "$SSA_DIR" || { error "Failed to clean SSA directory"; exit 1; }
@@ -95,7 +104,7 @@ clean_ssa_directories() {
   success "SSA directories cleaned."
 }
 
-# Phase 7: Compile SSA modules to frozen bytecode
+# Phase 9: Compile SSA modules to frozen bytecode
 compile_modules() {
   info "Compiling SSA module files to frozen bytecode..."
 
@@ -113,13 +122,12 @@ compile_modules() {
   success "Compilation complete."
 }
 
-# Phase 8: Upload required files to the device
+# Phase 10: Upload required files to the device
 upload_files() {
   info "Uploading required files..."
   mpremote cp -r ./ssaHAL/lib/ : || { error "Failed to copy lib files"; exit 1; }
   mpremote cp -r "$CONFIG_DIR"/ : || { error "Failed to copy configuration files"; exit 1; }
   
-  # Create remote directories and tolerate errors if they already exist
   mpremote mkdir :ssa || info "Directory 'ssa' may already exist on device."
   mpremote cp -r "$SSA_DIR/compiled/"* :./ssa/ || { error "Failed to copy SSA compiled files"; exit 1; }
   mpremote mkdir :ssa_modules || info "Directory 'ssa_modules' may already exist on device."
@@ -127,14 +135,14 @@ upload_files() {
   success "Files uploaded successfully."
 }
 
-# Phase 9: Clean up temporary directories
+# Phase 11: Clean up temporary directories
 cleanup() {
   info "Cleaning up temporary files..."
   rm -rf "$TEMP_DIR" || { error "Failed to remove temporary directory"; exit 1; }
   success "Cleanup complete."
 }
 
-# Phase 10: Optionally upload boot.py
+# Phase 12: Optionally upload boot.py
 upload_boot() {
   if [ "$UPLOAD_BOOT" = true ]; then
     info "Uploading boot.py..."
@@ -143,7 +151,7 @@ upload_boot() {
   fi
 }
 
-# Phase 11: Optionally upload an example file
+# Phase 13: Optionally upload an example file
 upload_example() {
   if [ -n "$EXAMPLE_FILE" ]; then
     if [ -f "./ssaHAL/examples/$EXAMPLE_FILE" ]; then
@@ -160,10 +168,12 @@ upload_example() {
 
 # Main execution function
 main() {
+  check_project_root
   check_device
   parse_options "$@"
   nuke_board
   prepare_temp_dirs
+  remove_pycache
   process_configs
   clean_ssa_directories
   compile_modules
