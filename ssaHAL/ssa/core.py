@@ -5,6 +5,8 @@ from ._utils import iterative_dict_diff
 
 from .interfaces import NetworkDriver, SSARuntime
 
+from copy import deepcopy
+
 class SSA():
     """
     The SSA class is the main class for the Smart Sensor Actuator framework
@@ -42,7 +44,7 @@ class SSA():
             raise Exception(f"[ERROR] Failed to init SSA instance: {e}") from e
 
         self._properties = {}
-        self._default_setter_blacklist = []
+        self._set_action_blacklist = []
 
     def launch(self, user_main=None):
         """
@@ -90,15 +92,22 @@ class SSA():
         """
         return name in self._properties
 
-    def uses_default_setter(self, name):
-        return name not in self._default_setter_blacklist
+    def uses_default_set_action(self, name):
+        return name not in self._set_action_blacklist
 
-    def create_property(self, name, default, uses_default_setter=True):
+    def create_property(self, name, default, default_action=True):
         """
         Creates a new property with the given default value.
-        
+
         Raises:
             Exception: If a property with the specified name already exists.
+
+        Args:
+            name: The name of the property.
+            default: The default value for the property.
+            uses_default_setter: If True, the property will use the default setter
+            provided by the runtime. Otherwise, the property will not be synchronized
+            with the runtime.
         """
         if name not in self._properties:
             self._properties[name] = default
@@ -106,10 +115,10 @@ class SSA():
             raise Exception(f"[ERROR] Property `{name}` already exists. \
                     Use `set_property` to change it.")
 
-        if not uses_default_setter:
-            self._default_setter_blacklist.append(name)
+        if not default_action:
+            self._set_action_blacklist.append(name)
 
-    def get_property(self, name):
+    def get_property(self, name, deep_copy=True):
         """
         Retrieves the value of the specified property.
         
@@ -119,6 +128,14 @@ class SSA():
         
         Args:
             name: The name of the property.
+            deep_copy: If True, the method will return a deep copy of the property
+            Setting this to false can be useful when the property is a large object
+            but caution should be taken to avoid unintended side effects and desynchronization
+            with the runtime.
+
+            The diff strategy for dictionary properties will not work if the
+            property is not a deep copy, as the original object will be modified
+            circumventing the setter.
         
         Returns:
             The value associated with the property.
@@ -126,6 +143,9 @@ class SSA():
         if name not in self._properties:
             raise Exception(f"[ERROR] Property `{name}` does not exist. \
                     Create it using `create_property` first.")
+        if deep_copy:
+            return deepcopy(self._properties[name])
+
         return self._properties[name]
 
     async def set_property(self, name, value, use_dict_diff=True, **kwargs):
@@ -147,8 +167,7 @@ class SSA():
                 synchronization operation. Unrecognized arguments are ignored.
         """
         if name not in self._properties:
-            raise Exception(f"[ERROR] Property `{name}` does not exist. \
-                    Create it using `create_property` first.")
+            raise Exception(f"[ERROR] Property `{name}` does not exist. Create it using `create_property` first.")
 
         if type(value) != type(self._properties[name]):
             raise TypeError(f"[ERROR] Property `{name}` must be of type {type(self._properties[name])}")
