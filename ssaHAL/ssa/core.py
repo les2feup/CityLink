@@ -41,6 +41,7 @@ class SSA():
             raise Exception(f"[ERROR] Failed to init SSA instance: {e}") from e
 
         self._properties = {}
+        self._default_setter_blacklist = []
 
     def launch(self, user_main=None):
         """
@@ -62,7 +63,7 @@ class SSA():
         """
         try:
             #TODO: extract this into the config
-            self._nic.connect(retries=5, base_timeout_ms=1000)
+            self._nic.connect(retries=5, base_timeout_ms=2000)
         except Exception as e:
             raise Exception(f"[ERROR] Failed to connect to network: {e}") from e
 
@@ -88,7 +89,10 @@ class SSA():
         """
         return name in self._properties
 
-    def create_property(self, name, default):
+    def uses_default_setter(self, name):
+        return name not in self._default_setter_blacklist
+
+    def create_property(self, name, default, uses_default_setter=True):
         """
         Creates a new property with the given default value.
         
@@ -100,6 +104,9 @@ class SSA():
         else:
             raise Exception(f"[ERROR] Property `{name}` already exists. \
                     Use `set_property` to change it.")
+
+        if not uses_default_setter:
+            self._default_setter_blacklist.append(name)
 
     def get_property(self, name):
         """

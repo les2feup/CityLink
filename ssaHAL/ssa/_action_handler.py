@@ -106,8 +106,9 @@ class ActionHandler():
             try:
                 print(f"[DEBUG] Invoking action handler `{handler.__name__}`")
                 self._ssa.create_task(handler, payload) # Invoke the action handler
+                print(f"[DEBUG] Action task launched, exiting global_handler callback`")
             except Exception as e:
-                print(f"[ERROR] Action callback `{handler.__name__}` failed to execute: {e}")
+                print(f"[ERROR] Action task `{handler.__name__}` failed to launch: {e}")
             return
 
         found = self._find_dedicated_handler(action_uri)
@@ -118,10 +119,11 @@ class ActionHandler():
         try:
             print(f"[DEBUG] Invoking action handler `{handler.__name__}` with kwargs `{kwargs}`")
             self._ssa.create_task(handler, payload, **kwargs) # Invoke the action handler
+            print(f"[DEBUG] Action task launched, exiting global_handler callback`")
         except Exception as e:
             func_name = handler.__name__ if hasattr(handler, "__name__") \
                     else "unknown"
-            print(f"[ERROR] Action callback `{func_name}` with kwargs `{kwargs}` failed to execute: {e}")
+            print(f"[ERROR] Action task `{func_name}` with kwargs `{kwargs}` failed to launch: {e}")
 
     def register_action(self, action_uri, handler_func):
         """
