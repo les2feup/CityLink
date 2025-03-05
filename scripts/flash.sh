@@ -118,9 +118,11 @@ upload_files() {
   info "Uploading required files..."
   mpremote cp -r ./ssaHAL/lib/ : || { error "Failed to copy lib files"; exit 1; }
   mpremote cp -r "$CONFIG_DIR"/ : || { error "Failed to copy configuration files"; exit 1; }
-  mpremote mkdir :ssa || { error "Failed to create directory 'ssa' on device"; exit 1; }
+  
+  # Create remote directories and tolerate errors if they already exist
+  mpremote mkdir :ssa || info "Directory 'ssa' may already exist on device."
   mpremote cp -r "$SSA_DIR/compiled/"* :./ssa/ || { error "Failed to copy SSA compiled files"; exit 1; }
-  mpremote mkdir :ssa_modules || { error "Failed to create directory 'ssa_modules' on device"; exit 1; }
+  mpremote mkdir :ssa_modules || info "Directory 'ssa_modules' may already exist on device."
   mpremote cp -r "$SSA_MODULES_DIR/compiled/"* :./ssa_modules/ || { error "Failed to copy SSA modules compiled files"; exit 1; }
   success "Files uploaded successfully."
 }
@@ -146,7 +148,7 @@ upload_example() {
   if [ -n "$EXAMPLE_FILE" ]; then
     if [ -f "./ssaHAL/examples/$EXAMPLE_FILE" ]; then
       info "Uploading example file '$EXAMPLE_FILE' as user/app.py..."
-      mpremote mkdir :user || true  # Ignore error if directory exists
+      mpremote mkdir :user || info "Directory 'user' may already exist on device."
       mpremote cp ./ssaHAL/examples/"$EXAMPLE_FILE" :user/app.py || { error "Failed to upload example file"; exit 1; }
       success "Example file uploaded successfully."
     else
