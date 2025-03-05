@@ -1,6 +1,7 @@
 from ._config import ConfigLoader
 from ._action_handler import ActionHandler
 from ._actions import firmware_update, property_update
+from ._utils import iterative_dict_diff
 
 from .interfaces import NetworkDriver, SSARuntime
 
@@ -127,17 +128,21 @@ class SSA():
                     Create it using `create_property` first.")
         return self._properties[name]
 
-    async def set_property(self, name, value, **kwargs):
+    async def set_property(self, name, value, use_dict_diff=True, **kwargs):
         """
         Set a property's value and synchronize it with the runtime.
 
         Raises:
             Exception: If the property does not exist. Use `create_property` to
             create it first.
+            TypeError: If the value's type does not match the property's type.
 
         Args:
             name: The name of the property.
             value: The new value for the property.
+            use_dict_diff: If True, the method will attempt to merge the new
+            value with the existing property value using a dictionary diff
+
             **kwargs: Additional keyword arguments to pass to the runtime's
                 synchronization operation. Unrecognized arguments are ignored.
         """
@@ -145,10 +150,18 @@ class SSA():
             raise Exception(f"[ERROR] Property `{name}` does not exist. \
                     Create it using `create_property` first.")
 
-        if not await self._runtime.sync_property(name, value, **kwargs):
-            raise Exception(f"[ERROR] Failed to synchronize property `{name}`.")
+        if type(value) != type(self._properties[name]):
+            raise TypeError(f"[ERROR] Property `{name}` must be of type {type(self._properties[name])}")
 
-        self._properties[name] = value
+        if isinstance(value, dict) and use_dict_diff:
+            diff = iterative_dict_diff(self._properties[name], value)
+            if not await self._runtime.sync_property(name, diff, **kwargs):
+                raise Exception(f"[ERROR] Failed to synchronize property `{name}`.")
+            self._properties[name].update(diff)
+        else:
+            if not await self._runtime.sync_property(name, value, **kwargs):
+                raise Exception(f"[ERROR] Failed to synchronize property `{name}`.")
+            self._properties[name] = value
 
     async def trigger_event(self, name, value, **kwargs):
         """
