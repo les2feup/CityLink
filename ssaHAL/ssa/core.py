@@ -95,7 +95,7 @@ class SSA():
     def uses_default_set_action(self, name):
         return name not in self._set_action_blacklist
 
-    def create_property(self, name, default, default_action=True):
+    def create_property(self, name, default, use_default_action=True):
         """
         Creates a new property with the given default value.
 
@@ -105,17 +105,23 @@ class SSA():
         Args:
             name: The name of the property.
             default: The default value for the property.
-            uses_default_setter: If True, the property will use the default setter
-            provided by the runtime. Otherwise, the property will not be synchronized
-            with the runtime.
+            use_default_action: If True, the property will be available for
+            the default set action provided by the runtime.
+
+            Setting this argument to False will prevent the property from being
+            able to be updated via the default set action, which is accessible at
+            (...)/ssa/set/{property_name}.
+
+            This can be usefull when the property must only be changed internally
+            via the SSA instance or when custom actions are provided to update
+            the property.
         """
         if name not in self._properties:
             self._properties[name] = default
         else:
-            raise Exception(f"[ERROR] Property `{name}` already exists. \
-                    Use `set_property` to change it.")
+            raise Exception(f"[ERROR] Property `{name}` already exists. Use `set_property` to change it.")
 
-        if not default_action:
+        if not use_default_action:
             self._set_action_blacklist.append(name)
 
     def get_property(self, name, deep_copy=True):
@@ -174,6 +180,9 @@ class SSA():
 
         if isinstance(value, dict) and use_dict_diff:
             diff = iterative_dict_diff(self._properties[name], value)
+            if not diff:
+                return
+
             if not await self._runtime.sync_property(name, diff, **kwargs):
                 raise Exception(f"[ERROR] Failed to synchronize property `{name}`.")
             self._properties[name].update(diff)
