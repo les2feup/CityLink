@@ -58,6 +58,7 @@ async def property_update(ssa, value, prop):
 
     if not ssa.uses_default_setter(prop):
         print(f"[ERROR] Property '{prop}' cannot be updated via the default setter.")
+        return
 
     try:
         await ssa.set_property(prop, value)
