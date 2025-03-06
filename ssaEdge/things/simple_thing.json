@@ -3,6 +3,9 @@
     "@type": "tm:ThingModel",
     "title": "simple_example",
     "description": "Example thing with example affordances implemented with the Smart Sensor Actuator HAL to serve as a demo to the SSA framework",
+    "version": {
+        "model": "0.0.1"
+    },
 
     "links" : [{
         "rel": "tm:extends",
@@ -30,6 +33,7 @@
             }]
         }
     },
+
     "actions": {
         "print_action": {
             "description": "A dummy action that just prints the received message to stdout",
@@ -51,6 +55,7 @@
             }]
         }
     },
+
     "events": {
         "random_event":{
             "description": "A randomly triggered event that publishes a string to the event topic",

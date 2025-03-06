@@ -15,78 +15,12 @@
         }
     },
     "security": "nosec_sc",
-    "properties": {
-        "ssa_config": {
-            "title": "SSA HAL Configuration",
-            "description": "Configuration of the Smart Sensor Actuator HAL.",
-            "readOnly": true,
-            "writeOnly": false,
-            "observable": true,
-            "type": "object",
-            "properties": {
-                "self_id": {
-                    "type": "object",
-                    "properties": {
-                        "uuid": {
-                            "type": "string",
-                            "format": "uuid"
-                        },
-                        "model": {
-                            "type": "string",
-                            "default": "{{THING_MODEL}}"
-                        },
-                        "version": {
-                            "type": "object",
-                            "properties": {
-                                "model": {
-                                    "type": "string",
-                                    "format": "semver"
-                                },
-                                "version": {
-                                    "type": "string",
-                                    "format": "semver"
-                                }
-                            }
-                        }
-                    }
-                },
-                "broker": {
-                    "type": "object",
-                    "properties": {
-                        "host": {
-                            "type": "string",
-                            "format": "ipv4"
-                        },
-                        "port": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 65535,
-                            "default": 1883
-                        }
-                    }
-                }
-            },
-            "forms": [
-                {
-                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "{{THING_MODEL}}/{{THING_UUID_V4}}/properties/ssa_hal/config",
-                    "op": [
-                        "readproperty", 
-                        "observeproperty"
-                    ],
-                    "mqv:qos": "1",
-                    "mqv:retain": true,
-                    "contentType": "application/json"
-                }
-            ]
-        }
-    },
     "actions": {
-        "firmware": {
+        "update_firmware": {
             "title": "Update user firmware",
             "description": "Push a firmware update to an SSA device. New update will overwrite existing code (if any) under user/app.py",
             "safe": false,
-            "idempotent": true,
+            "idempotent": false,
             "input": {
                 "type": "object",
                 "properties": {
@@ -98,6 +32,7 @@
                     "crc32": {
                         "type": "string",
                         "description": "crc32 value of the base64 payload with '0x' prefix",
+                        "pattern": "0[x][0-9A-F]{6}",
                         "contentEncoding": "base16"
                     }
                 },
@@ -109,13 +44,41 @@
             "forms": [
                 {
                     "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "{{THING_MODEL}}/{{THING_UUID_V4}}/actions/ssa_hal/firmware",
+                    "mqv:topic": "{{THING_MODEL}}/{{THING_UUID_V4}}/actions/ssa/firmware",
                     "op": "invokeaction",
                     "mqv:qos": "1",
                     "mqv:retain": false,
                     "contentType": "application/json"
                 }
             ]
+        },
+
+        "set_property":{
+            "title": "SSA HAl default set action",
+            "description": "Set the property of an SSA device via the default set action of the HAL.",
+            "safe": true,
+            "idempotent": true,
+            "input": {
+                "type": "string",
+                "contentMediaType": "application/json"
+            },
+            "uriVariables": {
+                "property":{
+                    "description": "name of the property to set",
+                }
+            },
+            "forms": [{
+                "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                "mqv:topic": "{{THING_MODEL}}/{{THING_UUID_V4}}/actions/ssa/set/{property}",
+                "op": "invokeaction",
+                "mqv:qos": "1",
+                "mqv:retain": false,
+                "contentType": "application/json"
+            }]
         }
-    }
+    },
+
+    "tm:optional": [
+        "/actions/set_property"
+    ]
 }
