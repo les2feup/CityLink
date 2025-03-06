@@ -96,7 +96,8 @@ class AsyncioMQTTRuntime(SSARuntime):
 
             try:
                 topic = topic.decode("utf-8")
-                payload = json.loads(payload.decode("utf-8"))
+                if payload:
+                    payload = json.loads(payload.decode("utf-8"))
             except ValueError as e:
                 print(f"[ERROR] Failed to decode MQTT message to JSON: {e}")
                 return
