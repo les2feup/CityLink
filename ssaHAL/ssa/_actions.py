@@ -56,6 +56,10 @@ async def property_update(ssa, value, prop):
         print(f"[ERROR] Property '{prop}' does not exist.")
         return
 
+    if not ssa.uses_default_set_action(prop):
+        print(f"[ERROR] Property '{prop}' cannot be updated via the default setter.")
+        return
+
     try:
         await ssa.set_property(prop, value)
     except Exception as e:

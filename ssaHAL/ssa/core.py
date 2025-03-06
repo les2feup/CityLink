@@ -1,8 +1,11 @@
 from ._config import ConfigLoader
 from ._action_handler import ActionHandler
 from ._actions import firmware_update, property_update
+from ._utils import iterative_dict_diff
 
 from .interfaces import NetworkDriver, SSARuntime
+
+from copy import deepcopy
 
 class SSA():
     """
@@ -41,6 +44,7 @@ class SSA():
             raise Exception(f"[ERROR] Failed to init SSA instance: {e}") from e
 
         self._properties = {}
+        self._set_action_blacklist = []
 
     def launch(self, user_main=None):
         """
@@ -62,7 +66,7 @@ class SSA():
         """
         try:
             #TODO: extract this into the config
-            self._nic.connect(retries=5, base_timeout_ms=1000)
+            self._nic.connect(retries=5, base_timeout_ms=2000)
         except Exception as e:
             raise Exception(f"[ERROR] Failed to connect to network: {e}") from e
 
@@ -88,20 +92,39 @@ class SSA():
         """
         return name in self._properties
 
-    def create_property(self, name, default):
+    def uses_default_set_action(self, name):
+        return name not in self._set_action_blacklist
+
+    def create_property(self, name, default, use_default_action=True):
         """
         Creates a new property with the given default value.
-        
+
         Raises:
             Exception: If a property with the specified name already exists.
+
+        Args:
+            name: The name of the property.
+            default: The default value for the property.
+            use_default_action: If True, the property will be available for
+            the default set action provided by the runtime.
+
+            Setting this argument to False will prevent the property from being
+            able to be updated via the default set action, which is accessible at
+            (...)/ssa/set/{property_name}.
+
+            This can be usefull when the property must only be changed internally
+            via the SSA instance or when custom actions are provided to update
+            the property.
         """
         if name not in self._properties:
             self._properties[name] = default
         else:
-            raise Exception(f"[ERROR] Property `{name}` already exists. \
-                    Use `set_property` to change it.")
+            raise Exception(f"[ERROR] Property `{name}` already exists. Use `set_property` to change it.")
 
-    def get_property(self, name):
+        if not use_default_action:
+            self._set_action_blacklist.append(name)
+
+    def get_property(self, name, deep_copy=True):
         """
         Retrieves the value of the specified property.
         
@@ -111,6 +134,14 @@ class SSA():
         
         Args:
             name: The name of the property.
+            deep_copy: If True, the method will return a deep copy of the property
+            Setting this to false can be useful when the property is a large object
+            but caution should be taken to avoid unintended side effects and desynchronization
+            with the runtime.
+
+            The diff strategy for dictionary properties will not work if the
+            property is not a deep copy, as the original object will be modified
+            circumventing the setter.
         
         Returns:
             The value associated with the property.
@@ -118,30 +149,47 @@ class SSA():
         if name not in self._properties:
             raise Exception(f"[ERROR] Property `{name}` does not exist. \
                     Create it using `create_property` first.")
+        if deep_copy:
+            return deepcopy(self._properties[name])
+
         return self._properties[name]
 
-    async def set_property(self, name, value, **kwargs):
+    async def set_property(self, name, value, use_dict_diff=True, **kwargs):
         """
         Set a property's value and synchronize it with the runtime.
 
         Raises:
             Exception: If the property does not exist. Use `create_property` to
             create it first.
+            TypeError: If the value's type does not match the property's type.
 
         Args:
             name: The name of the property.
             value: The new value for the property.
+            use_dict_diff: If True, the method will attempt to merge the new
+            value with the existing property value using a dictionary diff
+
             **kwargs: Additional keyword arguments to pass to the runtime's
                 synchronization operation. Unrecognized arguments are ignored.
         """
         if name not in self._properties:
-            raise Exception(f"[ERROR] Property `{name}` does not exist. \
-                    Create it using `create_property` first.")
+            raise Exception(f"[ERROR] Property `{name}` does not exist. Create it using `create_property` first.")
 
-        if not await self._runtime.sync_property(name, value, **kwargs):
-            raise Exception(f"[ERROR] Failed to synchronize property `{name}`.")
+        if not isinstance(type(value), type(self._properties[name])):
+            raise TypeError(f"[ERROR] Property `{name}` must be of type {type(self._properties[name])}")
 
-        self._properties[name] = value
+        if isinstance(value, dict) and use_dict_diff:
+            diff = iterative_dict_diff(self._properties[name], value)
+            if not diff:
+                return
+
+            if not await self._runtime.sync_property(name, diff, **kwargs):
+                raise Exception(f"[ERROR] Failed to synchronize property `{name}`.")
+            self._properties[name].update(diff)
+        else:
+            if not await self._runtime.sync_property(name, value, **kwargs):
+                raise Exception(f"[ERROR] Failed to synchronize property `{name}`.")
+            self._properties[name] = value
 
     async def trigger_event(self, name, value, **kwargs):
         """

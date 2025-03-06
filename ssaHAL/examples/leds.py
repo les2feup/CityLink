@@ -117,6 +117,12 @@ def main(ssa: SSA):
     led_strip = [simulated_led.copy() for i in range(N_LEDS)]
     ssa.create_property("led_strip", led_strip)
 
+    # We only want the property to be updated via the actions defined below
+    # So we set use_default_action to False.
+    # If we don't do this, the property can be updated via the default setter
+    # which is accessible at (...)/ssa/set/{property_name}
+    ssa.create_property("led_strip", led_strip, use_default_action=False)
+
     ssa.register_action("led_strip/toggle/{state}", toggle_led_strip)
     ssa.register_action("led_strip/set_color/{color}", set_strip_color)
     ssa.register_action("led_strip/set_brightness/{brightness}", set_strip_brightness)

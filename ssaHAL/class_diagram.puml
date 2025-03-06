@@ -1,0 +1,116 @@
+@startuml
+title Class Diagram for SSA Framework
+
+interface NetworkDriver {
+  - config: dict
+  ---
+  + __init__(config)
+  + connect(retries, base_timeout_ms, **kwargs)
+  + disconnect()
+  + get_ip()
+}
+
+class GenericWLANDriver {
+  - _wlan: WLAN
+  ---
+  + __init__(config)
+  + connect(retries, base_timeout_ms, **kwargs)
+  + disconnect()
+  + get_ip()
+}
+
+interface SSARuntime {
+  - ssa_instance: SSA
+  - id: dict
+  - config: dict
+  - action_handler: callable
+  ---
+  + __init__(ssa_instance, id, config, action_handler)
+  + launch(setup_func)
+  + sync_property(property_name, value, **kwargs)
+  + trigger_event(event_name, payload, **kwargs)
+  + rt_task_create(task_func, *args, **kwargs)
+  + rt_task_sleep_ms(ms)
+  + rt_task_report_status(status)
+}
+
+class AsyncioMQTTRuntime {
+  - _ssa: SSA
+  - _client: MQTTClient
+  - _tasks: list
+  - _action_handler: callable
+  - registration_topic: str
+  - registration_payload: str
+  - base_topic: str
+  - _retries: int
+  - _timeout: int
+  - _clean_session: bool
+  - _action_qos: int
+  ---
+  + __init__(ssa_instance, id, config, action_handler)
+  - _set_global_action_handler(global_handler)
+  - _connect_to_broker()
+  - _main_loop()
+  - _runtime_entry(main)
+  + launch(main)
+  + sync_property(property_name, value, **kwargs)
+  + trigger_event(event_name, payload, **kwargs)
+  + rt_task_create(task_func, *args, **kwargs)
+  + rt_task_sleep_ms(ms)
+  + rt_task_report_status(status)
+}
+
+class SSA {
+  - _action_handler: ActionHandler
+  - _nic: NetworkDriver
+  - _runtime: SSARuntime
+  - _properties: dict
+  - _set_action_blacklist: list
+  ---
+  + __init__(nic_class: NetworkDriver, runtime_class: SSARuntime)
+  + launch(user_main)
+  + has_property(name)
+  + uses_default_set_action(name)
+  + create_property(name, default, use_default_action)
+  + get_property(name, deep_copy)
+  + set_property(name, value, use_dict_diff, **kwargs)
+  + trigger_event(name, value, **kwargs)
+  + register_action(uri_template, callback)
+  + create_task(task, *args, **kwargs)
+}
+
+class ConfigLoader {
+  - files: list
+  ---
+  + __init__(files)
+  + load_config()
+}
+
+class ActDictElement {
+  - callback: callable
+  - node_name: str
+  - children: dict
+  ---
+  + __init__(callback, node_name, children)
+}
+
+class ActionHandler {
+  - _ssa: SSA
+  - actions: dict
+  ---
+  + __init__(ssa_instance)
+  - _find_dedicated_handler(action_uri)
+  + global_handler(action_uri, payload)
+  + register_action(action_uri, handler_func)
+}
+
+NetworkDriver <|-- GenericWLANDriver
+SSARuntime <|-- AsyncioMQTTRuntime
+SSA *-- NetworkDriver
+SSA *-- SSARuntime
+SSA *-- ActionHandler
+SSA *-- ConfigLoader
+SSARuntime *-- SSA
+ActionHandler *-- SSA
+ActionHandler *-- ActDictElement
+@enduml
