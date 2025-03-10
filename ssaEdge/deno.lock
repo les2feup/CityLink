@@ -14,9 +14,15 @@
     "jsr:@std/path@1": "1.0.8",
     "npm:@thingweb/thing-model@*": "1.0.3_ajv@8.17.1",
     "npm:@types/node@*": "22.5.4",
+    "npm:ajv-formats@*": "3.0.1_ajv@8.17.1",
+    "npm:ajv@*": "8.17.1",
+    "npm:debug@*": "4.4.0",
+    "npm:json-placeholder-replacer@*": "2.1.0",
     "npm:mqtt@*": "5.10.3",
     "npm:path-to-regexp@^6.3.0": "6.3.0",
-    "npm:wot-thing-model-types@*": "1.1.0-09-November-2023"
+    "npm:wot-thing-description-types@*": "1.1.0-09-November-2023",
+    "npm:wot-thing-model-types@*": "1.1.0-09-November-2023",
+    "npm:wot-typescript-definitions@*": "0.8.0-SNAPSHOT.29"
   },
   "jsr": {
     "@oak/commons@1.0.0": {

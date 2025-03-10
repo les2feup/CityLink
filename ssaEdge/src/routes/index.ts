@@ -16,5 +16,23 @@ export function createAppRouter(
   // Merge the models routes
   router.use(createTMRouter(hostedModels).routes());
 
+  router.get("/", (ctx) => {
+    ctx.response.type = "text/html";
+    ctx.response.body = `
+      <html>
+        <head>
+          <title>Welcome to the WoT Edge Node Demo</title>
+        </head>
+        <body>
+          <h1>Welcome to the WoT Application</h1>
+          <p>Navigate to:</p>
+          <ul>
+            <li><a href="/things">Things</a></li>
+            <li><a href="/models">Models</a></li>
+          </ul>
+        </body>
+      </html>
+    `;
+  });
   return router;
 }

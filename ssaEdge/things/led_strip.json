@@ -7,13 +7,11 @@
         "model": "0.0.1"
     },
 
-    "links": [
-        {
-            "rel": "tm:extends",
-            "href": "http://www.example.org/base_ssa_thing",
-            "type": "application/tm+json"
-        }
-    ],
+    "links": [{
+        "rel": "tm:extends",
+        "href": "http://10.241.179.95:8080/models/base_ssa_thing",
+        "type": "application/tm+json"
+    }],
 
     "properties": {
         "led_strip": {

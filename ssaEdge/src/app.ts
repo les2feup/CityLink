@@ -2,7 +2,7 @@ import { Application, ThingModel, ThingModelHelpers } from "../deps.ts";
 import { loadAllThingModels } from "./services/thingModelService.ts";
 import { setupMQTT } from "./controllers/mqttController.ts";
 import { createAppRouter} from "./routes/index.ts";
-import { HTTP_PORT } from "./config/config.ts";
+import { HTTP_PORT, HTTP_HOSTNAME } from "./config/config.ts";
 
 export function startApp(): void {
   // Shared state: Map<model, Map<uuid, WoT.ThingDescription>>
@@ -26,5 +26,5 @@ export function startApp(): void {
   app.use(router.allowedMethods());
 
   console.log(`HTTP server listening on port ${HTTP_PORT}`);
-  app.listen({ port: HTTP_PORT });
+  app.listen({ hostname: HTTP_HOSTNAME, port: HTTP_PORT });
 }
