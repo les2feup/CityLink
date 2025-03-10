@@ -2,7 +2,6 @@ import { mqtt, ThingModelHelpers } from "../../deps.ts";
 import { MQTT_BROKER_ADDR } from "../config/config.ts";
 import {
   createThingFromModel,
-  loadThingModel,
 } from "../services/thingModelService.ts";
 
 import type { Buffer } from "../../deps.ts";
@@ -79,11 +78,11 @@ async function handleRegistrationMessage(
   const map = {
     THING_MODEL: payload.model,
     THING_UUID_V4: payload.uuid,
-    MQTT_BROKER_ADDR: "localhost:1883", // Consider using a configuration value here
+    MQTT_BROKER_ADDR: MQTT_BROKER_ADDR,
   };
 
   try {
-    const model = await loadThingModel(payload.model);
+    const model = await tmTools.fetchModel(payload.model);
     const td = await createThingFromModel(tmTools, model, map);
     console.log(`Created TD from model: ${td.title}`);
 

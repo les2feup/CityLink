@@ -1,23 +1,11 @@
 import { Router } from "../../deps.ts";
 
-/**
- * Creates a Router instance with the HTTP routes.
- */
-export function createRouter(
+export function createTDRouter(
   hostedThings: Map<string, Map<string, WoT.ThingDescription>>,
 ): Router {
   const router = new Router();
 
-  router.get("/", (ctx) => {
-    ctx.response.body = `<!DOCTYPE html>
-<html>
-  <head><title>Hello oak!</title></head>
-  <body>
-   <h1>Hello oak!</h1>
-  </body>
-</html>`;
-  });
-
+  // List available Thing models (keys)
   router.get("/things", (ctx) => {
     const models = [...hostedThings.keys()];
     const links = models
@@ -35,6 +23,7 @@ export function createRouter(
     </html>`;
   });
 
+  // List things for a given model
   router.get("/things/:model", (ctx) => {
     const model = ctx.params.model;
     const things = hostedThings.get(model!);
@@ -60,6 +49,7 @@ export function createRouter(
     }
   });
 
+  // Display a specific Thing
   router.get("/things/:model/:uuid", (ctx) => {
     const model = ctx.params.model;
     const uuid = ctx.params.uuid;

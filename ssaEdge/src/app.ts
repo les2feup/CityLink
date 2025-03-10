@@ -1,18 +1,26 @@
-import { Application, ThingModelHelpers } from "../deps.ts";
+import { Application, ThingModel, ThingModelHelpers } from "../deps.ts";
+import { loadAllThingModels } from "./services/thingModelService.ts";
 import { setupMQTT } from "./controllers/mqttController.ts";
-import { createRouter } from "./controllers/httpController.ts";
+import { createAppRouter} from "./routes/index.ts";
 import { HTTP_PORT } from "./config/config.ts";
 
 export function startApp(): void {
   // Shared state: Map<model, Map<uuid, WoT.ThingDescription>>
   const hostedThings = new Map<string, Map<string, WoT.ThingDescription>>();
+  const hostedModels = new Map<string, ThingModel>();
   const tmTools = new ThingModelHelpers();
+
+  loadAllThingModels().then((models) => {
+    for (const [name, model] of models) {
+      hostedModels.set(name, model);
+    }
+  });
 
   // Initialize MQTT handler
   setupMQTT(tmTools, hostedThings);
 
   // Initialize HTTP server
-  const router = createRouter(hostedThings);
+  const router = createAppRouter(hostedThings, hostedModels);
   const app = new Application();
   app.use(router.routes());
   app.use(router.allowedMethods());
