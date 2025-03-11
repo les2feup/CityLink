@@ -2,10 +2,10 @@
 import { Router } from "../../deps.ts";
 import { createTDRouter } from "./tdRoutes.ts";
 import { createTMRouter } from "./tmRoutes.ts";
-import type { ThingModel } from "../../deps.ts";
+import type { ThingModel, ThingDescription} from "../../deps.ts";
 
 export function createAppRouter(
-  hostedThings: Map<string, Map<string, WoT.ThingDescription>>,
+  hostedThings: Map<string, Map<string, ThingDescription>>,
   hostedModels: Map<string, ThingModel>,
 ): Router {
   const router = new Router();

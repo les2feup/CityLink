@@ -1,5 +1,5 @@
 // src/services/thingModelService.ts
-import { assert, ThingModel, ThingModelHelpers } from "../../deps.ts";
+import { assert, ThingModel, ThingModelHelpers, ThingDescription } from "../../deps.ts";
 import { THINGS_DIR } from "../config/config.ts";
 
 import type { CompositionOptions } from "../../deps.ts";
@@ -43,13 +43,13 @@ export async function createThingFromModel(
   tmTools: ThingModelHelpers,
   model: ThingModel,
   map: Record<string, unknown>,
-): Promise<WoT.ThingDescription> {
+): Promise<ThingDescription> {
   const options: CompositionOptions = {
     map,
     selfComposition: false,
   };
   const [thing] = (await tmTools.getPartialTDs(model, options)) as
-    | WoT.ThingDescription[]
+    | ThingDescription[]
     | [];
   return thing;
 }

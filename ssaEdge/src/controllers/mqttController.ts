@@ -6,7 +6,7 @@ import {
 } from "../config/config.ts";
 import { createThingFromModel } from "../services/thingModelService.ts";
 
-import type { Buffer } from "../../deps.ts";
+import type { Buffer, ThingDescription } from "../../deps.ts";
 import type { RegistrationPayload } from "../models/registration.ts";
 
 /**
@@ -14,7 +14,7 @@ import type { RegistrationPayload } from "../models/registration.ts";
  */
 export function setupMQTT(
   tmTools: ThingModelHelpers,
-  hostedThings: Map<string, Map<string, WoT.ThingDescription>>,
+  hostedThings: Map<string, Map<string, ThingDescription>>,
 ): void {
   const client = mqtt.connect(`mqtt://${MQTT_BROKER_ADDR}`);
 
@@ -92,7 +92,7 @@ async function handleRegistrationMessage(
 
     let modelMap = hostedThings.get(payload.model);
     if (!modelMap) {
-      modelMap = new Map<string, WoT.ThingDescription>();
+      modelMap = new Map<string, ThingDescription>();
       hostedThings.set(payload.model, modelMap);
     }
     modelMap.set(payload.uuid, td);
