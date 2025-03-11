@@ -23,7 +23,10 @@ export function setupMQTT(
     client.subscribe("registration/#", (err) => {
       if (err) {
         console.error("Error subscribing to registration topic:", err);
-        Deno.exit(1);
+        // Emit an event or implement a retry mechanism
+        // For example:
+        setTimeout(() => setupMQTT(tmTools, hostedThings), 5000); // Retry after 5 seconds
+        return;
       }
       console.log(
         "Connected to MQTT broker and subscribed to registration topic",
@@ -38,6 +41,7 @@ export function setupMQTT(
   client.on("error", (error: Error) => {
     console.error("MQTT client encountered an error:", error);
   });
+}
 }
 
 async function handleRegistrationMessage(
