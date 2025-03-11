@@ -27,6 +27,7 @@
                     "base64": {
                         "type": "string",
                         "description": "Micropython script developed for the SSA HAL.",
+                        "pattern":"^[-A-Za-z0-9+/]*={0,3}$",
                         "contentEncoding": "base64"
                     },
                     "crc32": {
@@ -34,6 +35,28 @@
                         "description": "crc32 value of the base64 payload with '0x' prefix",
                         "pattern": "0[x][0-9A-F]{6}",
                         "contentEncoding": "base16"
+                    },
+                    "model": {
+                        "type": "string",
+                        "description": "Thing Model that describes the new firmware capabilities.",
+                        "contentMediaType": "text/plain"
+                    },
+                    "version": {
+                        "type": "object",
+                        "properties":{
+                            "model": {
+                                "type": "string",
+                                "description": "Version of the new Thing Model",
+                                "format": "SemVer",
+                                "contentMediaType": "text/plain"
+                            },
+                            "instance": {
+                                "type": "string",
+                                "description": "Version of the firmware instance",
+                                "format": "SemVer",
+                                "contentMediaType": "text/plain"
+                            }
+                        }
                     }
                 },
                 "required": [
@@ -64,7 +87,7 @@
             },
             "uriVariables": {
                 "property":{
-                    "description": "name of the property to set",
+                    "description": "name of the property to set"
                 }
             },
             "forms": [{
@@ -82,3 +105,4 @@
         "/actions/set_property"
     ]
 }
+

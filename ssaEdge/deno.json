@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "dev": "deno run -E -N -S -R --watch main.ts"
+    "dev": "deno run -E -N -S -R --watch src/main.ts"
   },
   "nodeModulesDir": "auto",
   "imports": {

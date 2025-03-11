@@ -147,8 +147,7 @@ class SSA():
             The value associated with the property.
         """
         if name not in self._properties:
-            raise Exception(f"[ERROR] Property `{name}` does not exist. \
-                    Create it using `create_property` first.")
+            raise Exception(f"[ERROR] Property `{name}` does not exist. Create it using `create_property` first.")
         if deep_copy:
             return deepcopy(self._properties[name])
 
@@ -175,8 +174,8 @@ class SSA():
         if name not in self._properties:
             raise Exception(f"[ERROR] Property `{name}` does not exist. Create it using `create_property` first.")
 
-        if not isinstance(type(value), type(self._properties[name])):
-            raise TypeError(f"[ERROR] Property `{name}` must be of type {type(self._properties[name])}")
+        if not isinstance(value, type(self._properties[name])):
+            raise TypeError(f"[ERROR] Property `{name}` must be of type {type(self._properties[name])}. Got {type(value)} instead.")
 
         if isinstance(value, dict) and use_dict_diff:
             diff = iterative_dict_diff(self._properties[name], value)

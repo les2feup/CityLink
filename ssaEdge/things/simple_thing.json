@@ -9,7 +9,7 @@
 
     "links" : [{
         "rel": "tm:extends",
-        "href": "http://www.example.org/base_ssa_thing",
+        "href": "http://{{MODEL_HOST_ADDR}}/models/base_ssa_thing",
         "type": "application/tm+json"
     }],
 

@@ -115,7 +115,6 @@ def main(ssa: SSA):
             "is_on": False
             }
     led_strip = [simulated_led.copy() for i in range(N_LEDS)]
-    ssa.create_property("led_strip", led_strip)
 
     # We only want the property to be updated via the actions defined below
     # So we set use_default_action to False.
