@@ -2,6 +2,7 @@ import { mqtt, ThingModelHelpers } from "../../deps.ts";
 import {
   HTTP_HOSTNAME,
   HTTP_PORT,
+  MODEL_HOST_ADDR,
   MQTT_BROKER_ADDR,
 } from "../config/config.ts";
 import { createThingFromModel } from "../services/thingModelService.ts";
@@ -81,6 +82,7 @@ async function handleRegistrationMessage(
     THING_MODEL: payload.model,
     THING_UUID_V4: payload.uuid,
     MQTT_BROKER_ADDR: MQTT_BROKER_ADDR,
+    MODEL_HOST_ADDR: MODEL_HOST_ADDR,
   };
 
   try {
