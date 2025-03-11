@@ -41,7 +41,7 @@ class AsyncioMQTTRuntime(SSARuntime):
         self._retries = connection_opts.get("retries", 3)
         self._timeout = connection_opts.get("timeout_ms", 2000)
 
-        self.registration_topic = f"/registration/{uuid}"
+        self.registration_topic = f"registration/{uuid}"
         self.registration_payload = json.dumps(id)
 
         self.base_topic = f"{model}/{uuid}"
