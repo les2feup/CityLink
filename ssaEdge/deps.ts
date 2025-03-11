@@ -7,4 +7,4 @@ export type { ThingModel } from "npm:wot-thing-model-types";
 export type { Buffer } from "node:buffer";
 
 export { ThingModelHelpers } from "./eclipe-thingweb/thing-model/src/thing-model.ts";
-export type { CompositionOptions } from "./eclipe-thingweb/thing-model/src/thing-model.ts";
+export type { CompositionOptions } from "./eclipse-thingweb/thing-model/src/thing-model.ts";

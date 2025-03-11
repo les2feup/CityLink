@@ -10,11 +10,16 @@ export function startApp(): void {
   const hostedModels = new Map<string, ThingModel>();
   const tmTools = new ThingModelHelpers();
 
-  loadAllThingModels().then((models) => {
-    for (const [name, model] of models) {
-      hostedModels.set(name, model);
-    }
-  });
+  loadAllThingModels()
+    .then((models) => {
+      for (const [name, model] of models) {
+        hostedModels.set(name, model);
+      }
+      console.log(`Loaded ${models.size} thing models`);
+    })
+    .catch((error) => {
+      console.error(`Failed to load thing models: ${error.message}`);
+    });
 
   // Initialize MQTT handler
   setupMQTT(tmTools, hostedThings);
