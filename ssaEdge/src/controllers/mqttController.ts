@@ -42,7 +42,6 @@ export function setupMQTT(
     console.error("MQTT client encountered an error:", error);
   });
 }
-}
 
 async function handleRegistrationMessage(
   tmTools: ThingModelHelpers,
