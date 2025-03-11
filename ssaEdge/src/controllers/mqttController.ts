@@ -1,7 +1,5 @@
 import { mqtt, ThingModelHelpers } from "../../deps.ts";
 import {
-  HTTP_HOSTNAME,
-  HTTP_PORT,
   MODEL_HOST_ADDR,
   MQTT_BROKER_ADDR,
 } from "../config/config.ts";
@@ -89,8 +87,7 @@ async function handleRegistrationMessage(
   };
 
   try {
-    const model_uri =
-      `http://${HTTP_HOSTNAME}:${HTTP_PORT}/models/${payload.model}`;
+    const model_uri = `http://${MODEL_HOST_ADDR}/models/${payload.model}`;
     const model = await tmTools.fetchModel(model_uri);
     const td = await createThingFromModel(tmTools, model, map);
     console.log(`Created TD from model: ${td.title}`);
@@ -101,7 +98,7 @@ async function handleRegistrationMessage(
       hostedThings.set(payload.model, modelMap);
     }
     modelMap.set(payload.uuid, td);
-    console.log(`Hosted thing registered: ${td.title}`);
+    console.log(`Hosted thing registered: ${td.title}:${td.id}`);
   } catch (error) {
     console.error("Error during Thing creation:", error);
   }

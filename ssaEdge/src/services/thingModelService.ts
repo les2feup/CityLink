@@ -4,7 +4,7 @@ import { THINGS_DIR } from "../config/config.ts";
 
 import type { CompositionOptions } from "../../deps.ts";
 
-async function loadThingModel(filePath: string): Promise<ThingModel> {
+async function loadLocalThingModel(filePath: string): Promise<ThingModel> {
   try {
     const fileContent = await Deno.readTextFile(filePath);
     const thingModel: ThingModel = JSON.parse(fileContent);
@@ -32,7 +32,7 @@ export async function loadAllThingModels(): Promise<Map<string, ThingModel>> {
   for await (const dirEntry of Deno.readDir(THINGS_DIR)) {
     if (dirEntry.isFile && dirEntry.name.endsWith(".json")) {
       const modelName = dirEntry.name.replace(".json", "");
-      const model = await loadThingModel(`${THINGS_DIR}/${dirEntry.name}`);
+      const model = await loadLocalThingModel(`${THINGS_DIR}/${dirEntry.name}`);
       models.set(modelName, model);
     }
   }
@@ -46,7 +46,7 @@ export async function createThingFromModel(
 ): Promise<ThingDescription> {
   const options: CompositionOptions = {
     map,
-    selfComposition: false,
+    selfComposition: true,
   };
   const [thing] = (await tmTools.getPartialTDs(model, options)) as
     | ThingDescription[]
