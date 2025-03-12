@@ -1,0 +1,52 @@
+@startuml
+
+left to right direction
+skinparam nodesep 100
+
+database "Thing Registry" as db {
+    folder "Thing Models" as tms {
+        }
+
+    folder "Thing Descriptions" as tds {
+        }
+}
+
+node "SSA Edge Node" as edgeNode {
+    () "WoT API" as wotProt
+
+    [SSA IoT Connector] as ssaIoT
+    [SSA WoT Proxy] as ssaProxy
+    [Thing Registry Client] as tRClient
+
+    ssaIoT -u-> ssaProxy : updates
+    ssaProxy -d-> ssaIoT : uses
+
+    ssaIoT -u-> tRClient : uses
+
+    ssaProxy -r.> wotProt : expose thing
+}
+
+node "SSA IoT Device" as device {
+    [SSA Runtime] as ssaRt
+    [User Application] as userApp
+
+    [Hardware Drivers] as hwd
+    [Sensors / Actuators] as hw
+
+    hwd -d- hw
+    ssaRt -l- hwd : uses
+    ssaRt -d-> userApp: runs
+    userApp -u-> ssaRt: uses
+}
+
+tRClient -u-> tds : register \nThing Description(s)
+tRClient -u-> tms : fetch Thing Model(s)
+
+ssaProxy -u[hidden]- tms
+wotProt -u[hidden]- tms
+
+ssaRt -u..> ssaIoT : emit events\nupdate properties
+ssaIoT -d..> ssaRt : invoke actions
+ssaIoT -d..> ssaRt : update app code
+
+@enduml
