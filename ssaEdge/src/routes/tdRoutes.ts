@@ -1,7 +1,7 @@
-import { Router } from "../../deps.ts";
+import { Router, ThingDescription } from "../../deps.ts";
 
 export function createTDRouter(
-  hostedThings: Map<string, Map<string, WoT.ThingDescription>>,
+  hostedThings: Map<string, Map<string, ThingDescription>>,
 ): Router {
   const router = new Router();
 

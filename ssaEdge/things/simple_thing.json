@@ -9,7 +9,7 @@
 
     "links" : [{
         "rel": "tm:extends",
-        "href": "http://10.241.179.95:8080/models/base_ssa_thing",
+        "href": "http://127.0.0.1:8080/models/base_ssa_thing",
         "type": "application/tm+json"
     }],
 

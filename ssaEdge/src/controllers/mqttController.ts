@@ -1,12 +1,11 @@
 import { mqtt, ThingModelHelpers } from "../../deps.ts";
 import {
-  HTTP_HOSTNAME,
-  HTTP_PORT,
+  MODEL_HOST_ADDR,
   MQTT_BROKER_ADDR,
 } from "../config/config.ts";
 import { createThingFromModel } from "../services/thingModelService.ts";
 
-import type { Buffer } from "../../deps.ts";
+import type { Buffer, ThingDescription } from "../../deps.ts";
 import type { RegistrationPayload } from "../models/registration.ts";
 
 /**
@@ -14,7 +13,7 @@ import type { RegistrationPayload } from "../models/registration.ts";
  */
 export function setupMQTT(
   tmTools: ThingModelHelpers,
-  hostedThings: Map<string, Map<string, WoT.ThingDescription>>,
+  hostedThings: Map<string, Map<string, ThingDescription>>,
 ): void {
   const client = mqtt.connect(`mqtt://${MQTT_BROKER_ADDR}`);
 
@@ -22,7 +21,10 @@ export function setupMQTT(
     client.subscribe("registration/#", (err) => {
       if (err) {
         console.error("Error subscribing to registration topic:", err);
-        Deno.exit(1);
+        // Emit an event or implement a retry mechanism
+        // For example:
+        setTimeout(() => setupMQTT(tmTools, hostedThings), 5000); // Retry after 5 seconds
+        return;
       }
       console.log(
         "Connected to MQTT broker and subscribed to registration topic",
@@ -81,22 +83,22 @@ async function handleRegistrationMessage(
     THING_MODEL: payload.model,
     THING_UUID_V4: payload.uuid,
     MQTT_BROKER_ADDR: MQTT_BROKER_ADDR,
+    MODEL_HOST_ADDR: MODEL_HOST_ADDR,
   };
 
   try {
-    const model_uri =
-      `http://${HTTP_HOSTNAME}:${HTTP_PORT}/models/${payload.model}`;
+    const model_uri = `http://${MODEL_HOST_ADDR}/models/${payload.model}`;
     const model = await tmTools.fetchModel(model_uri);
     const td = await createThingFromModel(tmTools, model, map);
     console.log(`Created TD from model: ${td.title}`);
 
     let modelMap = hostedThings.get(payload.model);
     if (!modelMap) {
-      modelMap = new Map<string, WoT.ThingDescription>();
+      modelMap = new Map<string, ThingDescription>();
       hostedThings.set(payload.model, modelMap);
     }
     modelMap.set(payload.uuid, td);
-    console.log(`Hosted thing registered: ${td.title}`);
+    console.log(`Hosted thing registered: ${td.title}:${td.id}`);
   } catch (error) {
     console.error("Error during Thing creation:", error);
   }
