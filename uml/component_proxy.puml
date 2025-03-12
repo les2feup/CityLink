@@ -3,6 +3,8 @@
 left to right direction
 skinparam nodesep 100
 
+() "\t\tWoT API" as wotProt
+
 database "Thing Registry" as db {
     folder "Thing Models" as tms {
         }
@@ -11,17 +13,21 @@ database "Thing Registry" as db {
         }
 }
 
+database "App Registry" as appDB {
+}
+
 node "SSA Edge Node" as edgeNode {
-    () "WoT API" as wotProt
 
     [SSA IoT Connector] as ssaIoT
     [SSA WoT Proxy] as ssaProxy
     [Thing Registry Client] as tRClient
 
+
     ssaIoT -u-> ssaProxy : updates
     ssaProxy -d-> ssaIoT : uses
 
     ssaIoT -u-> tRClient : uses
+    ssaIoT -r- appDB : fetch app code
 
     ssaProxy -r.> wotProt : expose thing
 }
@@ -43,7 +49,6 @@ tRClient -u-> tds : register \nThing Description(s)
 tRClient -u-> tms : fetch Thing Model(s)
 
 ssaProxy -u[hidden]- tms
-wotProt -u[hidden]- tms
 
 ssaRt -u..> ssaIoT : emit events\nupdate properties
 ssaIoT -d..> ssaRt : invoke actions

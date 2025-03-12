@@ -1,0 +1,34 @@
+@startuml
+actor "SSA IoT Device" as Device
+participant "SSA Edge Node" as Edge
+database "Thing Registry" as ThingRegistry
+database "App Registry" as AppRegistry
+
+Device -> Device: Boot & load configuration parameters
+Device -> Device: Connect to IoT Network & SSA Edge Node
+Device -> Edge: Send registration message
+activate Edge
+
+Edge -> ThingRegistry: Fetch Thing Model (TM)
+ThingRegistry --> Edge: Return TM
+
+Edge -> AppRegistry: Fetch user application code (app)
+AppRegistry --> Edge: Return app code
+
+Edge -> Edge: Process registration and instantiate new Thing Description (TD)
+Edge --> Device: Send app code
+
+Edge -> ThingRegistry: Register new Thing Description (TD)
+ThingRegistry --> Edge: Confirmation
+
+Edge -> Edge: Expose new TD via WoT API
+
+deactivate Edge
+
+Device -> Device: Start operation loop\n(Listen for config/app code updates)
+
+== Ongoing Operation ==
+Device -> Edge: Emit events / update properties
+Edge -> Device: Invoke actions / update app code
+@enduml
+
