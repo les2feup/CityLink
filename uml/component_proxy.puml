@@ -1,0 +1,62 @@
+@startuml
+left to right direction
+
+skinparam nodesep 80
+
+() HTTP
+() "SSA DB API" as db
+() "SSA Proxy Protocol" as proxyProt
+() "SSA Connector Protocol" as conProt
+
+node "SSA Edge Node" as edgeNode {
+    [SSA IoT Connector] as ssaIoT
+    [SSA IoT Proxy] as ssaProxy
+    [SSA Server] as ssaServ
+
+    ssaIoT -r[hidden]. ssaProxy
+    ssaIoT -l-> ssaServ
+    ssaServ -> ssaIoT
+}
+
+node "IoT Device" as device {
+    [SSA Firmware] as ssaFW
+    [User Application] as userApp
+
+    [Hardware Drivers] as hwd
+    [Sensors / Actuators] as hw
+
+    hwd -d- hw
+    ssaFW -l- hwd : uses
+    ssaFW -d-> userApp: runs
+    userApp -u-> ssaFW: uses
+}
+
+ssaServ -u. db : fetch Thing Model(s)\nregister Thing Description(s)\nfetch User Code
+ssaServ -u. HTTP : expose Thing\nDescription(s)
+ssaIoT -d. conProt : configure device\nupload user code
+ssaFW -u. conProt : receive updates\nconnect to server
+ssaFW -u. proxyProt: provide affordances
+ssaProxy -. proxyProt: proxy device affordances
+ssaProxy -u. HTTP: provide device affordances
+
+proxyProt -r[hidden]. conProt
+
+note as N
+    In **Proxy Mode**, the SSA Edge Node hosts a replica of the state
+    of the IoT device affordances that it exposes via the node's
+    web api.
+    The **SSA Proxy protocol** is usefull when the IoT Device's
+    communication stack does not adequatelly translate to the
+    W3C WoT's information model. Or when an HTTP API for the thing's
+    is affordances is desirable.
+
+    This diagram assumes that compatible implementations
+    of the SSA Connector Protocol and SSA Proxy Protocol
+    are deployed on the edge node and the iot device.
+end note
+
+N -l[hidden]. proxyProt
+N -l[hidden]. conProt
+
+@enduml
+
