@@ -68,6 +68,7 @@
             deno # dev tools and runtime
 
             doxygen # documentation generator
+            plantuml # uml diagram generator
 
             python312Packages.astor # For clean.py script
             python312Packages.typing-extensions
