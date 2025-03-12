@@ -4,14 +4,16 @@ left to right direction
 skinparam nodesep 100
 
 () HTTP
-() "Service Protocol" as servProt
-() "Connector Protocol" as conProt
+() "SSA DB API" as db
+() "WoT Affordance Protocol" as affProt
+() "SSA Connector Protocol" as conProt
 
 node "SSA Edge Node" as edgeNode {
     [SSA IoT Connector] as iotCon
-    [WoT Servient] as servient
+    [SSA server] as server
 
-    iotCon -l-> servient: register device
+    iotCon -l-> server
+    server -> iotCon
 }
 
 node "IoT Device" as device {
@@ -27,23 +29,26 @@ node "IoT Device" as device {
     userApp -u-> ssaFW: uses
 }
 
-servient -u. HTTP : expose thing(s)
-iotCon -d. conProt : configure device
-iotCon -d. conProt : upload user code
-ssaFW -u. conProt : receive updates
-ssaFW -u. conProt : register in network
-ssaFW -u. servProt: provide services
+server -u. db : fetch Thing Model(s)\nregister Thing Description(s)\nfetch User Code
+server -u. HTTP : expose Thing\nDescription(s)
+iotCon -d. conProt : configure device\nupload user code
+ssaFW -u. conProt : receive updates\nconnect to server
+ssaFW -u. affProt: provide affordances
 
-conProt -r[hidden]. servProt
+conProt -r[hidden]. affProt
 
 note as N
-    Connector and Service Protocol
-    represent IoT communication
-    tecnhologies and may be the same.
-    - MQTT, CoAP, LoRaWAN, etc
+    The **SSA Connector Protocol** and the **WoT Connector**
+    **Protocol** represent IoT communication tecnhologies.
+    Depending on the platform, both protocols may or may
+    not be implemented on top of the same communication
+    stack.
+    This diagram assumes that compatible implementations
+    of the SSA Connector Protocol are deployed on the
+    edge node and iot devices.
 end note
 
-N -l[hidden]. servProt
+N -l[hidden]. affProt
 N -l[hidden]. conProt
 
 @enduml
