@@ -1,52 +1,50 @@
 @startuml
 left to right direction
 
-skinparam linetype ortho
-skinparam nodesep 30
+skinparam nodesep 100
 
 () HTTP
-() "Communication Protocol" as iotProt
+() "Service Protocol" as servProt
+() "Connector Protocol" as conProt
 
 node "SSA Edge Node" as edgeNode {
-    () "IoT Network Interface" as nodeNet
-
-    [SSA IoT Connector] as con
+    [SSA IoT Connector] as iotCon
     [WoT Servient] as servient
 
-    con -u- nodeNet
-    con -r- servient
-
-    servient -d..> HTTP : expose managed things
+    iotCon -l-> servient: register device
 }
 
-node "IoT Device" {
-    () "IoT Network Interface" as iotNet
+node "IoT Device" as device {
+    [SSA Firmware] as ssaFW
+    [User Application] as userApp
 
-    frame "SSA Runtime" as ssaRuntime {
-        [SSA API] as ssaApi
-        [User Application] as userApp
+    [Hardware Drivers] as hwd
+    [Sensors / Actuators] as hw
 
-        userApp -left..> ssaApi : use
-        ssaApi -d- iotNet
-    }
-
-    [hardware drivers] as hwd
-    ssaRuntime -d- hwd
+    hwd -d- hw
+    ssaFW -l- hwd : uses
+    ssaFW -d-> userApp: runs
+    userApp -u-> ssaFW: uses
 }
 
-nodeNet -up.. iotProt: use
-iotNet -down.. iotProt: use
+servient -u. HTTP : expose thing(s)
+iotCon -d. conProt : configure device
+iotCon -d. conProt : upload user code
+ssaFW -u. conProt : receive updates
+ssaFW -u. conProt : register in network
+ssaFW -u. servProt: provide services
+
+conProt -r[hidden]. servProt
 
 note as N
-    Both the SSA Iot Connector
-    and SSA Runtime instances
-    must be compatible.
-    That is, they must support
-    the same communication
-    protocol and network.
+    Connector and Service Protocol
+    represent IoT communication
+    tecnhologies and may be the same.
+    - MQTT, CoAP, LoRaWAN, etc
 end note
 
-N -r- iotProt
+N -l[hidden]. servProt
+N -l[hidden]. conProt
 
 @enduml
 
