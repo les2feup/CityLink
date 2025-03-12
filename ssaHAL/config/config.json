@@ -6,7 +6,7 @@
     },
     "runtime":{
         "broker": {
-            "addr": "10.110.143.175",
+            "addr": "192.168.1.26",
             "port": 1883
         },
         "connection":{
