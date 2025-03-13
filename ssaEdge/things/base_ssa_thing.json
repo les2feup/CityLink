@@ -3,12 +3,12 @@
         "https://www.w3.org/2022/wot/td/v1.1"
     ],
     "@type": "tm:ThingModel",
-    "title": "base_ssa_thing",
+    "title": "ssa_core",
     "version": {
         "model": "0.0.1"
     },
     "id": "urn:uuid:{{THING_UUID_V4}}",
-    "description": "Base SSA Thing Model. Describes only the core functionality of the Smart Sensor Actuator HAL.",
+    "description": "SSA Thing Model. Describes only the core functionality of the Smart Sensor Actuator Runtime.",
     "securityDefinitions": {
         "nosec_sc": {
             "scheme": "nosec"
@@ -24,11 +24,9 @@
             "input": {
                 "type": "object",
                 "properties": {
-                    "base64": {
+                    "script": {
                         "type": "string",
                         "description": "Micropython script developed for the SSA HAL.",
-                        "pattern":"^[-A-Za-z0-9+/]*={0,3}$",
-                        "contentEncoding": "base64"
                     },
                     "crc32": {
                         "type": "string",
@@ -48,13 +46,11 @@
                                 "type": "string",
                                 "description": "Version of the new Thing Model",
                                 "format": "SemVer",
-                                "contentMediaType": "text/plain"
                             },
                             "instance": {
                                 "type": "string",
                                 "description": "Version of the firmware instance",
                                 "format": "SemVer",
-                                "contentMediaType": "text/plain"
                             }
                         }
                     }
@@ -67,11 +63,11 @@
             "forms": [
                 {
                     "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "{{THING_MODEL}}/{{THING_UUID_V4}}/actions/ssa/firmware",
+                    "mqv:topic": "ssa_core/{{THING_UUID_V4}}/update_firmware",
                     "op": "invokeaction",
                     "mqv:qos": "1",
                     "mqv:retain": false,
-                    "contentType": "application/json"
+                    "contentType": "application/vnd.msgpack"
                 }
             ]
         },
@@ -82,21 +78,17 @@
             "safe": true,
             "idempotent": true,
             "input": {
-                "type": "string",
-                "contentMediaType": "application/json"
+                "type": "object",
+                "contentMediaType": "application/vnd.msgpack"
             },
-            "uriVariables": {
-                "property":{
-                    "description": "name of the property to set"
-                }
-            },
+
             "forms": [{
                 "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                "mqv:topic": "{{THING_MODEL}}/{{THING_UUID_V4}}/actions/ssa/set/{property}",
+                "mqv:topic": "ssa_core/{{THING_UUID_V4}}/set_property",
                 "op": "invokeaction",
                 "mqv:qos": "1",
                 "mqv:retain": false,
-                "contentType": "application/json"
+                "contentType": "application/vnd.msgpack"
             }]
         }
     },

@@ -1,7 +1,4 @@
-import os
-import binascii
-
-async def firmware_update(_ssa, update):
+async def firmware_update(update):
     """
     Asynchronously updates the device firmware from a JSON update package.
     
@@ -17,26 +14,27 @@ async def firmware_update(_ssa, update):
         _ssa: Device state or configuration object (unused in current implementation).
         update: dictionary with keys "base64" for the firmware data and "crc32" for the expected checksum.
     """
-    print(f"[INFO] Firmware update received with size {len(str(update))}")
+    from binascii import crc32
+    from os import mkdir, listdir
+    from machine import soft_reset
 
-    binary = binascii.a2b_base64(update["base64"])
+    script = update["script"]
     expected_crc = int(update["crc32"], 16)
-    bin_crc = binascii.crc32(binary)
+    script_crc = crc32(script)
 
-    if bin_crc != expected_crc:
+    if script_crc != expected_crc:
         print(f"[ERROR] CRC32 mismatch: expected:{hex(expected_crc)}, \
-                got {hex(bin_crc)} Firmware update failed.")
+                got {hex(script_crc)} Firmware update failed.")
         return
 
-    if "user" not in os.listdir():
-        os.mkdir("user")
+    if "user" not in listdir():
+        mkdir("user")
 
     print("[INFO] Writing firmware to device")
     with open("user/app.py", "w") as f:
-        f.write(binary.decode("utf-8"))
+        f.write(script)
 
     print("[INFO] Firmware write complete. Restarting device.")
-    from machine import soft_reset
     soft_reset()
 
 async def property_update(ssa, value, prop):

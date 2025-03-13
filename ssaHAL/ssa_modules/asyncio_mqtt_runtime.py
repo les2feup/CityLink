@@ -1,10 +1,11 @@
 import json
 import asyncio
+import umsgpack
 from ssa.interfaces import SSARuntime
 from umqtt.simple import MQTTClient 
 
 class AsyncioMQTTRuntime(SSARuntime):
-    def __init__(self, ssa_instance, id, config, action_handler):
+    def __init__(self, config):
         """
         Initialize an AsyncioMQTTRuntime instance with validated identity and connection settings.
         
@@ -15,15 +16,16 @@ class AsyncioMQTTRuntime(SSARuntime):
         such as retries and timeout. It initializes MQTT topics for registration and base operations, sets up an MQTT client
         with the specified broker address, port, and credentials, and configures a last will message if provided.
         """
+        self._tasks = {}
 
-        assert isinstance(id, dict), "ID configuration should be a dictionary"
+        assert isinstance(config, dict), "ID configuration should be a dictionary"
 
-        uuid = id.get("uuid")
-        model = id.get("model")
+        self.id = config.get("id")
+        self.model = config.get("model")
         assert isinstance(uuid, str), "UUID should be a string"
         assert isinstance(model, str), "Model should be a string" 
 
-        version = id.get("version")
+        self.version = config.get("version")
         assert isinstance(version, dict), "Version should be a dictionary"
         assert isinstance(version.get("instance"), str), "instance version not found"
         assert isinstance(version.get("model"), str), "model version not found"
@@ -41,10 +43,6 @@ class AsyncioMQTTRuntime(SSARuntime):
         self._retries = connection_opts.get("retries", 3)
         self._timeout = connection_opts.get("timeout_ms", 2000)
 
-        self.registration_topic = f"registration/{uuid}"
-        self.registration_payload = json.dumps(id)
-
-        self.base_topic = f"{model}/{uuid}"
         self._client = MQTTClient(uuid,
                                   broker_addr,
                                   broker.get("port", 0),
@@ -70,48 +68,6 @@ class AsyncioMQTTRuntime(SSARuntime):
             topic = f"{self.base_topic}/last_will"
             self._client.set_last_will(topic, lw_msg, lw_retain, lw_qos)
 
-        assert ssa_instance is not None, "SSA instance should not be None"
-        self._ssa= ssa_instance
-        self._tasks = []
-
-        assert action_handler is not None, "Action handler should not be None"
-        self._set_global_action_handler(action_handler)
-
-    def _set_global_action_handler(self, global_handler):
-        base_action_topic = f"{self.base_topic}/actions"
-        print(f"[INFO] Setting global action handler for topic: {base_action_topic}")
-
-        def handler_wrapper(topic: bytes, payload: bytes):
-            """
-            Wrapper function to handle incoming MQTT messages.
-            
-            This function is invoked by the MQTT client when a message is received.
-            It decodes the topic and payload, then forwards the message to the global
-            action handler for processing.
-            
-            Args:
-                topic: The MQTT topic where the message was received.
-                payload: The message payload as a byte string.
-            """
-
-            try:
-                topic = topic.decode("utf-8")
-                if payload:
-                    payload = json.loads(payload.decode("utf-8"))
-            except ValueError as e:
-                print(f"[ERROR] Failed to decode MQTT message to JSON: {e}")
-                return
-            except Exception as e:
-                print(f"[ERROR] Failed to decode MQTT message to utf-8: {e}")
-                return
-
-            print(f"[DEBUG] Decoded MQTT message: {topic} - {payload}")
-
-            # subtract the base topic from the topic
-            action_uri = topic[len(base_action_topic) + 1:]
-            global_handler(action_uri, payload)
-
-        self._action_handler = handler_wrapper
 
     async def _connect_to_broker(self):
         """
@@ -134,6 +90,9 @@ class AsyncioMQTTRuntime(SSARuntime):
 
         raise Exception(f"[ERROR] Failed to connect to broker after {self._retries} retries")
 
+    def _action_handler(self):
+        pass
+
     async def _main_loop(self):
         """
         Runs the main MQTT loop to process incoming messages and execute tasks.
@@ -144,7 +103,7 @@ class AsyncioMQTTRuntime(SSARuntime):
         messages and yields briefly to allow task execution.
         """
         self._client.set_callback(self._action_handler)
-        self._client.subscribe(f"{self.base_topic}/actions/#")
+        self._client.subscribe(f"ssa_core/{self.id}/fw", qos=1)
         self._client.publish(self.registration_topic,
                              self.registration_payload,
                              qos=1,
@@ -219,7 +178,7 @@ class AsyncioMQTTRuntime(SSARuntime):
 
         print("[INFO] Runtime exited.")
 
-    async def sync_property(self, property_name, value, qos=0, retain=False, **_):
+    async def sync_property(self, prop_name, prop_value, qos=1, retain=True, **_):
         """Synchronizes a property with the WoT servient.
         Publishes the given property value as a JSON payload to an MQTT topic derived from
         the base topic and the property name. Returns True if the publication is successful;
@@ -235,16 +194,15 @@ class AsyncioMQTTRuntime(SSARuntime):
         Returns:
             bool: True if the property was successfully synchronized, False otherwise.
         """
-
         try:
-            topic = f"{self.base_topic}/properties/{property_name}"
-            self._client.publish(topic, json.dumps(value), retain, qos)
+            topic = f"{self.base_topic}/properties/{prop_name}"
+            self._client.publish(topic, json.dumps(prop_value), retain, qos)
         except Exception as e:
-            print(f"[WARNING] Failed to sync property '{property_name}': {e}")
+            print(f"[WARNING] Failed to sync property '{prop_name}': {e}")
             return False
         return True
 
-    async def trigger_event(self, event_name, payload, qos=0, retain=False, **_):
+    async def emit_event(self, event_name, event_data, qos=1, retain=True, **_):
         """
         Triggers an event by publishing the payload to the appropriate MQTT topic.
 
@@ -264,13 +222,13 @@ class AsyncioMQTTRuntime(SSARuntime):
         """
         try:
             topic = f"{self.base_topic}/events/{event_name}"
-            self._client.publish(topic, json.dumps(payload), retain, qos)
+            self._client.publish(topic, json.dumps(event_data), retain, qos)
         except Exception as e:
             print(f"[WARNING] Failed to trigger event '{event_name}': {e}")
             return False
         return True
 
-    def rt_task_create(self, task_func, *args, **kwargs):
+    def rt_task_create(self, task_name, task_func):
         """
         Creates and schedules an asynchronous task for the runtime.
 
@@ -290,18 +248,15 @@ class AsyncioMQTTRuntime(SSARuntime):
             if it raises an exception, a warning is printed.
             In all cases, the task is removed from the internal tasks list upon completion.
             """
-            task_name = "unknown" if not hasattr(task_func, "__name__") else task_func.__name__
             try:
-                print(f"[INFO] Starting task '{task_name}' with args: {args}, kwargs: {kwargs}")
-                await task_func(self._ssa, *args, **kwargs)
+                await task_func()
                 print(f"[INFO] Task '{task_name}' finished executing.")
             except Exception as e:
                 print(f"[WARNING] Task '{task_name}' failed: {e}")
             finally:
-                if task_func in self._tasks:
-                    self._tasks.remove(task_func)
-
-        self._tasks.append(asyncio.create_task(wrapped_task()))
+                del self._tasks[task_name]
+                
+        self._tasks[task_name] = asyncio.create_task(wrapped_task())
 
     async def rt_task_sleep_ms(self, ms):
         await asyncio.sleep_ms(ms)

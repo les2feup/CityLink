@@ -1,5 +1,6 @@
 """! Simple example app demonstrating the use of the Smart Sensor Actuator Hardware Abstraction Layer."""
 import random
+import micropython
 from ssa import SSA, ssa_task, ssa_main
 
 @ssa_task(2000)
