@@ -5,8 +5,6 @@ from ._utils import iterative_dict_diff
 
 from .interfaces import NetworkDriver, SSARuntime
 
-from copy import deepcopy
-
 class SSA():
     """
     The SSA class is the main class for the Smart Sensor Actuator framework
@@ -148,8 +146,6 @@ class SSA():
         """
         if name not in self._properties:
             raise Exception(f"[ERROR] Property `{name}` does not exist. Create it using `create_property` first.")
-        if deep_copy:
-            return deepcopy(self._properties[name])
 
         return self._properties[name]
 
