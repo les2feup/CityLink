@@ -1,10 +1,8 @@
-import json
-import asyncio
-import umsgpack
-from ssa.interfaces import SSARuntime
-from umqtt.simple import MQTTClient 
 
-class AsyncioMQTTRuntime(SSARuntime):
+from ssa.interfaces import SSARuntime
+
+class uMQTTRuntime(SSARuntime):
+
     def __init__(self, config):
         """
         Initialize an AsyncioMQTTRuntime instance with validated identity and connection settings.
@@ -16,9 +14,8 @@ class AsyncioMQTTRuntime(SSARuntime):
         such as retries and timeout. It initializes MQTT topics for registration and base operations, sets up an MQTT client
         with the specified broker address, port, and credentials, and configures a last will message if provided.
         """
+        super().__init__(config)
         self._tasks = {}
-
-        assert isinstance(config, dict), "ID configuration should be a dictionary"
 
         self.id = config.get("id")
         self.model = config.get("model")
@@ -48,11 +45,10 @@ class AsyncioMQTTRuntime(SSARuntime):
                                   broker.get("port", 0),
                                   broker.get("user"),
                                   broker.get("password"),
-                                  broker.get("keepalive", 0),
+                                  broker.get("keepalive", 10),
                                   broker.get("ssl"))
 
         self._clean_session = config.get("clean_session", True)
-        self._action_qos = config.get("action_qos", 1)
 
         last_will = config.get("last_will")
         if last_will is not None:
@@ -68,6 +64,21 @@ class AsyncioMQTTRuntime(SSARuntime):
             topic = f"{self.base_topic}/last_will"
             self._client.set_last_will(topic, lw_msg, lw_retain, lw_qos)
 
+    # SSAConnector methods
+    async def connect(self, retries, base_timeout_ms):
+        async def connect_wlan():
+
+
+        async def connect_to_broker():
+            print("[INFO] Attempting to connect to broker")
+            self._client.connect(self._clean_session, self._timeout)
+            return
+
+
+    async def disconnect(self):...
+
+    async def register_device(self):...
+    async def model_update_handler(self, model):...
 
     async def _connect_to_broker(self):
         """

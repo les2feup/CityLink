@@ -202,7 +202,7 @@ class SSA():
             The result from the runtime's trigger_event operation, allowing the caller
             to handle any potential failures.
         """
-        return await self._runtime.trigger_event(name, value, **kwargs)
+        return await self._runtime.emit_event(name, value, **kwargs)
 
     def register_action(self, uri_template: str, callback):
         """

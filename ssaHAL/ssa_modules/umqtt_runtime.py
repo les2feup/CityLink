@@ -1,13 +1,52 @@
-class SSAConnector:
-    """Base class defining the SSAConnector interface."""
+from ssa.interfaces import SSARuntime
+
+from umqtt.simple import MQTTClient
+from micropython import const
+
+import asyncio
+import umsgpack
+
+REGISTRATION_TOPIC = const("ssa_core/register")
+
+async def _with_exponential_backoff(func, retries, base_timeout_ms):
+    for i in range(retries):
+        retry_timeout = base_timeout_ms * (2 ** i)
+        print(f"[INFO] Trying {func.__name__} (attempt {i + 1}/{retries})")
+        try:
+            return await func()
+        except Exception as e:
+            print(f"[ERROR] {func.__name__} failed: {e}, retrying in {retry_timeout} milliseconds")
+            await asyncio.sleep_ms(retry_timeout)
+
+    raise Exception(f"[ERROR] {func.__name__} failed after {retries} retries")
+
+class uMQTTRuntime(SSARuntime):
 
     def __init__(self, config):
-        """Initialize the SSAConnector base class."""
-        raise NotImplementedError("Subclasses must implement __init__")
+        super().__init__(config)
+
+        runtime_config = config["runtime"]
+        self._mqtt = MQTTClient(
+            client_id=runtime_config.get("client_id"),
+            server=runtime_config["broker_addr"],
+            user=runtime_config.get("username"),
+            password=runtime_config.get("password"),
+            keepalive=runtime_config.get("keepalive", 60),
+            ssl=runtime_config.get("ssl"))
+
+    ######## SSAConnector interface methods ######## 
 
     async def connect(self, retries, base_timeout_ms):
         """Attempt to the Edge Node's SSA IoT Connector"""
-        raise NotImplementedError("Subclasses must implement connect()")
+        ... # connect WLAN
+
+        mqtt_timeout = self.config["runtime"].get("mqtt_timeout", 10)
+        cleanup_session = self.config["runtime"].get("clean_session", True)
+
+        await _with_exponential_backoff(self._mqtt.connect(clean_session, mqtt_timeout),
+                                        retries, base_timeout_ms)
+
+
 
     async def disconnect(self):
         """Disconnect from the network."""
@@ -21,46 +60,7 @@ class SSAConnector:
         """Handle updates to the device model."""
         raise NotImplementedError("Subclasses must implement model_update_handler()")
 
-
-class SSARuntime(SSAConnector):
-    """Base class defining the SSARuntime interface."""
-    def __init__(self, config):
-        """Initialize SSARuntime with a required configuration dictionary."""
-        self.tasks = {}  # This ensures all implementors will have a tasks attribute
-        self.config = config  # This ensures all implementors will have a config attribute
-
-        config_template = {
-                "connector": dict,
-                "runtime": dict,
-                "tm": {
-                    "name": str,
-                    "version": {
-                        "model": str,
-                        "instance": str
-                        }
-                    }
-                }
-
-        def validate_configuration(template, provided, path="config"):
-            if not isinstance(provided, dict):
-                raise ValueError(f"{path} must be a dictionary")
-
-            for key, expected_type in template.items():
-                if key not in provided:
-                    raise ValueError(f"Missing required key: {path}['{key}']")
-
-                if isinstance(expected_type, dict):
-                    validate_configuration(expected_type,
-                                           provided[key],
-                                           f"{path}['{key}']")
-
-                elif not isinstance(provided[key], expected_type):
-                    raise TypeError(
-                    f"Expected {path}['{key}'] to be {expected_type.__name__}, "
-                    f"but got {type(provided[key]).__name__}"
-                )
-
-        validate_configuration(config_template, config)
+    ######## SSARuntime interface methods ######## 
 
     def launch(self, extra_init_func=None):
         """Launch the runtime."""

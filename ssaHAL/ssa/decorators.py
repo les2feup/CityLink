@@ -2,7 +2,7 @@ import time
 import asyncio
 
 from .core import SSA
-from ssa_modules import AsyncioMQTTRuntime, GenericWLANDriver
+from ssa_modules import uMQTTRuntime, GenericWLANDriver
 
 def ssa_task(period_ms: int = 0):
     """
@@ -56,7 +56,7 @@ def ssa_task(period_ms: int = 0):
     return decorator
 
 def ssa_main(nic_class = GenericWLANDriver,
-             runtime_class = AsyncioMQTTRuntime):
+             runtime_class = uMQTTRuntime):
     """Wraps the main function with an SSA instance launcher.
              
              This decorator instantiates an SSA object using the provided network interface
