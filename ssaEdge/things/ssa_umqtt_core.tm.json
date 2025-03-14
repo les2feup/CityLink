@@ -1,0 +1,119 @@
+{
+    "@context": [
+        "https://www.w3.org/2022/wot/td/v1.1"
+    ],
+    "@type": "tm:ThingModel",
+    "title": "ssa_umqtt_core",
+    "version": {
+        "model": "0.1.0"
+    },
+
+    "description": "Models the core functionality of the SSA uMQTT runtime, an ssa runtime implemented using micropython that uses MQTT as the underlying communication protocol.",
+
+    "links" : [{
+        "rel": "tm:extends",
+        "href": "http://127.0.0.1:8080/models/ssa_core.tm",
+        "type": "application/tm+json"
+    }],
+
+    "properties": {
+        "coreStatus": {
+            "observable": true,
+            "forms": [{
+                "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                "mqv:topic": "ssa_umqtt_core/{{THING_UUID_V4}}/status",
+                "op": [
+                    "readproperty",
+                    "observeproperty",
+                    "unobserveproperty"
+                ],
+                "mqv:qos": 1,
+                "mqv:retain": true,
+                "contentType": "application/vnd.msgpack"
+            }]
+        },
+
+        "coreVFSActionResult": {
+            "title": "Core VFS Action Result",
+            "description": "Result of the last (Virtual) File System action.",
+
+            "observable": true,
+            "readOnly": true,
+            "writeOnly": false,
+
+            "type": "object",
+            "properties": {
+                "last": {
+                    "type": "string",
+                    "title": "Last Action Performed",
+                    "description": "The last action performed on the (Virtual) File System.",
+                    "enum": [
+                        "write",
+                        "delete"
+                    ]
+                },
+                "result": {
+                    "type": "string",
+                    "title": "Result",
+                    "description": "Result of the last action performed on the (Virtual) File System.",
+                    "enum": [
+                        "success",
+                        "error"
+                    ]
+                },
+                "message": {
+                    "type": "string",
+                    "title": "Message",
+                    "description": "Message associated with the last action performed on the (Virtual) File System."
+                },
+                "timestamp": {
+                    "type": "string",
+                    "title": "Timestamp",
+                    "description": "Timestamp of the last action performed on the (Virtual) File System."
+                }
+            },
+
+            "required": ["last", "result", "timestamp"],
+
+            "forms": [{
+                "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                "mqv:topic": "ssa_umqtt_core/{{THING_UUID_V4}}/vfs/result",
+                "op": [
+                    "readproperty",
+                    "observeproperty",
+                    "unobserveproperty"
+                ],
+                "mqv:qos": 1,
+                "mqv:retain": true,
+                "contentType": "application/vnd.msgpack"
+            }]
+        }
+    },
+
+    "actions": {
+        "ssaVFSAction": {
+            "forms": [{
+                "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                "mqv:topic": "ssa_umqtt_core/{{THING_UUID_V4}}/vfs",
+                "op": [
+                    "invokeaction"
+                ],
+                "mqv:qos": 1,
+                "mqv:retain": false,
+                "contentType": "application/vnd.msgpack"
+            }]
+        },
+
+        "ssaCoreReload": {
+            "forms": [{
+                "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                "mqv:topic": "ssa_umqtt_core/{{THING_UUID_V4}}/reload",
+                "op": [
+                    "invokeaction"
+                ],
+                "mqv:qos": 1,
+                "mqv:retain": false,
+            }]
+        }
+    }
+}

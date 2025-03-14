@@ -80,10 +80,9 @@ async function handleRegistrationMessage(
   }
 
   const map = {
-    THING_MODEL: payload.model,
     THING_UUID_V4: payload.uuid,
     MQTT_BROKER_ADDR: MQTT_BROKER_ADDR,
-    MODEL_HOST_ADDR: MODEL_HOST_ADDR,
+    THING_REGISTRY_ADDR: "http://localhost:8080",
   };
 
   try {
