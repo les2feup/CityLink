@@ -1,0 +1,115 @@
+{
+    "@context": [
+        "https://www.w3.org/2022/wot/td/v1.1"
+    ],
+
+    "@type": "tm:ThingModel",
+    "title": "ssa_core",
+
+    "version": {
+        "model": "0.1.0"
+    },
+
+    "id": "urn:uuid:{{THING_UUID_V4}}",
+    "description": "SSA Core Thing Model. Models the functionality common to all Smart Sensor Actuator Runtimes.",
+
+    "securityDefinitions": {
+        "nosec_sc": {
+            "scheme": "nosec"
+        }
+    },
+
+    "security": "nosec_sc",
+
+    "properties": {
+        "coreStatus": {
+            "title": "Core Status",
+            "description": "Status of the SSA Core.",
+            "type": "string",
+            "readOnly": true,
+            "enum": [
+                "idle",
+                "healthy",
+                "pending_diagnostic",
+
+                "invalid_model",
+                "invalid_firmware",
+
+                "error",
+                "unknown",
+                "disconnected"
+            ]
+        }
+    },
+
+    "actions": {
+        "ssaVFSAction": {
+            "title": "(Virtual) File System Action",
+            "description": "Perform an action on the (Virtual) File System of the SSA device.",
+            "safe": false,
+            "idempotent": false,
+            "synchronous": false,
+            "input": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "title": "Action",
+                        "description": "Action to perform on the (Virtual) File System.",
+                        "type": "string",
+                        "enum": [
+                            "write",
+                            "delete",
+                        ]
+                    },
+                    "path": {
+                        "title": "File Path",
+                        "description": "Path to the file in the (Virtual) File System.",
+                        "type": "string",
+                    }
+                    "contents": {
+                        "title": "File Contents",
+                        "type": "string",
+                        "description": "Contents of the file for the write action.",
+                    },
+                    "hash": {
+                        "title": "Input Hash",
+                        "description": "Hash for the entire action object transmitted as input for this action invocation.",
+                        "type": "object",
+                        "properties": {
+                            "hash": {
+                                "title": "Hash",
+                                "type": "string",
+                                "description": "Hash of the action object.",
+                            },
+                            "algo": {
+                                "title": "Hashing Algorithm",
+                                "type": "string",
+                                "description": "Hashing algorithm used to generate the hash.",
+                            }
+                        },
+                    },
+                    "reload": {
+                        "title": "Reload",
+                        "type": "boolean",
+                        "description": "Flag to trigger immediate reload of the ssa firmware after the action is performed.",
+                    }
+                },
+                "required": [
+                    "action",
+                    "path",
+                    "hash"
+                ]
+            },
+        },
+
+        "ssaCoreReload": {
+            "title": "SSA Core Reload",
+            "description": "Force a reload the SSA Core firmware.",
+            "safe": false,
+            "idempotent": false,
+            "synchronous": false,
+        },
+    }
+}
+
+

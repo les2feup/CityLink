@@ -1,0 +1,37 @@
+{
+    "@context": [
+        "https://www.w3.org/2022/wot/td/v1.1"
+    ],
+    "@type": "tm:ThingModel",
+    "title": "SSAuMQTTCore",
+    "version": {
+        "model": "0.1.0"
+    },
+
+    "description": "SSA Core Thing Model. Models the functionality common to all Smart Sensor Actuator Runtimes.",
+
+    "links" : [{
+        "rel": "tm:extends",
+        "href": "http://127.0.0.1:8080/models/SSACore",
+        "type": "application/tm+json"
+    }],
+
+    "properties": {
+        "coreStatus": {
+            "forms": [{
+                "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                "mqv:topic": "SSAuMQTTCore/{{THING_UUID_V4}}/status",
+                "op": [
+                    "readproperty",
+                    "observeproperty",
+                ],
+                "mqv:qos": 1,
+                "mqv:retain": true,
+                "contentType": "application/vnd.msgpack"
+            }]
+        },
+    },
+
+    "actions": {
+    }
+}
