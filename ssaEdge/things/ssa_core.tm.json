@@ -19,10 +19,8 @@
         "coreStatus": {
             "title": "Core Status",
             "description": "Status of the SSA Core.",
-
             "readOnly": true,
             "writeOnly": false,
-            
             "enum": [
                 "idle",
                 "error",
@@ -31,71 +29,117 @@
         }
     },
     "actions": {
-        "ssaVFSAction": {
-            "title": "(Virtual) File System Action",
-            "description": "Perform an action on the (Virtual) File System of the SSA device.",
-
-            "safe": false,
+        "ssaVFSListAction": {
+            "title": "SSA VFS List Action",
+            "description": "List the contents of a directory in the Virtual File System.",
+            "safe": true,
             "idempotent": false,
-            "synchronous": false,
-
             "input": {
                 "type": "object",
                 "properties": {
-                    "action": {
-                        "title": "Action",
-                        "description": "Action to perform on the (Virtual) File System.",
-                        "type": "string",
-                        "enum": [
-                            "list",
-                            "read",
-                            "write",
-                            "delete"
-                        ]
-                    },
-                    "path": {
-                        "title": "File Path",
-                        "description": "Path to the file in the (Virtual) File System.",
+                    "dir": {
+                        "title": "Directory",
+                        "description": "Directory to list.",
                         "type": "string"
                     },
-                    "contents": {
-                        "title": "File Contents",
+                    "recursive": {
+                        "title": "Recursive",
+                        "description": "List contents recursively.",
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "dir"
+                ]
+            }
+        },
+        "ssaVFSReadAction": {
+            "title": "SSA VFS Read Action",
+            "description": "Read the contents of a file in the Virtual File System.",
+            "safe": true,
+            "idempotent": false,
+            "input": {
+                "type": "string",
+                "title": "File",
+                "description": "File to read."
+            }
+        },
+        "ssaVFSWriteAction": {
+            "title": "SSA VFS Write Action",
+            "description": "Write to a file in the Virtual File System.",
+            "safe": false,
+            "idempotent": false,
+            "input": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "title": "File path",
+                        "description": "File to write.",
+                        "type": "string"
+                    },
+                    "payload": {
                         "type": "object",
-                        "description": "Contents of the file for the write action.",
+                        "description": "Payload to write to the file verified with a hash.",
                         "properties": {
-                            "contents": {
-                                "title": "Contents",
+                            "data": {
                                 "type": "string",
-                                "description": "Contents of the file for the write action."
+                                "title": "Data",
+                                "description": "Data to write."
                             },
                             "hash": {
-                                "title": "Contents Hash",
                                 "type": "string",
-                                "description": "Hash of the contents of the file for the write action."
+                                "title": "Hash",
+                                "description": "Hash of the data to write."
                             },
                             "algo": {
-                                "title": "Hashing Algorithm",
                                 "type": "string",
-                                "description": "Hashing algorithm used to generate the hash."
+                                "title": "Algorithm",
+                                "description": "Hash algorithm used to generate the hash.",
                             }
                         }
                     },
-                    "reload": {
-                        "title": "Reload",
-                        "type": "boolean",
-                        "description": "Flag to trigger immediate reload of the ssa firmware after the action is performed."
+                    "append": {
+                        "title": "Append",
+                        "description": "Append to the file. If false, the file is overwritten.",
+                        "type": "boolean"
                     }
                 },
-
-                "required": [ "action", "path", "hash" ]
+                "required": [
+                    "file",
+                    "payload"
+                ]
+            }
+        },
+        "ssaVFSDeleteAction": {
+            "title": "SSA VFS Delete Action",
+            "description": "Delete a file or directory in the Virtual File System.",
+            "safe": false,
+            "idempotent": false,
+            "input": {
+                "type": "object",
+                "description": "File or directory to delete.",
+                "properties": {
+                    "path": {
+                        "title": "Path",
+                        "description": "Path to delete.",
+                        "type": "string"
+                    },
+                    "recursive": {
+                        "title": "Recursive",
+                        "description": "Delete contents recursively.",
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "path"
+                ]
             }
         },
         "ssaCoreReload": {
             "title": "SSA Core Reload",
             "description": "Force a reload the SSA Core firmware.",
             "safe": false,
-            "idempotent": false,
-            "synchronous": false
+            "idempotent": false
         }
     }
 }

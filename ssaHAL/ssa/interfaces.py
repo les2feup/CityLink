@@ -11,7 +11,7 @@ class SSAConnector:
     async def disconnect(self):
         """Disconnect from the network."""
         raise NotImplementedError("Subclasses must implement disconnect()")
-    
+
     async def register_device(self):
         """Register the device with the WoT servient."""
         raise NotImplementedError("Subclasses must implement register_device()")
@@ -46,6 +46,7 @@ class SSARuntime(SSAConnector, AffordanceHandler):
     def __init__(self, config, extra_config_template={}):
         """Initialize SSARuntime with a required configuration dictionary."""
         self.tasks = {}  # This ensures all implementors will have a tasks attribute
+        self.actions = {}  # This ensures all implementors will have an actions attribute
         self.properties = {}  # This ensures all implementors will have a properties attribute
         self.config = config
 
@@ -101,4 +102,3 @@ class SSARuntime(SSAConnector, AffordanceHandler):
     async def rt_task_sleep_ms(self, ms):
         """Sleep for a given number of milliseconds."""
         raise NotImplementedError("Subclasses must implement rt_task_sleep_ms()")
-

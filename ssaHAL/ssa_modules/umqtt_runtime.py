@@ -60,7 +60,60 @@ class uMQTTRuntime(SSARuntime):
             keepalive=broker_config.get("keepalive", 60),
             ssl=broker_config.get("ssl"))
 
+        # TODO: wrap these with input decoding and appropriate response generation
+        from ssa._core_actions import vfs_list, vfs_read, vfs_write, vfs_delete
+        self._builtin_actions = {
+                "vfs/list": vfs_list,
+                "vfs/read": vfs_read,
+                "vfs/write": vfs_write,
+                "vfs/delete": vfs_delete
+                "reload": lambda _: self._reload()
+                }
+
+    ######## Helper methods ########
+
+    def self._on_message(self, topic, msg):
+        """Handle incoming messages from the broker."""
+        topic = topic.decode("utf-8")
+        print(f"[INFO] Received message on topic '{topic}'")
+
+        if not topic.startswith(self._base_action_topic):
+            print(f"[WARNING] Ignoring message on topic '{topic}'")
+            return
+
+        action_name = topic[len(self._base_action_topic) + 1:]
+
+        if action_name.startswith(RT_NAME):
+            try:
+                self._builtin_actions[action_name](msg)
+            except Exception as e:
+                print(f"[ERROR] Failed to execute builtin action '{action_name}': {e}")
+
+        elif action_name in self._actions:
+            try:
+                self._actions[action_name](msg)
+            except Exception as e:
+                print(f"[ERROR] Failed to execute action '{action_name}': {e}")
+
+    async def _run(self):
+        """Run the uMQTT runtime."""
+
+        while True:
+            blocking = len(self._tasks) == 0
+            if blocking:
+                print("[INFO] No tasks to run. Blocking on MQTT messages.")
+                self._client.wait_msg()
+            else:
+                self._client.check_msg()
+                await asyncio.sleep_ms(100)
+
+    def _reload(self):
+        self.disconnect()
+        from machine import soft_reset
+        soft_reset()
+
     ######## SSAConnector interface methods ######## 
+
     async def connect(self):
         """Attempt to the Edge Node's SSA IoT Connector"""
         retries = self.config["runtime"]["connection"].get("retries", 3)
@@ -85,17 +138,11 @@ class uMQTTRuntime(SSARuntime):
                                         retries, timeout_ms)
 
         base_topic = f"ssa/{self.config["runtime"]["broker"]["client_id"]}"
-
         self._base_event_topic = f"{base_topic}/events"
         self._base_action_topic = f"{base_topic}/actions"
         self._base_property_topic = f"{base_topic}/properties"
 
-        core_vfs_action_topic = f"{self._base_action_topic}/{RT_NAME}/vfs"
-        core_reload_action_topic = f"{self._base_action_topic}/{RT_NAME}/reload"
-
         self._mqtt.set_callback(self._on_message)
-        self._mqtt.subscribe(core_vfs_action_topic, qos=1)
-        self._mqtt.subscribe(core_reload_action_topic, qos=1)
 
     async def disconnect(self):
         """Disconnect from the network."""
@@ -109,12 +156,7 @@ class uMQTTRuntime(SSARuntime):
         self._mqtt.publish(REGISTRATION_TOPIC, registration_data)
         # TODO: Implement registration response handling
 
-
     ######## AffordanceHandler interface methods ######## 
-
-    """Base class defining the AffordanceHandler interface."""
-    def __init__(self, config):
-        """Initialize the AffordanceHandler base class."""
 
     def create_property(self, prop_name, prop_value, **kwargs):
         """Create a new property."""
@@ -137,21 +179,6 @@ class uMQTTRuntime(SSARuntime):
         raise NotImplementedError("Subclasses must implement register_action()")
 
     ######## SSARuntime interface methods ######## 
-    def _on_message(self, topic, msg):
-        pass
-
-    async def _run(self):
-        """Run the uMQTT runtime."""
-
-        while True:
-            blocking = len(self._tasks) == 0
-            if blocking:
-                print("[INFO] No tasks to run. Blocking on MQTT messages.")
-                self._client.wait_msg()
-            else:
-                self._client.check_msg()
-                await asyncio.sleep_ms(100)
-            
 
     def launch(self, extra_init_func=None):
         """Launch the runtime.

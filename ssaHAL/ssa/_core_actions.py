@@ -1,56 +1,40 @@
+import os
 
+async def vfs_list(input):
+    raise NotImplementedError("This function is not implemented yet.")
 
-async def vfs_action(ssa, input):
-    action = input["action"]
+async def vfs_read(input):
+    raise NotImplementedError("This function is not implemented yet.")
 
+async def vfs_write(input):
+    file_path = input["file_path"]
+    data = input["payload"].get("data")
+    hash = input["payload"].get("hash")
+    hash_algo = input["payload"].get("algo")
 
+    if hash_algo != "crc32":
+        raise NotImplementedError("Only CRC32 is supported for now.")
 
     from binascii import crc32
-    from os import mkdir, listdir
-    from machine import soft_reset
+    if crc32(data) != hash:
+        raise ValueError("Hash mismatch.")
 
-    script = update["script"]
-    expected_crc = int(update["crc32"], 16)
-    script_crc = crc32(script)
+    mode = "a" if input.get("append", False) else "w"
 
-    if script_crc != expected_crc:
-        print(f"[ERROR] CRC32 mismatch: expected:{hex(expected_crc)}, \
-                got {hex(script_crc)} Firmware update failed.")
-        return
+    file_path = file_path.rstrip("/")
+    path_parts = file_path.split("/")
+    file_name = path_parts[-1]
 
-    if "user" not in listdir():
-        mkdir("user")
+    if os.getcwd() != "/":
+        os.chdir("/")
 
-    print("[INFO] Writing firmware to device")
-    with open("user/app.py", "w") as f:
-        f.write(script)
+    for part in path_parts[:-1]:
+        if part not in os.listdir():
+            os.mkdir(part)
+        os.chdir(part)
 
-async def reload_action(*_):
-    from machine import soft_reset
-    soft_reset()
+    with open(file_name, mode) as f:
+        f.write(data)
 
-async def property_update(ssa, value, prop):
-    """
-    Asynchronously updates a property on the given SSA instance.    
-
-    This function checks whether the specified property exists on the SSA 
-    object and updates the property using the SSA setter with the provided value.
-    If an error occurs during this process, an error message is printed with the details.
-    
-    Args:
-        ssa: The object whose property is to be updated.
-        value: The new value for the property.
-        prop: The name of the property to update.
-    """
-    if not ssa.has_property(prop):
-        print(f"[ERROR] Property '{prop}' does not exist.")
-        return
-
-    if not ssa.uses_default_set_action(prop):
-        print(f"[ERROR] Property '{prop}' cannot be updated via the default setter.")
-        return
-
-    try:
-        await ssa.set_property(prop, value)
-    except Exception as e:
-        print(f"[ERROR] Failed to update property '{prop}': {e}")
+async def vfs_delete(input):
+    raise NotImplementedError("This function is not implemented yet.")
