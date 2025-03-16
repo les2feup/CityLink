@@ -1,6 +1,7 @@
 {
     "@context": [
-        "https://www.w3.org/2022/wot/td/v1.1"
+        "https://www.w3.org/2022/wot/td/v1.1",
+        "https://raw.githubusercontent.com/w3c/wot-binding-templates/refs/heads/main/bindings/protocols/mqtt/context.jsonld"
     ],
     "@type": "tm:ThingModel",
     "title": "ssa_umqtt_core",
@@ -16,12 +17,36 @@
         "type": "application/tm+json"
     }],
 
+    "forms": [
+        {
+            "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+            "mqv:filter": "ssa/{{THING_UUID_V4}}/properties/#",
+            "op": [
+                "readallproperties",
+                "observeallproperties",
+                "unobserveallproperties"
+            ],
+            "mqv:qos": 1,
+            "contentType": "application/vnd.msgpack"
+        },
+        {
+            "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+            "mqv:filter": "ssa/{{THING_UUID_V4}}/events/#",
+            "op": [
+                "subscribeallevents",
+                "unsubscribeallevents"
+            ],
+            "mqv:qos": 1,
+            "contentType": "application/vnd.msgpack"
+        }
+    ],
+
     "properties": {
         "coreStatus": {
             "observable": true,
             "forms": [{
                 "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                "mqv:topic": "ssa_umqtt_core/{{THING_UUID_V4}}/status",
+                "mqv:topic": "ssa/{{THING_UUID_V4}}/properties/umqtt_core/status",
                 "op": [
                     "readproperty",
                     "observeproperty",
@@ -33,9 +58,9 @@
             }]
         },
 
-        "coreVFSActionResult": {
-            "title": "Core VFS Action Result",
-            "description": "Result of the last (Virtual) File System action.",
+        "coreVFSActionResponse": {
+            "title": "Core VFS Action Response",
+            "description": "Response for the last Virtual File System action.",
 
             "observable": true,
             "readOnly": true,
@@ -43,10 +68,10 @@
 
             "type": "object",
             "properties": {
-                "last": {
+                "action": {
                     "type": "string",
                     "title": "Last Action Performed",
-                    "description": "The last action performed on the (Virtual) File System.",
+                    "description": "The last action performed on the Virtual File System.",
                     "enum": [
                         "write",
                         "delete"
@@ -55,7 +80,7 @@
                 "result": {
                     "type": "string",
                     "title": "Result",
-                    "description": "Result of the last action performed on the (Virtual) File System.",
+                    "description": "Result of the last action performed on the Virtual File System.",
                     "enum": [
                         "success",
                         "error"
@@ -64,20 +89,20 @@
                 "message": {
                     "type": "string",
                     "title": "Message",
-                    "description": "Message associated with the last action performed on the (Virtual) File System."
+                    "description": "Message associated with the last action performed on the Virtual File System."
                 },
                 "timestamp": {
                     "type": "string",
                     "title": "Timestamp",
-                    "description": "Timestamp of the last action performed on the (Virtual) File System."
+                    "description": "Timestamp of the last action performed on the Virtual File System."
                 }
             },
 
-            "required": ["last", "result", "timestamp"],
+            "required": ["action", "result", "timestamp"],
 
             "forms": [{
                 "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                "mqv:topic": "ssa_umqtt_core/{{THING_UUID_V4}}/vfs/result",
+                "mqv:topic": "ssa/{{THING_UUID_V4}}/properties/umqtt_core/vfs/report",
                 "op": [
                     "readproperty",
                     "observeproperty",
@@ -94,7 +119,7 @@
         "ssaVFSAction": {
             "forms": [{
                 "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                "mqv:topic": "ssa_umqtt_core/{{THING_UUID_V4}}/vfs",
+                "mqv:topic": "ssa/{{THING_UUID_V4}}/actions/umqtt_core/vfs",
                 "op": [
                     "invokeaction"
                 ],
@@ -107,12 +132,12 @@
         "ssaCoreReload": {
             "forms": [{
                 "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                "mqv:topic": "ssa_umqtt_core/{{THING_UUID_V4}}/reload",
+                "mqv:topic": "ssa/{{THING_UUID_V4}}/actions/umqtt_core/reload",
                 "op": [
                     "invokeaction"
                 ],
                 "mqv:qos": 1,
-                "mqv:retain": false,
+                "mqv:retain": false
             }]
         }
     }
