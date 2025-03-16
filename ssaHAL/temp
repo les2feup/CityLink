@@ -1,0 +1,17 @@
+while temp < 4
+    send()
+    init_alarm()
+
+    while TRUE
+        if recv {
+                alarm_cancel()
+                logic
+            }
+
+        else {
+                if (alart trigg)
+                    retry...
+                else {
+                        sleep_ms(100)
+                    }
+            }

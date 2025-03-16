@@ -1,37 +1,55 @@
 class SSAConnector:
     """Base class defining the SSAConnector interface."""
-
     def __init__(self, config):
         """Initialize the SSAConnector base class."""
         raise NotImplementedError("Subclasses must implement __init__")
 
-    async def connect(self, retries, base_timeout_ms):
+    async def connect(self):
         """Attempt to the Edge Node's SSA IoT Connector"""
         raise NotImplementedError("Subclasses must implement connect()")
 
     async def disconnect(self):
         """Disconnect from the network."""
         raise NotImplementedError("Subclasses must implement disconnect()")
-
+    
     async def register_device(self):
         """Register the device with the WoT servient."""
         raise NotImplementedError("Subclasses must implement register_device()")
 
-    async def model_update_handler(self, update_data):
-        """Handle updates to the device model."""
-        raise NotImplementedError("Subclasses must implement model_update_handler()")
-
-
-class SSARuntime(SSAConnector):
-    """Base class defining the SSARuntime interface."""
+class AffordanceHandler:
+    """Base class defining the AffordanceHandler interface."""
     def __init__(self, config):
+        """Initialize the AffordanceHandler base class."""
+
+    def create_property(self, prop_name, prop_value, **kwargs):
+        """Create a new property."""
+        raise NotImplementedError("Subclasses must implement create_property()")
+
+    def get_property(self, prop_name, **kwargs):
+        """Get the value of a property."""
+        raise NotImplementedError("Subclasses must implement get_property()")
+
+    async def set_property(self, prop_name, prop_value, **kwargs):
+        """Set the value of a property."""
+        raise NotImplementedError("Subclasses must implement set_property()")
+
+    async def emit_event(self, event_name, event_data, **kwargs):
+        """Publish an event to all subscribers."""
+        raise NotImplementedError("Subclasses must implement emit_event()")
+
+    def register_action_handler(self, action_name, action_func, **kwargs):
+        """Register a new action."""
+        raise NotImplementedError("Subclasses must implement register_action()")
+
+class SSARuntime(SSAConnector, AffordanceHandler):
+    """Base class defining the SSARuntime interface."""
+    def __init__(self, config, extra_config_template={}):
         """Initialize SSARuntime with a required configuration dictionary."""
         self.tasks = {}  # This ensures all implementors will have a tasks attribute
-        self.config = config  # This ensures all implementors will have a config attribute
+        self.properties = {}  # This ensures all implementors will have a properties attribute
+        self.config = config
 
-        config_template = {
-                "connector": dict,
-                "runtime": dict,
+        default_config_template = {
                 "tm": {
                     "name": str,
                     "version": {
@@ -40,6 +58,8 @@ class SSARuntime(SSAConnector):
                         }
                     }
                 }
+
+        extra_config_template.update(default_config_template)
 
         def validate_configuration(template, provided, path="config"):
             if not isinstance(provided, dict):
@@ -60,23 +80,11 @@ class SSARuntime(SSAConnector):
                     f"but got {type(provided[key]).__name__}"
                 )
 
-        validate_configuration(config_template, config)
+        validate_configuration(extra_config_template, config)
 
     def launch(self, extra_init_func=None):
         """Launch the runtime."""
         raise NotImplementedError("Subclasses must implement launch()")
-
-    async def publish_property(self, prop_name, prop_value, **kwargs):
-        """Publish the value of an observable property."""
-        raise NotImplementedError("Subclasses must implement publish_property()")
-
-    async def send_property(self, prop_name, prop_value, **kwargs):
-        """Send a property update to a specific destination."""
-        raise NotImplementedError("Subclasses must implement send_property()")
-
-    async def emit_event(self, event_name, event_data, **kwargs):
-        """Publish an event to all subscribers."""
-        raise NotImplementedError("Subclasses must implement emit_event()")
 
     def rt_task_create(self, task_id, task_func):
         """Register a task for execution."""

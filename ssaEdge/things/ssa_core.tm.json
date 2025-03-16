@@ -47,6 +47,8 @@
                         "description": "Action to perform on the (Virtual) File System.",
                         "type": "string",
                         "enum": [
+                            "list",
+                            "read",
                             "write",
                             "delete"
                         ]
@@ -58,18 +60,18 @@
                     },
                     "contents": {
                         "title": "File Contents",
-                        "type": "string",
-                        "description": "Contents of the file for the write action."
-                    },
-                    "hash": {
-                        "title": "Input Hash",
-                        "description": "Hash for the entire action object transmitted as input for this action invocation.",
                         "type": "object",
+                        "description": "Contents of the file for the write action.",
                         "properties": {
-                            "hash": {
-                                "title": "Hash",
+                            "contents": {
+                                "title": "Contents",
                                 "type": "string",
-                                "description": "Hash of the action object."
+                                "description": "Contents of the file for the write action."
+                            },
+                            "hash": {
+                                "title": "Contents Hash",
+                                "type": "string",
+                                "description": "Hash of the contents of the file for the write action."
                             },
                             "algo": {
                                 "title": "Hashing Algorithm",

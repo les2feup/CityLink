@@ -117,6 +117,17 @@
 
     "actions": {
         "ssaVFSAction": {
+            "input": {
+                "properties":{
+                    "contents": {
+                        "properties":{
+                            "algo": {
+                                "const": "crc32"
+                            }
+                        }
+                    }
+                }
+            }
             "forms": [{
                 "href": "mqtt://{{MQTT_BROKER_ADDR}}",
                 "mqv:topic": "ssa/{{THING_UUID_V4}}/actions/umqtt_core/vfs",

@@ -1,19 +1,10 @@
-async def firmware_update(update):
-    """
-    Asynchronously updates the device firmware from a JSON update package.
-    
-    This function decodes a firmware update provided as a JSON string that 
-    includes a base64‐encoded firmware binary and its expected CRC32 checksum 
-    (in hexadecimal format). It verifies the integrity of the decoded binary,
-    writes it to "user/app.py" (creating the directory if necessary), and
-    initiates a device restart.
 
-    If the checksum verification fails, the update is aborted.
-    
-    Args:
-        _ssa: Device state or configuration object (unused in current implementation).
-        update: dictionary with keys "base64" for the firmware data and "crc32" for the expected checksum.
-    """
+
+async def vfs_action(ssa, input):
+    action = input["action"]
+
+
+
     from binascii import crc32
     from os import mkdir, listdir
     from machine import soft_reset
@@ -34,7 +25,8 @@ async def firmware_update(update):
     with open("user/app.py", "w") as f:
         f.write(script)
 
-    print("[INFO] Firmware write complete. Restarting device.")
+async def reload_action(*_):
+    from machine import soft_reset
     soft_reset()
 
 async def property_update(ssa, value, prop):
