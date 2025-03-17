@@ -1,4 +1,3 @@
-from .asyncio_mqtt_runtime import uMQTTRuntime
-from .generic_wlan_driver import GenericWLANDriver
+from .umqtt_core.runtime import uMQTTRuntime as Runtime
 
-__all__ = ["AsyncioMQTTRuntime", "GenericWLANDriver"]
+__all__ = ["Runtime"]

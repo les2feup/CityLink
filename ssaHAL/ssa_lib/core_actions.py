@@ -1,12 +1,15 @@
 import os
 
-async def vfs_list(input):
+
+def vfs_list(input):
     raise NotImplementedError("This function is not implemented yet.")
 
-async def vfs_read(input):
+
+def vfs_read(input):
     raise NotImplementedError("This function is not implemented yet.")
 
-async def vfs_write(input):
+
+def vfs_write(input):
     file_path = input["file_path"]
     data = input["payload"].get("data")
     hash = input["payload"].get("hash")
@@ -16,6 +19,7 @@ async def vfs_write(input):
         raise NotImplementedError("Only CRC32 is supported for now.")
 
     from binascii import crc32
+
     if crc32(data) != hash:
         raise ValueError("Hash mismatch.")
 
@@ -36,5 +40,8 @@ async def vfs_write(input):
     with open(file_name, mode) as f:
         f.write(data)
 
-async def vfs_delete(input):
+    return file_path
+
+
+def vfs_delete(input):
     raise NotImplementedError("This function is not implemented yet.")

@@ -126,7 +126,9 @@ class aloader:
                 return ext_type_to_class[ext_type].unpackb(ext_data)
             except AttributeError:
                 raise NotImplementedError(
-                    "Ext class {:s} lacks unpackb()".format(repr(ext_type_to_class[ext_type]))
+                    "Ext class {:s} lacks unpackb()".format(
+                        repr(ext_type_to_class[ext_type])
+                    )
                 )
 
         return ext

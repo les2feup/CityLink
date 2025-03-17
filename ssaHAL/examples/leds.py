@@ -1,5 +1,6 @@
 from ssa import SSA, ssa_main
 
+
 def get_led_index(led_index: str):
     try:
         return int(led_index, 10)
@@ -13,13 +14,14 @@ def get_led_index(led_index: str):
 
     return led_index
 
+
 async def set_led_brightness(ssa: SSA, _msg: str, led_index: str, brightness: str):
     led_index = get_led_index(led_index)
     if led_index is None:
         return
 
     led_strip = ssa.get_property("led_strip")
-    
+
     brightness = int(brightness)
     if brightness < 0 or brightness > 100:
         print("Brightness must be between 0 and 100")
@@ -27,6 +29,7 @@ async def set_led_brightness(ssa: SSA, _msg: str, led_index: str, brightness: st
 
     led_strip[led_index]["brightness"] = brightness
     await ssa.set_property("led_strip", led_strip)
+
 
 async def set_led_color(ssa: SSA, _msg: str, led_index: str, color: str):
     led_index = get_led_index(led_index)
@@ -48,6 +51,7 @@ async def set_led_color(ssa: SSA, _msg: str, led_index: str, color: str):
     led_strip[led_index]["color"] = hex(color)
     await ssa.set_property("led_strip", led_strip)
 
+
 async def toggle_led(ssa: SSA, _msg: str, led_index: str, state: str):
     led_index = get_led_index(led_index)
     if led_index is None:
@@ -62,6 +66,7 @@ async def toggle_led(ssa: SSA, _msg: str, led_index: str, state: str):
     led_strip[led_index]["is_on"] = state == "on"
     await ssa.set_property("led_strip", led_strip)
 
+
 async def toggle_led_strip(ssa: SSA, _msg: str, state: str):
     if state not in ["on", "off"]:
         print(f"Invalid state: {state}")
@@ -72,6 +77,7 @@ async def toggle_led_strip(ssa: SSA, _msg: str, state: str):
         led["is_on"] = state == "on"
 
     await ssa.set_property("led_strip", led_strip)
+
 
 async def set_strip_brightness(ssa: SSA, _msg: str, brightness: str):
     led_strip = ssa.get_property("led_strip")
@@ -85,6 +91,7 @@ async def set_strip_brightness(ssa: SSA, _msg: str, brightness: str):
         led["brightness"] = brightness
 
     await ssa.set_property("led_strip", led_strip)
+
 
 async def set_strip_color(ssa: SSA, _msg: str, color: str):
     led_strip = ssa.get_property("led_strip")
@@ -104,16 +111,14 @@ async def set_strip_color(ssa: SSA, _msg: str, color: str):
 
     await ssa.set_property("led_strip", led_strip)
 
+
 # Number of LEDs in the strip
 N_LEDS = 8
 
+
 @ssa_main()
 def main(ssa: SSA):
-    simulated_led = {
-            "brightness": 100,
-            "color": hex(0xFFFFFF),
-            "is_on": False
-            }
+    simulated_led = {"brightness": 100, "color": hex(0xFFFFFF), "is_on": False}
     led_strip = [simulated_led.copy() for i in range(N_LEDS)]
 
     # We only want the property to be updated via the actions defined below
@@ -128,4 +133,6 @@ def main(ssa: SSA):
 
     ssa.register_action("led_strip/{led_index}/toggle/{state}", toggle_led)
     ssa.register_action("led_strip/{led_index}/set_color/{color}", set_led_color)
-    ssa.register_action("led_strip/{led_index}/set_brightness/{brightness}", set_led_brightness)
+    ssa.register_action(
+        "led_strip/{led_index}/set_brightness/{brightness}", set_led_brightness
+    )

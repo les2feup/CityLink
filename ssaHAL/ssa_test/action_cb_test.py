@@ -2,6 +2,7 @@ import unittest
 
 from ssa._action_handler import ActionHandler
 
+
 # Dummy SSA class to pass into ActionHandler.
 class DummySSA:
     def __init__(self):
@@ -10,6 +11,7 @@ class DummySSA:
     def create_task(self, handler, payload, **kwargs):
         # For testing, simply record the handler call instead of launching an async task.
         self.tasks.append((handler, payload, kwargs))
+
 
 # -------------------------------
 # Tests for action registration.
@@ -23,6 +25,7 @@ class TestActionHandlerRegistration(unittest.TestCase):
         # Register a literal action (no URI parameters)
         def callback1(ssa, msg):
             return "callback1"
+
         self.ah.register_action("foo", callback1)
         # Since there are no URI parameters, the entire action URI is used as the key.
         self.assertIn("foo", self.ah.actions)
@@ -40,6 +43,7 @@ class TestActionHandlerRegistration(unittest.TestCase):
         # the full URI string is used as a key.
         def callback2(ssa, msg):
             return "callback2"
+
         self.ah.register_action("foo/bar", callback2)
         self.assertIn("foo/bar", self.ah.actions)
         elem = self.ah.actions["foo/bar"]
@@ -49,6 +53,7 @@ class TestActionHandlerRegistration(unittest.TestCase):
         # Register an action with one URI parameter: foo/{bar}
         def callback3(ssa, msg, bar):
             return f"bar: {bar}"
+
         self.ah.register_action("foo/{bar}", callback3)
         # The first literal segment ("foo") should be registered.
         self.assertIn("foo", self.ah.actions)
@@ -64,6 +69,7 @@ class TestActionHandlerRegistration(unittest.TestCase):
         # foo/{bar}/baz/qux/{quux}
         def callback4(ssa, msg, bar, quux):
             return f"{bar} and {quux}"
+
         self.ah.register_action("foo/{bar}/baz/qux/{quux}", callback4)
         self.assertIn("foo", self.ah.actions)
         foo_node = self.ah.actions["foo"]
@@ -82,6 +88,7 @@ class TestActionHandlerRegistration(unittest.TestCase):
         # Register an action with adjacent URI parameters: foo/{bar}/{baz}
         def callback5(ssa, msg, bar, baz):
             return f"{bar} and {baz}"
+
         self.ah.register_action("foo/{bar}/{baz}", callback5)
         self.assertIn("foo", self.ah.actions)
         foo_node = self.ah.actions["foo"]
@@ -97,6 +104,7 @@ class TestActionHandlerRegistration(unittest.TestCase):
         # Attempt to register an action where the first part is a URI parameter.
         def dummy_callback(ssa, msg, foo):
             return "dummy"
+
         with self.assertRaises(Exception) as context:
             self.ah.register_action("{foo}/bar", dummy_callback)
         self.assertIn("URI parameter cannot be the first part", str(context.exception))
@@ -105,10 +113,12 @@ class TestActionHandlerRegistration(unittest.TestCase):
         # Register an action with a parameter, then try to register it again.
         def callback6(ssa, msg, bar):
             return "callback6"
+
         self.ah.register_action("foo/{bar}", callback6)
         with self.assertRaises(Exception) as context:
             self.ah.register_action("foo/{bar}", callback6)
         self.assertIn("callback for `foo/{bar}` already exists", str(context.exception))
+
 
 # ----------------------------------------
 # Tests for finding a dedicated handler.
@@ -122,6 +132,7 @@ class TestFindDedicatedHandler(unittest.TestCase):
         # Register an action with one URI parameter: foo/{bar}
         def callback(ssa, msg, bar):
             return f"bar: {bar}"
+
         self.ah.register_action("foo/{bar}", callback)
         result = self.ah._find_dedicated_handler("foo/1123")
         self.assertIsNotNone(result)
@@ -134,6 +145,7 @@ class TestFindDedicatedHandler(unittest.TestCase):
         # Example: foo/{bar}/baz/qux/{quux}
         def callback(ssa, msg, bar, quux):
             return f"{bar} and {quux}"
+
         self.ah.register_action("foo/{bar}/baz/qux/{quux}", callback)
         result = self.ah._find_dedicated_handler("foo/123/baz/qux/456")
         self.assertIsNotNone(result)
@@ -145,6 +157,7 @@ class TestFindDedicatedHandler(unittest.TestCase):
         # Register an action with adjacent URI parameters: foo/{bar}/{baz}
         def callback(ssa, msg, bar, baz):
             return f"{bar} and {baz}"
+
         self.ah.register_action("foo/{bar}/{baz}", callback)
         result = self.ah._find_dedicated_handler("foo/111/222")
         self.assertIsNotNone(result)
@@ -156,6 +169,7 @@ class TestFindDedicatedHandler(unittest.TestCase):
         # Register an action that requires more segments.
         def callback(ssa, msg, bar):
             return "complete"
+
         self.ah.register_action("foo/{bar}/baz", callback)
         # "foo/1123" is incomplete because the full action is "foo/{bar}/baz"
         result = self.ah._find_dedicated_handler("foo/1123")
@@ -165,6 +179,7 @@ class TestFindDedicatedHandler(unittest.TestCase):
         # Test that an action that does not exist returns None.
         result = self.ah._find_dedicated_handler("nonexistent")
         self.assertIsNone(result)
+
 
 # ----------------------------------------
 # Tests for global handler invocation.
@@ -178,6 +193,7 @@ class TestGlobalHandler(unittest.TestCase):
         # Test that a literal action is invoked via global_handler.
         def callback(ssa, msg):
             return "global literal"
+
         self.ah.register_action("foo", callback)
         self.ah.global_handler("foo", "payload1")
         # For literal actions, the key is the full URI.
@@ -191,6 +207,7 @@ class TestGlobalHandler(unittest.TestCase):
         # Test that an action with a URI parameter is invoked correctly.
         def callback(ssa, msg, bar):
             return f"global parameter {bar}"
+
         self.ah.register_action("foo/{bar}", callback)
         self.ah.global_handler("foo/789", "payload2")
         self.assertEqual(len(self.dummy_ssa.tasks), 1)
@@ -206,5 +223,6 @@ class TestGlobalHandler(unittest.TestCase):
         self.ah.global_handler("nonexistent", "payload3")
         self.assertEqual(len(self.dummy_ssa.tasks), 0)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

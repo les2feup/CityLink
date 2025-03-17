@@ -1,7 +1,8 @@
 import sys
 from types import ModuleType
 
-class MQTTClient():
+
+class MQTTClient:
     def __init__(self, *args, **kwargs):
         pass
 

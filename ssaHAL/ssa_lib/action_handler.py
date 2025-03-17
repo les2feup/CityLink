@@ -1,4 +1,4 @@
-class ActDictElement():
+class ActDictElement:
     def __init__(self, callback=None, node_name=None, children=None):
         """
         Initialize an ActDictElement instance.
@@ -12,8 +12,9 @@ class ActDictElement():
         self.node_name = node_name
         self.children = children if children is not None else {}
 
-class ActionHandler():
-    def __init__(self, ssa_instance):
+
+class ActionHandler:
+    def __init__(self, task_launcher):
         """
         Initializes the ActionHandler with the given SSA instance.
 
@@ -22,21 +23,21 @@ class ActionHandler():
         Args:
             ssa_instance: The SSA instance used for integrating action handling into the system.
         """
-        self._ssa = ssa_instance
+        self._launcher = task_launcher
         self.actions = {}
 
     def _find_dedicated_handler(self, action_uri):
         """
         Traverse the action tree to locate a callback matching the given action URI.
 
-        This method splits the URI into segments and walks through the 
-        hierarchical action tree stored in self.actions. It first evaluates 
-        literal matches before considering parameterized segments using a 
-        wildcard key ("*"). 
+        This method splits the URI into segments and walks through the
+        hierarchical action tree stored in self.actions. It first evaluates
+        literal matches before considering parameterized segments using a
+        wildcard key ("*").
 
         For parameterized segments, the corresponding URI value is stored in a
-        dictionary under the node's parameter name. If a node with a valid 
-        callback is reached, the method returns the callback along with the 
+        dictionary under the node's parameter name. If a node with a valid
+        callback is reached, the method returns the callback along with the
         extracted parameters.
 
         For example, matching "foo/1123/baz" against a route "foo/{bar}/baz"
@@ -55,7 +56,7 @@ class ActionHandler():
 
         current_node = self.actions[parts[0]]
         kwargs = {}  # dictionary to hold parameter values
-                     # mapped by their node_name
+        # mapped by their node_name
 
         for part in parts[1:]:
             # Check for a literal match first.
@@ -78,15 +79,15 @@ class ActionHandler():
 
         return None
 
-    def global_handler(self, action_uri, payload):
+    def global_handler(self, action_uri, action_input):
         """
         Handles global action invocations by invoking a registered callback.
 
         This method is called when an action is triggered by the WoT servient.
-        It first checks if the provided action URI matches a top-level action 
+        It first checks if the provided action URI matches a top-level action
         and calls its callback if found. If no matching top-level handler exists,
-        it searches the action tree for a dedicated handler that supports URI 
-        parameter matching. 
+        it searches the action tree for a dedicated handler that supports URI
+        parameter matching.
         If the action URI is invalid or no suitable handler is found,
         a warning or error is logged.
         Any exceptions raised during callback execution are caught and logged.
@@ -105,7 +106,7 @@ class ActionHandler():
             handler = self.actions[action_uri].callback
             try:
                 print(f"[DEBUG] Invoking action handler `{handler.__name__}`")
-                self._ssa.create_task(handler, payload) # Invoke the action handler
+                self._launcher(handler, action_input)  # Invoke the action handler
                 print(f"[DEBUG] Action task launched, exiting global_handler callback`")
             except Exception as e:
                 print(f"[ERROR] Action task `{handler.__name__}` failed to launch: {e}")
@@ -117,19 +118,22 @@ class ActionHandler():
             return
         handler, kwargs = found
         try:
-            print(f"[DEBUG] Invoking action handler `{handler.__name__}` with kwargs `{kwargs}`")
-            self._ssa.create_task(handler, payload, **kwargs) # Invoke the action handler
+            print(
+                f"[DEBUG] Invoking action handler `{handler.__name__}` with kwargs `{kwargs}`"
+            )
+            self._launcher(handler, action_input, **kwargs)  # Invoke the action handler
             print(f"[DEBUG] Action task launched, exiting global_handler callback`")
         except Exception as e:
-            func_name = handler.__name__ if hasattr(handler, "__name__") \
-                    else "unknown"
-            print(f"[ERROR] Action task `{func_name}` with kwargs `{kwargs}` failed to launch: {e}")
+            func_name = handler.__name__ if hasattr(handler, "__name__") else "unknown"
+            print(
+                f"[ERROR] Action task `{func_name}` with kwargs `{kwargs}` failed to launch: {e}"
+            )
 
     def register_action(self, action_uri, handler_func):
         """
         Register a callback for the specified action URI.
 
-        The action URI may be a literal string or include segments with parameters 
+        The action URI may be a literal string or include segments with parameters
         (enclosed in curly braces) and sub-actions (separated by slashes).
         The first segment must be a literal. The callback should accept at least
         two arguments (the SSA instance and the received message) and additional
@@ -153,7 +157,9 @@ class ActionHandler():
         uri_parts = action_uri.split("/")
         # The first part must be a literal.
         if uri_parts[0].startswith("{"):
-            raise Exception("[ERROR] URI parameter cannot be the first part of an action name")
+            raise Exception(
+                "[ERROR] URI parameter cannot be the first part of an action name"
+            )
 
         # Process the first literal part.
         first_part = uri_parts[0]

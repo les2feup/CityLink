@@ -1,18 +1,18 @@
 {
-    "id": {
-        "uuid": "87c4011c-21d4-443e-9cca-c264e18213c0",
-        "model": "base_ssa_thing",
-        "version": { "instance": "0.0.1", "model": "0.0.1" }
+  "id": {
+    "uuid": "87c4011c-21d4-443e-9cca-c264e18213c0",
+    "model": "base_ssa_thing",
+    "version": { "instance": "0.0.1", "model": "0.0.1" }
+  },
+  "runtime": {
+    "broker": {
+      "addr": "192.168.1.26",
+      "port": 1883
     },
-    "runtime":{
-        "broker": {
-            "addr": "192.168.1.26",
-            "port": 1883
-        },
-        "connection":{
-            "retries": 3,
-            "timeout_ms": 2000
-        },
-        "action_qos": 1
-    }
+    "connection": {
+      "retries": 3,
+      "timeout_ms": 2000
+    },
+    "action_qos": 1
+  }
 }

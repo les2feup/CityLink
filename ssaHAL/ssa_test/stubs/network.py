@@ -1,7 +1,8 @@
 import sys
 from types import ModuleType
 
-class WLAN():
+
+class WLAN:
     def __init__(self, *args, **kwargs):
         pass
 
@@ -19,6 +20,7 @@ class WLAN():
 
     def ifconfig(self, *args, **kwargs):
         pass
+
 
 def load_stub():
     if "network" not in sys.modules:

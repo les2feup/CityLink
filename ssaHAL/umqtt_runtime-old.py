@@ -1,4 +1,3 @@
-
 from ssa.interfaces import SSARuntime
 
 class uMQTTRuntime(SSARuntime):
