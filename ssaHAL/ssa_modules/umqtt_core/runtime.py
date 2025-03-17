@@ -234,7 +234,8 @@ class uMQTTRuntime(SSARuntime):
             self.properties[prop_name] = prop_value
             try:
                 topic = f"{self._base_property_topic}/{self._instance_model_name}/{prop_name}"
-                self._mqtt.publish(topic, prop_value, retain=retain, qos=qos)
+                data = umsgpack.dumps(prop_value) # TODO: add options to use a custom serializer
+                self._mqtt.publish(topic, data, retain=retain, qos=qos)
             except Exception as e:
                 print(f"[ERROR] Failed to publish property update: {e}")
         else:
@@ -247,7 +248,8 @@ class uMQTTRuntime(SSARuntime):
 
         topic = f"{self._base_event_topic}/{self._instance_model_name}/{event_name}"
         try:
-            self._mqtt.publish(topic, event_data, retain=retain, qos=qos)
+            data = umsgpack.dumps(event_data)  # TODO: add options to use a custom serializer
+            self._mqtt.publish(topic, data, retain=retain, qos=qos)
         except Exception as e:
             print(f"[ERROR] Failed to publish event '{event_name}': {e}")
 

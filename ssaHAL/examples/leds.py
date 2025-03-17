@@ -1,4 +1,4 @@
-from ssa import SSA, ssa_main
+from ssa.core import SSA, ssa_main
 
 
 def get_led_index(led_index: str):

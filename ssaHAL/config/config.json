@@ -1,6 +1,6 @@
 {
     "tm": {
-        "name": "ssa_umqtt_core",
+        "name": "example_model",
         "version": {
             "model": "0.1.0",
             "instance": "0.1.0"

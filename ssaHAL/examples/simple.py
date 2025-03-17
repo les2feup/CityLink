@@ -1,11 +1,9 @@
 """! Simple example app demonstrating the use of the Smart Sensor Actuator Hardware Abstraction Layer."""
 
 import random
-import micropython
-from ssa import SSA, ssa_task, ssa_main
+from ssa.core import ssa_main, SSA
 
 
-@ssa_task(2000)
 async def random_event(ssa: SSA) -> None:
     """
     Generates a random event with a 50% probability.
@@ -14,7 +12,6 @@ async def random_event(ssa: SSA) -> None:
         await ssa.trigger_event("random_event", "Event triggered")
 
 
-@ssa_task(1000)
 async def random_property_with_event(ssa: SSA) -> None:
     """
     Updates a random property with a new random value.
@@ -23,7 +20,7 @@ async def random_property_with_event(ssa: SSA) -> None:
     new_value: int = random.randint(0, 100)
     await ssa.set_property("random_value", new_value)
     if new_value > 70:
-        await ssa.trigger_event("random_value_event", "Random value is greater than 70")
+        await ssa.emit_event("random_value_event", "Random value is greater than 70")
 
 
 async def print_action(_ssa: SSA, msg: str) -> None:
@@ -50,7 +47,7 @@ def main(ssa: SSA):
     """
     ssa.create_property("random_value", 0)
 
-    ssa.create_task(random_event)
-    ssa.create_task(random_property_with_event)
+    ssa.rt_task_create("random_event", random_event, 1000)
+    ssa.rt_task_create("random_property", random_property_with_event, 2000)
 
     ssa.register_action("print_action", print_action)
