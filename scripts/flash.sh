@@ -21,8 +21,10 @@ EXAMPLE_FILE=""
 # Global temporary directories (will be set in prepare_temp_dirs)
 TEMP_DIR=""
 CONFIG_DIR=""
-SSA_DIR=""
-SSA_MODULES_DIR=""
+
+# Global arrays for source directories and their cleaned counterparts.
+declare -a SOURCE_DIRS
+declare -a CLEANED_DIRS
 
 # Phase 1: Ensure script is running from the project root
 check_project_root() {
@@ -44,17 +46,26 @@ check_device() {
   success "Device connected."
 }
 
-# Phase 3: Parse command-line options
+# Phase 3: Parse command-line options and source directories
 parse_options() {
   while getopts "bne:" opt; do
     case $opt in
       b) UPLOAD_BOOT=true ;;
       n) NUKE_BOARD=true ;;
       e) EXAMPLE_FILE="$OPTARG" ;;
-      *) error "Usage: $0 [-b] [-n] [-e example_file]"; exit 1 ;;
+      *) error "Usage: $0 [-b] [-n] [-e example_file] source_dir1 [source_dir2 ...]"; exit 1 ;;
     esac
   done
+  shift $((OPTIND - 1))
+  if [ "$#" -lt 1 ]; then
+    error "No source directories provided."
+    error "Usage: $0 [-b] [-n] [-e example_file] source_dir1 [source_dir2 ...]"
+    exit 1
+  fi
+  # The remaining arguments are our source directories.
+  SOURCE_DIRS=("$@")
   info "Options parsed: UPLOAD_BOOT=$UPLOAD_BOOT, NUKE_BOARD=$NUKE_BOARD, EXAMPLE_FILE='$EXAMPLE_FILE'"
+  info "Source directories: ${SOURCE_DIRS[*]}"
 }
 
 # Phase 4: Nuke board if requested
@@ -69,22 +80,23 @@ nuke_board() {
 # Phase 5: Prepare temporary directories
 prepare_temp_dirs() {
   info "Preparing temporary directories..."
-  TEMP_DIR="./ssaHAL/.temp"
+  # Use a generic temporary directory at the root.
+  TEMP_DIR="./.temp"
   CONFIG_DIR="$TEMP_DIR/config"
-  SSA_DIR="$TEMP_DIR/ssa"
-  SSA_MODULES_DIR="$TEMP_DIR/modules"
   mkdir -p "$CONFIG_DIR" || { error "Failed to create directory $CONFIG_DIR"; exit 1; }
   success "Temporary directories created."
 }
 
-# Phase 6: Remove __pycache__ directories
+# Phase 6: Remove __pycache__ directories from each source directory
 remove_pycache() {
-  info "Removing all '__pycache__' directories..."
-  find ./ssaHAL -type d -name "__pycache__" -exec rm -rf {} + || { error "Failed to remove __pycache__ directories"; exit 1; }
+  info "Removing '__pycache__' directories from source directories..."
+  for src in "${SOURCE_DIRS[@]}"; do
+    find "$src" -type d -name "__pycache__" -exec rm -rf {} + || { error "Failed to remove __pycache__ directories in $src"; exit 1; }
+  done
   success "__pycache__ directories removed."
 }
 
-# Phase 7: Process configuration files
+# Phase 7: Process configuration files (remains unchanged)
 process_configs() {
   info "Processing configuration files..."
   jq -c < ./ssaHAL/config/config.json > "$CONFIG_DIR/config.json" || { error "Failed to process config.json"; exit 1; }
@@ -96,42 +108,53 @@ process_configs() {
   success "Configuration files processed."
 }
 
-# Phase 8: Clean SSA directories
-clean_ssa_directories() {
-  info "Cleaning SSA directories..."
-  python3 scripts/clean.py ./ssaHAL/ssa "$SSA_DIR" || { error "Failed to clean SSA directory"; exit 1; }
-  python3 scripts/clean.py ./ssaHAL/ssa_modules "$SSA_MODULES_DIR" || { error "Failed to clean SSA modules directory"; exit 1; }
-  success "SSA directories cleaned."
+# Phase 8: Clean source directories
+# For each provided source directory, run the cleaning script and copy its cleaned content
+# to a temporary destination whose name is based on the source’s basename.
+clean_source_directories() {
+  info "Cleaning source directories..."
+  CLEANED_DIRS=()
+  for src in "${SOURCE_DIRS[@]}"; do
+    dest="$TEMP_DIR/$(basename "$src")"
+    python3 scripts/clean.py "$src" "$dest" || { error "Failed to clean directory $src"; exit 1; }
+    CLEANED_DIRS+=("$dest")
+  done
+  success "Source directories cleaned."
 }
 
-# Phase 9: Compile SSA modules to frozen bytecode
+# Phase 9: Recursively compile source modules in each cleaned directory
 compile_modules() {
-  info "Compiling SSA module files to frozen bytecode..."
-
-  mkdir -p "$SSA_DIR/compiled/" || { error "Failed to create directory $SSA_DIR/compiled/"; exit 1; }
-  for file in "$SSA_DIR"/*.py; do
-    [ -e "$file" ] || continue
-    mpy-cross "$file" -o "$SSA_DIR/compiled/$(basename "$file" .py).mpy" || { error "Failed to compile $file"; exit 1; }
-  done
-
-  mkdir -p "$SSA_MODULES_DIR/compiled" || { error "Failed to create directory $SSA_MODULES_DIR/compiled"; exit 1; }
-  for file in "$SSA_MODULES_DIR"/*.py; do
-    [ -e "$file" ] || continue
-    mpy-cross "$file" -o "$SSA_MODULES_DIR/compiled/$(basename "$file" .py).mpy" || { error "Failed to compile $file"; exit 1; }
+  info "Compiling module files to frozen bytecode recursively..."
+  for src in "${CLEANED_DIRS[@]}"; do
+    info "Compiling .py files in directory '$src' recursively..."
+    compiled_dir="$src/compiled"
+    mkdir -p "$compiled_dir" || { error "Failed to create directory $compiled_dir"; exit 1; }
+    # Find all .py files recursively, but skip files already in the compiled subdirectory.
+    find "$src" -type f -name "*.py" ! -path "$compiled_dir/*" | while read -r file; do
+      rel_path=$(realpath --relative-to="$src" "$file")
+      out_file="$compiled_dir/${rel_path%.py}.mpy"
+      mkdir -p "$(dirname "$out_file")" || { error "Failed to create directory for $out_file"; exit 1; }
+      mpy-cross "$file" -o "$out_file" || { error "Failed to compile $file"; exit 1; }
+    done
   done
   success "Compilation complete."
 }
 
-# Phase 10: Upload required files to the device
+# Phase 10: Upload compiled files to the device for each cleaned directory.
 upload_files() {
   info "Uploading required files..."
   mpremote cp -r ./ssaHAL/lib/ : || { error "Failed to copy lib files"; exit 1; }
   mpremote cp -r "$CONFIG_DIR"/ : || { error "Failed to copy configuration files"; exit 1; }
   
-  mpremote mkdir :ssa || info "Directory 'ssa' may already exist on device."
-  mpremote cp -r "$SSA_DIR/compiled/"* :./ssa/ || { error "Failed to copy SSA compiled files"; exit 1; }
-  mpremote mkdir :ssa_modules || info "Directory 'ssa_modules' may already exist on device."
-  mpremote cp -r "$SSA_MODULES_DIR/compiled/"* :./ssa_modules/ || { error "Failed to copy SSA modules compiled files"; exit 1; }
+  for dir in "${CLEANED_DIRS[@]}"; do
+    dest_dir=$(basename "$dir")
+    mpremote mkdir ":$dest_dir" || info "Directory '$dest_dir' may already exist on device."
+    if [ -d "$dir/compiled" ]; then
+      mpremote cp -r "$dir/compiled/"* ":./$dest_dir/" || { error "Failed to copy compiled files from $dir"; exit 1; }
+    else
+      info "No compiled files found in $dir"
+    fi
+  done
   success "Files uploaded successfully."
 }
 
@@ -166,7 +189,7 @@ upload_example() {
   fi
 }
 
-# Main execution function
+# Main execution function: process options, then act on the passed source directories.
 main() {
   check_project_root
   check_device
@@ -175,7 +198,7 @@ main() {
   prepare_temp_dirs
   remove_pycache
   process_configs
-  clean_ssa_directories
+  clean_source_directories
   compile_modules
   upload_files
   cleanup
