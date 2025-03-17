@@ -3,7 +3,7 @@
         "name": "ssa_umqtt_core",
         "version": {
             "model": "0.1.0",
-            "instace": "0.1.0"
+            "instance": "0.1.0"
         }
     },
     "runtime": {

@@ -14,6 +14,8 @@ RESERVED_NAMES = const(("vfs", "ssa", "events", "actions", "properties", "umqtt_
 
 class uMQTTRuntime(SSARuntime):
     def __init__(self, config):
+        print("[DEBUG] Initializing uMQTT runtime...")
+
         extra_required_config = {
             "network": {
                 "ssid": str,
@@ -32,6 +34,8 @@ class uMQTTRuntime(SSARuntime):
         }
         super().__init__(config, extra_required_config)
 
+        print("[DEBUG]\t\t->Valid config.")
+
         self.tasks = {}
         self.properties = {}
 
@@ -46,18 +50,21 @@ class uMQTTRuntime(SSARuntime):
 
         self._action_handler = ActionHandler(action_laucher)
 
-        broker_config = config["runtime"]["broker"]
+        print("[DEBUG]\t\t->Action handler initialized.")
+
+        broker_config = self.config["runtime"]["broker"]
         self._mqtt = MQTTClient(
             client_id=broker_config["client_id"],
-            server=broker_config["broker"]["ipv4"],
-            port=broker_config["broker"].get("port", 1883),
+            server=broker_config["ipv4"],
+            port=broker_config.get("port", 1883),
             user=broker_config.get("username"),
             password=broker_config.get("password"),
             keepalive=broker_config.get("keepalive", 60),
             ssl=broker_config.get("ssl"),
         )
+        print("[DEBUG]\t\t->MQTT client initialized.")
 
-        self._instance_model_name = config["tm"]["name"]
+        self._instance_model_name = self.config["tm"]["name"]
 
         from ._core_actions import vfs_list, vfs_read, vfs_write, vfs_delete
 
@@ -83,6 +90,7 @@ class uMQTTRuntime(SSARuntime):
                 "reload": lambda _: self._reload(),
             }
         )
+        print("[DEBUG]\t\t->Builtin actions initialized.")
 
     ######## Helper methods ########
 
@@ -144,7 +152,9 @@ class uMQTTRuntime(SSARuntime):
 
     ######## SSAConnector interface methods ########
 
-    async def connect(self):
+    def connect(self):
+        print("[INFO] Connecting to the network and broker...")
+
         """Attempt to the Edge Node's SSA IoT Connector"""
         retries = self.config["runtime"]["connection"].get("retries", 3)
         timeout_ms = self.config["runtime"]["connection"].get("timeout_ms", 1000)
@@ -154,20 +164,23 @@ class uMQTTRuntime(SSARuntime):
         self._wlan.active(True)
         self._wlan.connect(ssid, self.config["network"]["password"])
 
+        print("[DEBUG]\t\t->WLAN interface initialized.")
+
         from ._utils import with_exponential_backoff
 
-        async def wlan_isconnected():
+        def wlan_isconnected():
             if self._wlan.isconnected():
                 return True
             raise Exception(f"connecting to `{ssid}` WLAN")
 
-        await with_exponential_backoff(wlan_isconnected, retries, timeout_ms)
+        with_exponential_backoff(wlan_isconnected, retries, timeout_ms)
+        print("[DEBUG]\t\t->WLAN connection established.")
 
-        cleanup_session = self.config["runtime"]["broker"].get("clean_session", True)
-
-        await with_exponential_backoff(
+        clean_session = self.config["runtime"]["broker"].get("clean_session", True)
+        with_exponential_backoff(
             self._mqtt.connect(clean_session, timeout_ms), retries, timeout_ms
         )
+        print("[DEBUG]\t\t->MQTT client connected.")
 
         base_topic = f"ssa/{self.config["runtime"]["broker"]["client_id"]}"
         self._base_event_topic = f"{base_topic}/events"
@@ -175,6 +188,7 @@ class uMQTTRuntime(SSARuntime):
         self._base_property_topic = f"{base_topic}/properties"
 
         self._mqtt.set_callback(self._on_message)
+        print("[DEBUG]\t\t->MQTT client callback set.")
 
         # Subscribe to core actions.
         self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/vfs/list", qos=2)
@@ -182,18 +196,20 @@ class uMQTTRuntime(SSARuntime):
         self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/vfs/write", qos=2)
         self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/vfs/delete", qos=2)
         self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/reload", qos=2)
+        print("[DEBUG]\t\t->Subscribed to core actions.")
 
-    async def disconnect(self):
+    def disconnect(self):
         """Disconnect from the network."""
         if self._wlan.isconnected():
             self._wlan.disconnect()
 
         self._mqtt.disconnect()
 
-    async def register_device(self):
+    def register_device(self):
         registration_topic = f"ssa/registration/{RT_NAME}"
         registration_data = umsgpack.dumps(self.config["tm"])
-        self._mqtt.publish(registration_topic, registration_data)
+        self._mqtt.publish(registration_topic, registration_data, retain=True, qos=1)
+        print("[INFO] Device registration message sent.")
         # TODO: Implement registration response handling
 
     ######## AffordanceHandler interface methods ########
@@ -247,11 +263,11 @@ class uMQTTRuntime(SSARuntime):
         async def main_loop():
             """Run the uMQTT runtime."""
             while True:
-                blocking = len(self._tasks) == 0
+                blocking = len(self.tasks) == 0
                 if blocking:
-                    self._client.wait_msg()
+                    self._mqtt.wait_msg()
                 else:
-                    self._client.check_msg()
+                    self._mqtt.check_msg()
                     await asyncio.sleep_ms(100)  # TODO: Tune sleep time.
 
         if setup_func:
@@ -263,7 +279,7 @@ class uMQTTRuntime(SSARuntime):
                 ) from e
 
         print("[INFO] Starting uMQTT runtime")
-        asyncio.run(main_loop)
+        asyncio.run(main_loop())
 
     def task_create(self, task_id, task_func):
         """Register a task for execution."""

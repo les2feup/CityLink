@@ -1,5 +1,5 @@
-async def with_exponential_backoff(func, retries, base_timeout_ms):
-    from asyncio import sleep_ms
+def with_exponential_backoff(func, retries, base_timeout_ms):
+    from time import sleep_ms
 
     for i in range(retries):
         retry_timeout = base_timeout_ms * (2**i)
@@ -10,7 +10,7 @@ async def with_exponential_backoff(func, retries, base_timeout_ms):
             print(
                 f"[ERROR] {func.__name__} failed: {e}, retrying in {retry_timeout} milliseconds"
             )
-            await sleep_ms(retry_timeout)
+            sleep_ms(retry_timeout)
 
     raise Exception(f"[ERROR] {func.__name__} failed after {retries} retries")
 

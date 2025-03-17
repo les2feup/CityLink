@@ -1,3 +1,3 @@
-from .umqtt_core.runtime import uMQTTRuntime as Runtime
+from .umqtt_core.runtime import uMQTTRuntime as DefaultRuntime
 
-__all__ = ["Runtime"]
+__all__ = ["DefaultRuntime"]

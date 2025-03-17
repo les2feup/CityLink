@@ -69,11 +69,14 @@ class SSA:
         config_handler = ConfigLoader(list_files())
 
         try:
-            # Configuration Module
             config = config_handler.load_config()
-            self._rt: SSARuntime = runtime_class(config)
         except Exception as e:
-            raise Exception(f"[ERROR] Failed to init SSA instance: {e}") from e
+            raise Exception(f"[ERROR] Failed to load configuration: {e}") from e
+
+        try:
+            self._rt = runtime_class(config)
+        except Exception as e:
+            raise Exception(f"[ERROR] Failed to init runtime instance: {e}") from e
 
     def launch(self, user_main=None):
         """
