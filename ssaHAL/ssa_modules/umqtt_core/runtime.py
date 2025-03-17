@@ -36,19 +36,20 @@ class uMQTTRuntime(SSARuntime):
 
         print("[DEBUG]\t\t->Valid config.")
 
-        self.tasks = {}
-        self.properties = {}
+        self._tasks = {}
+        self._properties = {}
 
-        def action_laucher(handler, input, **kwargs):
+        def action_launcher(handler, input, **kwargs):
+            print(f"[DEBUG] Launching action '{handler.__name__}'")
             async def action_wrapper():
                 try:
                     await handler(input, **kwargs)
                 except Exception as e:
-                    raise Exception(f"[ERROR] Failed to execute action: {e}") from e
+                    print(f"[ERROR] Failed to execute action: {e}")
 
-            asyncio.create_task(action_wrapper)
+            asyncio.create_task(action_wrapper())
 
-        self._action_handler = ActionHandler(action_laucher)
+        self._action_handler = ActionHandler(action_launcher)
 
         print("[DEBUG]\t\t->Action handler initialized.")
 
@@ -68,20 +69,19 @@ class uMQTTRuntime(SSARuntime):
 
         from ._core_actions import vfs_list, vfs_read, vfs_write, vfs_delete
 
-        def vfs_action_wrapper(vfs_action):
-            async def vfs_action(input_bytes):
+        def vfs_action_wrapper(executor):
+            async def vfs_action(input):
                 try:
-                    input = umsgpack.loads(input_bytes)
-                    event_data = vfs_action(input)
-                    topic = f"{self._base_event_topic}/{RT_NAME}/vfs/report"
+                    event_data = executor(input)
                     data = umsgpack.dumps(event_data)
+                    topic = f"{self._base_event_topic}/{RT_NAME}/vfs/report"
                     self._mqtt.publish(topic, data, retain=False, qos=1)
                 except Exception as e:
-                    raise Exception(f"[ERROR] Failed to execute VFS action: {e}") from e
+                    print (f"[ERROR] Failed to execute VFS action: {e}")
 
             return vfs_action
 
-        self._builtin_actions = const(
+        self._core_actions = const(
             {
                 "vfs/list": vfs_action_wrapper(vfs_list),
                 "vfs/read": vfs_action_wrapper(vfs_read),
@@ -120,23 +120,26 @@ class uMQTTRuntime(SSARuntime):
             msg (bytes): The message
         """
         topic = topic.decode("utf-8")
+        action_input = umsgpack.loads(msg)
         print(f"[INFO] Received message on topic '{topic}'")
 
         core_action_prefix = f"{self._base_action_topic}/{RT_NAME}/"
         model_action_prefix = f"{self._base_action_topic}/{self._instance_model_name}/"
 
-        if action_name.startswith(core_action_prefix):
-            action_name = action_name[len(core_action_prefix) :]
+        if topic.startswith(core_action_prefix):
+            action_name = topic[len(core_action_prefix) :]
             try:
-                self.task_create(self._core_actions[action_name](msg))
+                async def task_func():
+                    await self._core_actions[action_name](action_input)
+
+                self.task_create(action_name, task_func)
             except Exception as e:
                 print(f"[ERROR] Failed to execute builtin action '{action_name}': {e}")
 
-        elif action_name.startswith(model_action_prefix):
-            action_name = action_name[len(model_action_prefix) :]
+        elif topic.startswith(model_action_prefix):
+            action_name = topic[len(model_action_prefix) :]
             try:
-                pass  # TODO: Implement action handler
-            # self._actions[action_name](msg)
+                self._action_handler.global_handler(action_name, action_input)
             except Exception as e:
                 print(f"[ERROR] Failed to execute action '{action_name}': {e}")
 
@@ -177,12 +180,14 @@ class uMQTTRuntime(SSARuntime):
         print("[DEBUG]\t\t->WLAN connection established.")
 
         clean_session = self.config["runtime"]["broker"].get("clean_session", True)
-        with_exponential_backoff(
-            self._mqtt.connect(clean_session, timeout_ms), retries, timeout_ms
-        )
+
+        def mqtt_connect():
+            self._mqtt.connect(clean_session, timeout_ms)
+
+        with_exponential_backoff(mqtt_connect, retries, timeout_ms)
         print("[DEBUG]\t\t->MQTT client connected.")
 
-        base_topic = f"ssa/{self.config["runtime"]["broker"]["client_id"]}"
+        base_topic = f"ssa/{self.config['runtime']['broker']['client_id']}"
         self._base_event_topic = f"{base_topic}/events"
         self._base_action_topic = f"{base_topic}/actions"
         self._base_property_topic = f"{base_topic}/properties"
@@ -191,11 +196,11 @@ class uMQTTRuntime(SSARuntime):
         print("[DEBUG]\t\t->MQTT client callback set.")
 
         # Subscribe to core actions.
-        self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/vfs/list", qos=2)
-        self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/vfs/read", qos=2)
-        self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/vfs/write", qos=2)
-        self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/vfs/delete", qos=2)
-        self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/reload", qos=2)
+        self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/vfs/list", qos=1)
+        self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/vfs/read", qos=1)
+        self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/vfs/write", qos=1)
+        self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/vfs/delete", qos=1)
+        self._mqtt.subscribe(f"{self._base_action_topic}/{RT_NAME}/reload", qos=1)
         print("[DEBUG]\t\t->Subscribed to core actions.")
 
     def disconnect(self):
@@ -216,25 +221,26 @@ class uMQTTRuntime(SSARuntime):
 
     def create_property(self, prop_name, prop_value, **_):
         """Create a new property."""
-        if _is_valid_property_name(prop_name) and prop_name not in self.properties:
-            self.properties[prop_name] = prop_value
+        if self._is_valid_property_name(prop_name) and prop_name not in self._properties:
+            self._properties[prop_name] = prop_value
         else:
             raise ValueError(f"Invalid or duplicate property name: '{prop_name}'")
 
     def get_property(self, prop_name, **_):
         """Get the value of a property."""
-        if prop_name in self.properties:
-            return self.properties[prop_name]
+        if prop_name in self._properties:
+            return self._properties[prop_name]
 
         raise ValueError(f"Property '{prop_name}' not found")
 
     async def set_property(self, prop_name, prop_value, retain=True, qos=1, **_):
         """Set the value of a property."""
-        if prop_name in self.properties:
-            self.properties[prop_name] = prop_value
+        if prop_name in self._properties:
+            self._properties[prop_name] = prop_value
             try:
                 topic = f"{self._base_property_topic}/{self._instance_model_name}/{prop_name}"
-                data = umsgpack.dumps(prop_value) # TODO: add options to use a custom serializer
+                # TODO: add options to use a custom serializer
+                data = umsgpack.dumps(prop_value)  
                 self._mqtt.publish(topic, data, retain=retain, qos=qos)
             except Exception as e:
                 print(f"[ERROR] Failed to publish property update: {e}")
@@ -248,7 +254,9 @@ class uMQTTRuntime(SSARuntime):
 
         topic = f"{self._base_event_topic}/{self._instance_model_name}/{event_name}"
         try:
-            data = umsgpack.dumps(event_data)  # TODO: add options to use a custom serializer
+            data = umsgpack.dumps(
+                event_data
+            )  # TODO: add options to use a custom serializer
             self._mqtt.publish(topic, data, retain=retain, qos=qos)
         except Exception as e:
             print(f"[ERROR] Failed to publish event '{event_name}': {e}")
@@ -256,6 +264,7 @@ class uMQTTRuntime(SSARuntime):
     def register_action_handler(self, action_name, action_func, **_):
         """Register a new action."""
         self._action_handler.register_action(action_name, action_func)
+        self._mqtt.subscribe(f"{self._base_action_topic}/{self._instance_model_name}/{action_name}", qos=1)
 
     ######## SSARuntime interface methods ########
 
@@ -264,9 +273,11 @@ class uMQTTRuntime(SSARuntime):
 
         async def main_loop():
             """Run the uMQTT runtime."""
+            print("[INFO] Starting uMQTT runtime main loop.")
             while True:
-                blocking = len(self.tasks) == 0
+                blocking = len(self._tasks) == 0
                 if blocking:
+                    print("[INFO] Waiting for incoming messages...")
                     self._mqtt.wait_msg()
                 else:
                     self._mqtt.check_msg()
@@ -276,9 +287,7 @@ class uMQTTRuntime(SSARuntime):
             try:
                 setup_func()
             except Exception as e:
-                raise Exception(
-                    f"Setup function `{setup_func.___name__}` failed: {e}"
-                ) from e
+                raise Exception(f"Setup function failed: {e}") from e
 
         print("[INFO] Starting uMQTT runtime")
         asyncio.run(main_loop())
@@ -304,7 +313,7 @@ class uMQTTRuntime(SSARuntime):
             except Exception as e:
                 print(f"[WARNING] Task '{task_id}' failed: {e}")
             finally:
-                del self._tasks[task_name]
+                del self._tasks[task_id]
 
         self._tasks[task_id] = asyncio.create_task(wrapped_task())
 
@@ -312,7 +321,7 @@ class uMQTTRuntime(SSARuntime):
         """Cancel a previously registered task."""
         if task_id in self._tasks:
             try:
-                self._tasks[task_id].cancel()
+               await self._tasks[task_id].cancel()
             except Exception as e:
                 print(f"[WARNING] Failed to cancel task '{task_id}': {e}")
         else:

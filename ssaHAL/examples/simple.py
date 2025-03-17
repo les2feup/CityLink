@@ -9,7 +9,7 @@ async def random_event(ssa: SSA) -> None:
     Generates a random event with a 50% probability.
     """
     if random.randint(0, 1):
-        await ssa.trigger_event("random_event", "Event triggered")
+        await ssa.emit_event("random_event", "Event triggered")
 
 
 async def random_property_with_event(ssa: SSA) -> None:
@@ -18,7 +18,7 @@ async def random_property_with_event(ssa: SSA) -> None:
     Triggers an event if the new value is greater than 70.
     """
     new_value: int = random.randint(0, 100)
-    await ssa.set_property("random_value", new_value)
+    await ssa.set_property("random_value", new_value, qos=0)
     if new_value > 70:
         await ssa.emit_event("random_value_event", "Random value is greater than 70")
 

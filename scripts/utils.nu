@@ -1,23 +1,29 @@
-export def msgpack [example: path] {
-    let script = open $example
-    let crc32 = $script | crc32 | into int -r 16 | format number | get lowerhex
+let uuid = open ssaHAL/config/config.json | get runtime.broker.client_id
+let model_name = open ssaHAL/config/config.json | get tm.name
 
-    {script: $script, crc32: $crc32 } | to msgpack
-}
+let event_topic = $"ssa/($uuid)/events"
+let action_topic = $"ssa/($uuid)/actions"
+let property_topic = $"ssa/($uuid)/properties"
 
-export def msgpack_sub [topic?:string = "ssa/registration/umqtt_core"] {
-    print "Subscribing to mosquitto topic 'ssa/registration/umqtt_core'..."
-    mosquitto_sub -v -t $topic
-    | each { |$it|
-        # Split on the first space: topic is the first token,
-        # the remainder is the raw (binary) message.
-        let parts = $it | bytes split " "
-        let topic = $parts.0 | decode
-        let msg = $parts | skip 1 | reduce { |$it, $acc| $acc | bytes add $it --end}
-        print ({topic: $topic, msg: ($msg | from msgpack --objects | get 0)} | to json)
-    } | ignore
-}
-
-export def msgpack_pub [topic?:string = "ssa/registration/umqtt_core"] {
+export def msgpack_pub [topic: string] {
     $in | to msgpack | mosquitto_pub -t $topic -s
+}
+
+export def msgpack_sub [topic: string,
+                        --json (-j),
+                        --ignore_n (-i): int = 0] {
+    let file = mktemp XXXX.mpk
+    try {
+        loop {
+            mosquitto_sub -C (1 + $ignore_n) -t $topic | save -f $file
+            let data = open $file | skip $ignore_n | from msgpack --objects | get 0
+            let $data = match $json {
+                true => ($data | to json)
+                false => $data
+            }
+            print $data
+        }
+    } catch {
+        rm $file
+    }
 }

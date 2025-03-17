@@ -15,9 +15,9 @@ def ssa_main(runtime_class=None):
     """
     if not runtime_class:
         try:  # Default to ssa_modules default runtime if available
-            from ssa_modules import Runtime
+            from ssa_modules import DefaultRuntime
 
-            runtime_class = Runtime
+            runtime_class = DefaultRuntime
         except ImportError:
             raise Exception("No runtime class provided and no default available")
 
@@ -118,10 +118,10 @@ class SSA:
         return await self._rt.emit_event(name, value, **kwargs)
 
     def register_action(self, action_uri, action_callback):
-        def action_wrapper(action_input, **kwargs):
-            action_callback(self, action_input, **kwargs)
+        def ssa_model_action(action_input, **kwargs):
+            return action_callback(self, action_input, **kwargs)
 
-        self._rt.register_action(action_uri, action_wrapper)
+        self._rt.register_action_handler(action_uri, ssa_model_action)
 
     def rt_task_create(self, task_id, task_func, task_period_ms):
         """Register a task for execution."""
@@ -136,7 +136,7 @@ class SSA:
                     await task_func(self)
                 except Exception as e:
                     raise Exception(
-                        f"[ERROR] Failed to run {func.__name__}: {e}"
+                        f"[ERROR] Failed to run {task_func.__name__}: {e}"
                     ) from e
 
                 if task_period_ms == 0:  # one shot task
@@ -144,7 +144,7 @@ class SSA:
 
                 sleep_time = time.ticks_diff(next_wake_time, time.ticks_ms())
                 if sleep_time > 0:
-                    await self.rt_task_sleep_ms(sleep_time)
+                    await self._rt.task_sleep_ms(sleep_time)
 
         self._rt.task_create(task_id, ssa_task)
 
@@ -154,8 +154,8 @@ class SSA:
 
     async def rt_task_sleep_s(self, s):
         """Sleep for a given number of seconds."""
-        self._rt.task_sleep_s(s)
+        await self._rt.task_sleep_s(s)
 
     async def rt_task_sleep_ms(self, ms):
         """Sleep for a given number of milliseconds."""
-        self._rt.task_sleep_ms(ms)
+        await self._rt.task_sleep_ms(ms)

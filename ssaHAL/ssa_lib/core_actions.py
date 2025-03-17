@@ -10,9 +10,9 @@ def vfs_read(input):
 
 
 def vfs_write(input):
-    file_path = input["file_path"]
+    file_path = input["path"]
     data = input["payload"].get("data")
-    hash = input["payload"].get("hash")
+    hash = int(input["payload"].get("hash"), 16)
     hash_algo = input["payload"].get("algo")
 
     if hash_algo != "crc32":
@@ -20,8 +20,9 @@ def vfs_write(input):
 
     from binascii import crc32
 
-    if crc32(data) != hash:
-        raise ValueError("Hash mismatch.")
+    actual_hash = crc32(data)
+    if actual_hash != hash:
+        raise ValueError(f"Hash mismatch, expected {hex(hash)}, got {hex(actual_hash)}")
 
     mode = "a" if input.get("append", False) else "w"
 

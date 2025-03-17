@@ -5,7 +5,7 @@ def with_exponential_backoff(func, retries, base_timeout_ms):
         retry_timeout = base_timeout_ms * (2**i)
         print(f"[INFO] Trying {func.__name__} (attempt {i + 1}/{retries})")
         try:
-            return await func()
+            return func()
         except Exception as e:
             print(
                 f"[ERROR] {func.__name__} failed: {e}, retrying in {retry_timeout} milliseconds"

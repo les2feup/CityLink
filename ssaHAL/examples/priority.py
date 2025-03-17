@@ -8,6 +8,7 @@ Setting the priority is handled by the user through the SSA HAL API (topic is mq
 import random
 from ssa.core import ssa_main, SSA
 
+
 async def simulate_random_sensor(ssa: SSA) -> None:
     """
     Simulate a sensor reading and trigger a corresponding event.
@@ -18,7 +19,7 @@ async def simulate_random_sensor(ssa: SSA) -> None:
     """
     sensor_value = random.randint(0, 100)
     priority = ssa.get_property("priority")
-    await ssa.emit_event (
+    await ssa.emit_event(
         f"sensor_value/{priority}_prio", sensor_value
     )  # "low_prio", "medium_prio", "high_prio"
 
