@@ -3,8 +3,9 @@ import astor
 import sys
 import os
 
+
 def remove_docstrings(input_file, output_file):
-    with open(input_file, 'r', encoding='utf-8') as f:
+    with open(input_file, "r", encoding="utf-8") as f:
         try:
             parsed = ast.parse(f.read())
         except SyntaxError as e:
@@ -12,7 +13,9 @@ def remove_docstrings(input_file, output_file):
             return
 
     for node in ast.walk(parsed):
-        if not isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef, ast.Module)):
+        if not isinstance(
+            node, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef, ast.Module)
+        ):
             continue
 
         if not node.body:
@@ -21,13 +24,16 @@ def remove_docstrings(input_file, output_file):
         if not isinstance(node.body[0], ast.Expr):
             continue
 
-        if not hasattr(node.body[0], 'value') or not isinstance(node.body[0].value, ast.Constant):
+        if not hasattr(node.body[0], "value") or not isinstance(
+            node.body[0].value, ast.Constant
+        ):
             continue
 
         node.body = node.body[1:]
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(astor.to_source(parsed))
+
 
 def process_directory(input_dir, output_dir):
     for root, _, files in os.walk(input_dir):
@@ -38,7 +44,7 @@ def process_directory(input_dir, output_dir):
                 output_file = os.path.join(output_dir, relative_path)
 
                 output_dir_for_file = os.path.dirname(output_file)
-                os.makedirs(output_dir_for_file, exist_ok=True) # Create necessary dirs
+                os.makedirs(output_dir_for_file, exist_ok=True)  # Create necessary dirs
 
                 remove_docstrings(input_file, output_file)
                 print(f"Processed: {input_file} -> {output_file}")
