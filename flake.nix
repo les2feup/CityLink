@@ -36,7 +36,7 @@
         '';
 
         fw2json = pkgs.writeShellScriptBin "fw2json" ''
-        ${builtins.readFile ./scripts/fw2json.sh}
+          ${builtins.readFile ./scripts/fw2json.sh}
         '';
       in
       {
@@ -59,6 +59,9 @@
 
             jq # json cli parser
             rsbkb # for crc32 package
+
+            nodePackages_latest.prettier # code formatter
+            black # python code formatter
 
             mpremote # micropython remote tool
             micropython # micropython runtime and cross compiler
