@@ -2,14 +2,14 @@ from ssa.interfaces import SSARuntime
 from ssa_lib.action_handler import ActionHandler
 
 from umqtt.simple import MQTTClient
-from network import WLAN, STA_IF
 from micropython import const
+from network import WLAN, STA_IF
 
 import asyncio
 import umsgpack
 
 RT_NAME = const("umqtt_core")
-RESERVED_NAMES = const(["vfs", "ssa", "events", "actions", "properties", "umqtt_core"])
+RESERVED_NAMES = const(("vfs", "ssa", "events", "actions", "properties", "umqtt_core"))
 
 
 class uMQTTRuntime(SSARuntime):

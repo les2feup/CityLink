@@ -3,6 +3,7 @@ class AffordanceHandler:
 
     def __init__(self, config):
         """Initialize the AffordanceHandler base class."""
+        raise NotImplementedError("Subclasses must implement __init__()")
 
     def create_property(self, prop_name, prop_value, **kwargs):
         """Create a new property."""
