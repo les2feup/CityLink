@@ -3,6 +3,14 @@ from types import ModuleType
 
 
 def load_stub():
+    """
+    Initializes a stub implementation for the 'time' module.
+    
+    If the 'time' module is not present in sys.modules, this function creates a new module
+    with a no-operation sleep function and registers it. If the module already exists,
+    it updates its sleep function to perform no operation and adds a sleep_ms function,
+    both annotated with documentation indicating they are stub implementations.
+    """
     if "time" not in sys.modules:
         time_stub = ModuleType("time")
         time_stub.sleep = lambda x: None

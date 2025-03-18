@@ -41,6 +41,20 @@ export function setupMQTT(
   });
 }
 
+/**
+ * Processes and registers an incoming MQTT registration message.
+ *
+ * This asynchronous function validates the message received on a topic formatted as
+ * "registration/{uuid}", ensuring that the UUID in the topic matches the one in the JSON
+ * payload and that the payload includes both a "model" and "version". It then fetches the
+ * corresponding model using the provided helper, constructs a Thing Description (TD), and
+ * registers it in the collection of hosted things.
+ *
+ * @param tmTools An instance of ThingModelHelpers used to retrieve the device model.
+ * @param hostedThings A map organizing registered Thing Descriptions by model and UUID.
+ * @param topic The MQTT topic from which the message was received, expected in "registration/{uuid}" format.
+ * @param message The message payload as a Buffer containing JSON registration data.
+ */
 async function handleRegistrationMessage(
   tmTools: ThingModelHelpers,
   hostedThings: Map<string, Map<string, WoT.ThingDescription>>,
