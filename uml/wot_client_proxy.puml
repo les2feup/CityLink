@@ -2,7 +2,7 @@
 
 actor "WoT Client" as client
 participant "WoT Registry" as wot
-participant "SSA Egde Node" as edge
+participant "SSA Edge Node" as edge
 participant "SSA IoT Device"  as device
 
 == Registration (Simplified) ==
@@ -83,14 +83,10 @@ loop Interactions via WoT affordances
         activate edge
         loop while subscribed
             edge --> client : emit event
-            deactivate edge
         end
+        deactivate edge
     end
 end
 
 deactivate client
-@enduml
-
-
-
 @enduml
