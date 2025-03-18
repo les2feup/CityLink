@@ -19,17 +19,10 @@ database "App Registry" as appDB {
 node "SSA Edge Node" as edgeNode {
 
     [SSA IoT Connector] as ssaIoT
-    [SSA WoT Proxy] as ssaProxy
     [Thing Registry Client] as tRClient
 
-
-    ssaIoT -u-> ssaProxy : updates
-    ssaProxy -d-> ssaIoT : uses
-
     ssaIoT -u-> tRClient : uses
-    ssaIoT -r- appDB : fetch app code
-
-    ssaProxy -r.> wotProt : expose thing
+    ssaIoT -r-> appDB : fetch app code
 }
 
 node "SSA IoT Device" as device {
@@ -48,9 +41,8 @@ node "SSA IoT Device" as device {
 tRClient -u-> tds : register \nThing Description(s)
 tRClient -u-> tms : fetch Thing Model(s)
 
-ssaProxy -u[hidden]- tms
-
-ssaRt -u..> ssaIoT : publish events
-ssaIoT -d..> ssaRt : invoke actions\nread/write properties
+ssaIoT -d..> ssaRt : update app code
+ssaRt -u..> ssaIoT : announce self
+ssaRt -r..> wotProt: expose self
 
 @enduml
