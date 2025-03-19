@@ -13,14 +13,14 @@ class AffordanceHandler:
         """Get the value of a property."""
         raise NotImplementedError("Subclasses must implement get_property()")
 
-    async def set_property(self, prop_name, prop_value, **kwargs):
+    def set_property(self, prop_name, prop_value, **kwargs):
         """Set the value of a property."""
         raise NotImplementedError("Subclasses must implement set_property()")
 
-    async def emit_event(self, event_name, event_data, **kwargs):
-        """Publish an event to all subscribers."""
-        raise NotImplementedError("Subclasses must implement emit_event()")
-
-    def register_action_handler(self, action_name, action_func, **kwargs):
+    def set_action_callback(self, action_name, action_cb, **kwargs):
         """Register a new action."""
         raise NotImplementedError("Subclasses must implement register_action()")
+
+    def get_action_callback(self, action_name, **kwargs):
+        """Get the callback function for an action."""
+        raise NotImplementedError("Subclasses must implement get_action_callback()")

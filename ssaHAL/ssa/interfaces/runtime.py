@@ -4,8 +4,7 @@ from .affordance_handler import AffordanceHandler
 
 class SSARuntime(SSAConnector, AffordanceHandler):
     """Base class defining the SSARuntime interface."""
-
-    def __init__(self, config, extra_config_template={}):
+    def __init__(self, config):
         """Initialize SSARuntime with a required configuration dictionary."""
         self.config = config
 
@@ -36,7 +35,15 @@ class SSARuntime(SSAConnector, AffordanceHandler):
 
         validate_configuration(extra_config_template, config)
 
-    def launch(self, setup_func=None):
+    def connect(self):
+        """Attempt to the Edge Node's SSA IoT Connector"""
+        raise NotImplementedError("Subclasses must implement connect()")
+
+    def disconnect(self):
+        """Disconnect from the network."""
+        raise NotImplementedError("Subclasses must implement disconnect()")
+
+    def start_scheduler(self, setup_func=None):
         """Launch the runtime."""
         raise NotImplementedError("Subclasses must implement launch()")
 
