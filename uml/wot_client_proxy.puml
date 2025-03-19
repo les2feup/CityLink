@@ -1,0 +1,92 @@
+@startuml
+
+actor "WoT Client" as client
+participant "WoT Registry" as wot
+participant "SSA Edge Node" as edge
+participant "SSA IoT Device"  as device
+
+== Registration (Simplified) ==
+
+activate device
+device -> edge : identify self
+activate edge
+edge -> edge : instantiate device\nThing Description (TD)
+edge --> device : configuration
+deactivate device
+deactivate edge
+
+== Thing Proxy Operation Mode ==
+
+edge --> edge : Instantiate Thing Proxy
+activate edge
+device --> device : start operation loop
+activate device
+
+loop device operation cycle
+    device -> edge : transmit events
+    device -> edge : transmit properties
+    device -> edge : transmit action responses
+end
+deactivate device
+deactivate edge
+
+== Client Interactions == 
+
+client -> wot : get Thing Model\n (TM) instances
+activate client
+activate wot
+
+wot -> edge : get exposed TDs
+activate edge
+edge --> wot : exposed TDs
+deactivate edge
+
+wot -> wot : filter TDs by queried TM
+wot --> client : exposed TDs
+deactivate wot
+
+client -> client : consume TDs
+
+loop Interactions via WoT affordances
+    alt
+        client -> edge : invoke action 
+        activate edge
+
+        edge -> device : invoke action 
+        activate device 
+        device --> device : execute action
+        deactivate device
+
+        deactivate device
+        edge --> client : action response
+
+    else 
+        client -> edge : read property
+        activate edge
+        edge --> client : property
+        deactivate edge
+
+    else 
+        client -> edge : write property
+        activate edge
+
+        edge -> device : invoke "write property" action
+        activate device 
+        device --> device: execute action
+        deactivate device
+
+        edge --> client : updated property
+        deactivate edge
+
+    else
+        client -> edge : subscribe event
+        activate edge
+        loop while subscribed
+            edge --> client : emit event
+        end
+        deactivate edge
+    end
+end
+
+deactivate client
+@enduml

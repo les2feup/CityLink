@@ -16,12 +16,13 @@ class ActDictElement:
 class ActionHandler:
     def __init__(self, task_launcher):
         """
-        Initializes the ActionHandler with the given SSA instance.
-
-        Stores the provided SSA instance and initializes an empty action registry.
-
+        Initializes the ActionHandler with the provided task launcher.
+        
+        Stores the task launcher for scheduling action callbacks and sets up an empty
+        registry for managing action handlers.
+        
         Args:
-            ssa_instance: The SSA instance used for integrating action handling into the system.
+            task_launcher: An object used to launch or schedule action callbacks.
         """
         self._launcher = task_launcher
         self.actions = {}
@@ -81,20 +82,17 @@ class ActionHandler:
 
     def global_handler(self, action_uri, action_input):
         """
-        Handles global action invocations by invoking a registered callback.
-
-        This method is called when an action is triggered by the WoT servient.
-        It first checks if the provided action URI matches a top-level action
-        and calls its callback if found. If no matching top-level handler exists,
-        it searches the action tree for a dedicated handler that supports URI
-        parameter matching.
-        If the action URI is invalid or no suitable handler is found,
-        a warning or error is logged.
-        Any exceptions raised during callback execution are caught and logged.
-
+        Handles global action invocations by dispatching to the appropriate callback.
+        
+        This method routes an action based on its URI by first checking for a top-level
+        registered callback. If a match is not found, it searches the action tree for a
+        dedicated handler that supports parameterized URIs. If the action URI is invalid
+        or no suitable handler exists, a warning or error is logged. Any exceptions raised
+        during callback execution are caught and logged.
+        
         Args:
             action_uri: The action's URI relative to the base action URI.
-            payload: The data payload associated with the action invocation.
+            action_input: The payload data associated with the action invocation.
         """
 
         if action_uri is None or len(action_uri) == 0:
@@ -131,17 +129,16 @@ class ActionHandler:
 
     def register_action(self, action_uri, handler_func):
         """
-        Register a callback for the specified action URI.
-
-        The action URI may be a literal string or include segments with parameters
-        (enclosed in curly braces) and sub-actions (separated by slashes).
-        The first segment must be a literal. The callback should accept at least
-        two arguments (the SSA instance and the received message) and additional
-        arguments corresponding to any URI parameters.
-
+        Register a callback for a given action URI.
+        
+        The action URI may be a literal string or a pattern that includes parameterized segments
+        (enclosed in curly braces) and sub-actions (separated by slashes). The first segment
+        must be literal. When the action is triggered, the callback will be invoked with the
+        action input as its first argument and any extracted URI parameters as keyword arguments.
+        
         Raises:
             Exception: If the action URI is invalid or a callback for the URI already exists.
-
+        
         Args:
             action_uri: A string representing the action URI to register.
             handler_func: A function to be executed when the action is triggered.

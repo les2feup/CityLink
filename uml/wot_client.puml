@@ -1,0 +1,69 @@
+@startuml
+
+actor "WoT Client" as client
+participant "WoT Registry" as wot
+participant "SSA Edge Node" as edge
+participant "SSA IoT Device"  as device
+
+== Registration (Simplified) ==
+
+activate device
+device -> edge : identify self
+activate edge
+edge -> edge : instantiate device\nThing Description (TD)
+edge --> device : configuration
+deactivate edge
+deactivate device
+
+== Client Interactions == 
+
+device --> device : host affordances
+activate device
+
+client -> wot : get Thing Model\n (TM) instances
+activate client
+activate wot
+
+wot -> edge : get exposed TDs
+activate edge
+edge --> wot : exposed TDs
+deactivate edge
+
+wot -> wot : filter TDs by queried TM
+wot --> client : exposed TDs
+deactivate wot
+
+client -> client : consume TDs
+
+loop Interactions via WoT affordances
+    alt
+        client -> device : invoke action 
+        activate device
+        device -> device : execute action
+        device --> client : action response
+        deactivate device
+
+    else 
+        client -> device : read property
+        activate device 
+        device --> client : property
+        deactivate device
+
+    else 
+        client -> device : write property
+        activate device 
+        device --> client : updated property
+        deactivate device
+
+    else
+        client -> device : subscribe event
+        activate device
+        loop while subscribed
+            device --> client : emit event
+        end
+        deactivate device
+    end
+end
+
+deactivate client
+@enduml
