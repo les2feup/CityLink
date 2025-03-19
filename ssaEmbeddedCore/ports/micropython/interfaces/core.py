@@ -44,7 +44,7 @@ class SSACore(AffordanceHandler, TaskScheduler):
         def main_decorator(main_func):
             """Decorates the main function of the SSACore."""
 
-            def main_wrapper(self):
+            def main_wrapper():
                 """Wrapper for the main function of the SSACore."""
                 raise NotImplementedError("Subclasses must implement SSACoreEntry()")
 
