@@ -41,6 +41,31 @@ class AffordanceHandler:
         """
         raise NotImplementedError("Subclasses must implement set_property()")
 
+    def emit_event(self, event_name, event_data, **kwargs):
+        """
+        Emit an event with the specified name and data.
+
+        Subclasses must override this method to emit an event with the specified name and data.
+        Additional keyword arguments may be used to provide further customization.
+        """
+        raise NotImplementedError("Subclasses must implement emit_event()")
+
+    def sync_action(func):
+        """Decorator for synchronous action handlers."""
+
+        async def wrapper(self, *args, **kwargs):
+            raise NotImplementedError("Subclasses must implement sync_action()")
+
+        return wrapper
+
+    def async_action(func):
+        """Decorator for asynchronous action handlers."""
+
+        async def wrapper(self, *args, **kwargs):
+            raise NotImplementedError("Subclasses must implement async_action()")
+
+        return wrapper
+
     def register_action_handler(self, action_name, action_func, **kwargs):
         """
         Registers a new action handler.
@@ -55,19 +80,6 @@ class AffordanceHandler:
         """
         raise NotImplementedError("Subclasses must implement register_action()")
 
-    def emit_event(self, event_name, event_data, **kwargs):
-        """
-        Emit an event with the specified name and data.
-
-        Subclasses must override this method to emit an event with the specified name and data.
-        Additional keyword arguments may be used to provide further customization.
-        """
-        raise NotImplementedError("Subclasses must implement emit_event()")
-    
-    def _get_action_handler(self, action_name, **kwargs):
-        """Get the callback function for an action."""
-        raise NotImplementedError("Subclasses must implement get_action_callback()")
-
     def _invoke_action(self, action_name, action_input, **kwargs):
         """Invoke the specified action with the provided arguments."""
         raise NotImplementedError("Subclasses must implement invoke_action()")
@@ -78,7 +90,9 @@ class AffordanceHandler:
 
     def _builtin_action_vfs_write(self, action_input):
         """Write data to a file in the virtual file system."""
-        raise NotImplementedError("Subclasses must implement builtin_action_vfs_write()")
+        raise NotImplementedError(
+            "Subclasses must implement builtin_action_vfs_write()"
+        )
 
     def _builtin_action_vfs_list(self, action_input):
         """List the contents of the virtual file system."""
@@ -86,8 +100,12 @@ class AffordanceHandler:
 
     def _builtin_action_vfs_delete(self, action_input):
         """Delete a file from the virtual file system."""
-        raise NotImplementedError("Subclasses must implement builtin_action_vfs_delete()")
+        raise NotImplementedError(
+            "Subclasses must implement builtin_action_vfs_delete()"
+        )
 
     def _builtin_action_reload_core(self, action_input):
         """Reload the core module."""
-        raise NotImplementedError("Subclasses must implement builtin_action_reload_core()")
+        raise NotImplementedError(
+            "Subclasses must implement builtin_action_reload_core()"
+        )

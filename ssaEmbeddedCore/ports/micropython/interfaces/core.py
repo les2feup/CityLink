@@ -4,7 +4,7 @@ from .modules import AffordanceHandler, TaskScheduler, Serializer
 class SSACore(AffordanceHandler, TaskScheduler):
     """Base class defining the SSARuntime interface."""
 
-    def __init__(self, config_dir, default_serializer: Serializer):
+    def __init__(self, config_dir, fopen_mode="r", default_serializer: Serializer):
         """Initialize SSARuntime with a required configuration dictionary."""
 
     def _load_config(self):
