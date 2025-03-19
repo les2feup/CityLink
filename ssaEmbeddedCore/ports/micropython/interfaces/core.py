@@ -1,18 +1,19 @@
-from .modules.affordance_handler import AffordanceHandler
-from .modules.taskScheduler import TaskScheduler
-from .modules.serializer import Serializer
+from .modules import AffordanceHandler, TaskScheduler, Serializer
+
 
 class SSACore(AffordanceHandler, TaskScheduler):
     """Base class defining the SSARuntime interface."""
 
     def __init__(self, config_dir, default_serializer: Serializer):
         """Initialize SSARuntime with a required configuration dictionary."""
-        self.config_dir = config_dir
-        self.serializer = default_serializer
 
     def _load_config(self):
         """Load the configuration from the specified directory."""
         raise NotImplementedError("Subclasses must implement load_config()")
+
+    def _write_config(self, update_dict):
+        """Write the configuration to the specified directory."""
+        raise NotImplementedError("Subclasses must implement write_config()")
 
     def _connect(self):
         """Attempt to the Edge Node's SSA IoT Connector"""
@@ -22,7 +23,7 @@ class SSACore(AffordanceHandler, TaskScheduler):
         """Disconnect from the network."""
         raise NotImplementedError("Subclasses must implement disconnect()")
 
-    def _listen(self):
+    def _listen(self, blocking):
         """Listen and handle incoming requests."""
         raise NotImplementedError("Subclasses must implement listen()")
 

@@ -10,12 +10,12 @@ import os
 def _delete_all(directory=".", keep_this=True):
     """
     Recursively delete all files and directories in the specified path.
-    
-    This function removes every file and subdirectory under the given directory when 
-    running on a MicroPython device. When keep_this is True, the script file 
-    "_nuke.py" is not deleted. If the function is not running on a MicroPython board, 
+
+    This function removes every file and subdirectory under the given directory when
+    running on a MicroPython device. When keep_this is True, the script file
+    "_nuke.py" is not deleted. If the function is not running on a MicroPython board,
     it prints a message and exits without deleting anything.
-    
+
     Args:
         directory: The target directory for deletion (default is ".").
         keep_this: If True, preserves the "_nuke.py" file (default is True).

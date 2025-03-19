@@ -10,15 +10,6 @@ class AffordanceHandler:
         """
         raise NotImplementedError("Subclasses must implement __init__()")
 
-    def _set_builtins_namespace(self, namespace):
-        """
-        Set the namespace for built-in properties and actions.
-
-        This method allows the handler to define a namespace for built-in properties
-        and actions that are not associated with a specific device or service.
-        """
-        raise NotImplementedError("Subclasses must implement set_builtins_namespace()")
-
     def create_property(self, prop_name, prop_value, **kwargs):
         """
         Create a new property.
@@ -64,6 +55,39 @@ class AffordanceHandler:
         """
         raise NotImplementedError("Subclasses must implement register_action()")
 
-    def get_action_handler(self, action_name, **kwargs):
+    def emit_event(self, event_name, event_data, **kwargs):
+        """
+        Emit an event with the specified name and data.
+
+        Subclasses must override this method to emit an event with the specified name and data.
+        Additional keyword arguments may be used to provide further customization.
+        """
+        raise NotImplementedError("Subclasses must implement emit_event()")
+    
+    def _get_action_handler(self, action_name, **kwargs):
         """Get the callback function for an action."""
         raise NotImplementedError("Subclasses must implement get_action_callback()")
+
+    def _invoke_action(self, action_name, action_input, **kwargs):
+        """Invoke the specified action with the provided arguments."""
+        raise NotImplementedError("Subclasses must implement invoke_action()")
+
+    def _builtin_action_vfs_read(self, action_input):
+        """Read the contents of a file from the virtual file system."""
+        raise NotImplementedError("Subclasses must implement builtin_action_vfs_read()")
+
+    def _builtin_action_vfs_write(self, action_input):
+        """Write data to a file in the virtual file system."""
+        raise NotImplementedError("Subclasses must implement builtin_action_vfs_write()")
+
+    def _builtin_action_vfs_list(self, action_input):
+        """List the contents of the virtual file system."""
+        raise NotImplementedError("Subclasses must implement builtin_action_vfs_list()")
+
+    def _builtin_action_vfs_delete(self, action_input):
+        """Delete a file from the virtual file system."""
+        raise NotImplementedError("Subclasses must implement builtin_action_vfs_delete()")
+
+    def _builtin_action_reload_core(self, action_input):
+        """Reload the core module."""
+        raise NotImplementedError("Subclasses must implement builtin_action_reload_core()")
