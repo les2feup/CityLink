@@ -1,20 +1,20 @@
 def with_exponential_backoff(func, retries, base_timeout_ms):
     """
     Attempts to execute a function with exponential backoff on failure.
-    
+
     This function calls the provided callable, retrying up to the specified number of times.
     After each failure, it waits for an exponentially increasing delay starting at base_timeout_ms
     milliseconds. If the callable succeeds, its result is returned immediately; if all attempts fail,
     an Exception is raised.
-    
+
     Args:
         func: The callable to execute.
         retries: The maximum number of retry attempts.
         base_timeout_ms: The initial wait time in milliseconds, which doubles after each attempt.
-    
+
     Returns:
         The result of the callable if execution is successful.
-    
+
     Raises:
         Exception: If the callable fails on all retry attempts.
     """
@@ -37,16 +37,16 @@ def with_exponential_backoff(func, retries, base_timeout_ms):
 def iterative_dict_diff(old, new):
     """
     Compute the difference between two dictionaries.
-    
+
     Compares the original dictionary 'old' with the updated dictionary 'new' and
     returns a dictionary capturing any key additions or value updates. Nested
     dictionaries are processed iteratively, and empty dictionary entries are
     removed from the result.
-    
+
     Args:
         old: The original dictionary.
         new: The updated dictionary.
-    
+
     Returns:
         A dictionary representing the differences from 'old' to 'new'.
     """

@@ -4,7 +4,7 @@ from ssa.core import SSA, ssa_main
 def get_led_index(led_index: str):
     """
     Converts a string LED index to an integer.
-    
+
     Attempts to convert the provided LED index from its string representation to an
     integer using base-10 conversion. If the conversion fails, an error message is
     printed and None is returned.
@@ -25,7 +25,7 @@ def get_led_index(led_index: str):
 async def set_led_brightness(ssa: SSA, _msg: str, led_index: str, brightness: str):
     """
     Set the brightness of a specific LED.
-    
+
     Converts the LED index and brightness from their string representations. If the LED index is not valid or the brightness (after conversion to an integer) is not between 0 and 100, the function aborts without making any changes. Otherwise, it updates the LED's brightness in the simulated strip and persists the change asynchronously.
     """
     led_index = get_led_index(led_index)
@@ -46,12 +46,12 @@ async def set_led_brightness(ssa: SSA, _msg: str, led_index: str, brightness: st
 async def set_led_color(ssa: SSA, _msg: str, led_index: str, color: str):
     """
     Sets the color of a specific LED asynchronously.
-    
+
     This function updates an LED's color in the LED strip using a hexadecimal RGB
     string. It validates the LED index and the color value, converting the latter to
     an integer and ensuring it lies between 0 and 0xFFFFFF. If any validation fails,
     an error message is printed and no update is performed.
-    
+
     Args:
         led_index: String representing the target LED's index.
         color: Hexadecimal RGB string indicating the new color.
@@ -79,12 +79,12 @@ async def set_led_color(ssa: SSA, _msg: str, led_index: str, color: str):
 async def toggle_led(ssa: SSA, _msg: str, led_index: str, state: str):
     """
     Toggle a specified LED on or off.
-    
+
     This asynchronous function converts the LED identifier from a string to an integer
     and updates the corresponding LED's state in the LED strip. The change is saved using
     the system's property mechanism. If the LED index is invalid or the state is not "on" or
     "off", the function prints an error message and makes no update.
-    
+
     Args:
         led_index (str): The LED index as a string, to be validated and converted.
         state (str): The desired state ("on" or "off") for the LED.
@@ -106,11 +106,11 @@ async def toggle_led(ssa: SSA, _msg: str, led_index: str, state: str):
 async def toggle_led_strip(ssa: SSA, _msg: str, state: str):
     """
     Toggles the on/off state of all LEDs in the strip.
-    
+
     This asynchronous function updates each LED's "is_on" property based on the given state.
     If the state is "on", every LED is turned on; if "off", every LED is turned off.
     If an invalid state is provided, the function prints an error message and makes no changes.
-    
+
     Args:
         state: Desired state for the LED strip, either "on" or "off".
     """
@@ -128,7 +128,7 @@ async def toggle_led_strip(ssa: SSA, _msg: str, state: str):
 async def set_strip_brightness(ssa: SSA, _msg: str, brightness: str):
     """
     Sets the brightness for all LEDs on the strip.
-    
+
     Converts the brightness input from a string to an integer and applies it to each LED if the
     value is between 0 and 100. If the brightness is outside this range, an error message is printed,
     and the update is aborted. The updated LED strip state is then saved asynchronously.
@@ -149,7 +149,7 @@ async def set_strip_brightness(ssa: SSA, _msg: str, brightness: str):
 async def set_strip_color(ssa: SSA, _msg: str, color: str):
     """
     Set the color of all LEDs in the strip.
-    
+
     Converts a hexadecimal RGB string to an integer and validates that it is within the
     allowable range (0 to 0xFFFFFF). If valid, each LED in the led_strip property is updated
     with the new color and the change is applied asynchronously. If the conversion fails or
@@ -181,7 +181,7 @@ N_LEDS = 8
 def main(ssa: SSA):
     """
     Initializes the LED strip and registers actions for LED control.
-    
+
     This function sets up a simulated LED strip with default brightness, color, and state values,
     creates a corresponding property in the SSA system (disabling default updates), and registers
     actions to toggle and update color and brightness for the entire strip as well as individual LEDs.

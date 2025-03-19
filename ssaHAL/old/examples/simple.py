@@ -7,7 +7,7 @@ from ssa.core import ssa_main, SSA
 async def random_event(ssa: SSA) -> None:
     """
     Triggers a random event with a 50% probability.
-    
+
     This asynchronous function performs a random check and, if the condition
     is met, emits an event named "random_event" with a corresponding message.
     """
@@ -18,7 +18,7 @@ async def random_event(ssa: SSA) -> None:
 async def random_property_with_event(ssa: SSA) -> None:
     """
     Update the 'random_value' property and emit an event for high values.
-    
+
     This function generates a random integer between 0 and 100 and sets the 'random_value'
     property asynchronously with a quality-of-service of 0. If the new value exceeds 70,
     it emits a 'random_value_event' with an appropriate message.
@@ -47,7 +47,7 @@ async def print_action(_ssa: SSA, msg: str) -> None:
 def main(ssa: SSA):
     """
     Main entry point for the SSA application.
-    
+
     Initializes the 'random_value' property to 0, schedules periodic tasks for emitting random events every 1000 ms and updating the random property every 2000 ms, and registers the print action callback.
     """
     ssa.create_property("random_value", 0)

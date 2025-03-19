@@ -6,7 +6,7 @@ class WLAN:
     def __init__(self, *args, **kwargs):
         """
         Initialize a WLAN instance.
-        
+
         Accepts variable positional and keyword arguments but does not perform any operations.
         """
         pass
@@ -26,7 +26,7 @@ class WLAN:
     def ifconfig(self, *args, **kwargs):
         """
         Placeholder for network interface configuration.
-        
+
         This stub method accepts arbitrary arguments and keyword arguments without performing any action.
         """
         pass
@@ -35,7 +35,7 @@ class WLAN:
 def load_stub():
     """
     Registers a network module stub if not already loaded.
-    
+
     If the "network" module is absent from sys.modules, this function creates a stub module,
     assigns the WLAN class and a STA_IF constant (set to 0) to it, and adds it to sys.modules.
     """

@@ -4,7 +4,7 @@ import os
 def vfs_list(input):
     """
     Lists files in the virtual file system.
-    
+
     This function is not implemented and always raises a NotImplementedError.
     """
     raise NotImplementedError("This function is not implemented yet.")
@@ -13,7 +13,7 @@ def vfs_list(input):
 def vfs_read(input):
     """
     Placeholder for reading file data from the virtual file system.
-    
+
     This function is not yet implemented and will raise a NotImplementedError when called.
     """
     raise NotImplementedError("This function is not implemented yet.")
@@ -22,9 +22,9 @@ def vfs_read(input):
 def vfs_write(input):
     """
     Writes data to a file in the virtual file system.
-    
+
     This function writes data from the provided input dictionary to a specified file after verifying its integrity using a CRC32 hash. It supports writing (overwriting) or appending to the file based on the optional "append" flag. The input must include a file path and a payload containing the data, an expected CRC32 hash (as a hexadecimal string), and the hash algorithm which must be "crc32". If a different algorithm is specified, a NotImplementedError is raised. A ValueError is raised if the computed CRC32 hash does not match the expected hash. The function also ensures that the required directory structure exists, creating directories as needed, and changes the current working directory to the root before performing file operations.
-    
+
     Args:
         input (dict): Dictionary with file details:
             - "path" (str): Destination file path.
@@ -33,10 +33,10 @@ def vfs_write(input):
                 - "hash" (str): Expected CRC32 hash (hexadecimal string).
                 - "algo" (str): Hashing algorithm; must be "crc32".
             - "append" (bool, optional): If True, appends to the file; otherwise, overwrites it.
-    
+
     Returns:
         str: The file path where the data was written.
-    
+
     Raises:
         NotImplementedError: If the specified hash algorithm is not "crc32".
         ValueError: If the computed CRC32 hash does not match the expected hash.
@@ -78,7 +78,7 @@ def vfs_write(input):
 def vfs_delete(input):
     """
     Deletes a file from the virtual file system.
-    
+
     This function is a placeholder for file deletion operations and always raises a
     NotImplementedError.
     """

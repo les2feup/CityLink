@@ -6,7 +6,7 @@ class MQTTClient:
     def __init__(self, *args, **kwargs):
         """
         Initializes a new MQTTClient instance.
-        
+
         This constructor is currently a placeholder and does not perform any
         specific initialization.
         """
