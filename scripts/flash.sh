@@ -26,7 +26,27 @@ CONFIG_DIR=""
 declare -a SOURCE_DIRS
 declare -a CLEANED_DIRS
 
-# Phase 1: Ensure script is running from the project root
+# Checks whether the script is executed from the correct project root.
+#
+# This function verifies that the current directory contains the expected project structure by ensuring the
+# presence of the 'ssaHAL' and 'scripts' directories and the 'ssaHAL/config/config.json' configuration file.
+# If any of these are missing, it logs error messages and exits the script.
+#
+# Globals:
+#   error    - Function used to log error messages.
+#   success  - Function used to log a success message when the check passes.
+#
+# Outputs:
+#   Logs an error message to STDERR if the required directories or configuration file are not found.
+#   Logs a success message to STDOUT if the project root is confirmed.
+#
+# Returns:
+#   Exits the script with a non-zero status code if the check fails.
+#
+# Example:
+#   check_project_root
+#   # If the current directory is the project root, a success message is logged.
+#   # Otherwise, error messages are logged and the script exits.
 check_project_root() {
   if [[ ! -d "ssaHAL" || ! -d "scripts" || ! -f "ssaHAL/config/config.json" ]]; then
     error "This script must be run from the project root directory."
@@ -36,7 +56,27 @@ check_project_root() {
   success "Running from the correct project directory."
 }
 
-# Phase 2: Check device connection
+# Checks whether a device is connected by invoking 'mpremote ls'.
+#
+# This function logs an informational message to indicate that a device check is being performed.
+# It then calls 'mpremote ls' to determine if a device is available. If the command fails,
+# the function logs an error message and exits the script with a status code of 1. If the device is
+# successfully detected, it logs a success message.
+#
+# Globals:
+#   Utilizes global logging functions: info, error, success.
+#
+# Arguments:
+#   None.
+#
+# Outputs:
+#   Logs messages to STDOUT and STDERR.
+#
+# Returns:
+#   Exits the script with a status code of 1 if the device is not connected.
+#
+# Example:
+#   check_device
 check_device() {
   info "Checking if device is connected..."
   if ! mpremote ls > /dev/null 2>&1; then
@@ -46,7 +86,31 @@ check_device() {
   success "Device connected."
 }
 
-# Phase 3: Parse command-line options and source directories
+# Parses command-line options and sets up source directories.
+#
+# Globals:
+#   UPLOAD_BOOT  - Set to true if the -b flag is provided (enables boot file upload).
+#   NUKE_BOARD   - Set to true if the -n flag is provided (enables board nuking).
+#   EXAMPLE_FILE - Contains the filename specified by the -e option, if provided.
+#   SOURCE_DIRS  - Array to hold the source directories passed as positional arguments.
+#
+# Arguments:
+#   Options:
+#     -b              Enable uploading of boot.py.
+#     -n              Enable nuking of the board.
+#     -e <filename>   Specify an example file to be used.
+#   Positional:
+#     One or more source directories containing Python files.
+#
+# Outputs:
+#   Logs informational messages detailing the parsed options and source directories.
+#   Logs error messages and exits if no source directories are provided or upon invalid usage.
+#
+# Returns:
+#   Exits with status 1 if an error occurs; otherwise, sets necessary global variables.
+#
+# Example:
+#   ./flash.sh -b -n -e example.py src_dir1 src_dir2
 parse_options() {
   while getopts "bne:" opt; do
     case $opt in
@@ -77,7 +141,21 @@ nuke_board() {
   fi
 }
 
-# Phase 5: Prepare temporary directories
+# Prepares temporary directories for configuration files.
+#
+# This function sets up a generic temporary directory (./.temp) and a subdirectory for configuration files.
+# It logs informational messages during the process. If the creation of the configuration directory fails,
+# it logs an error and exits the script.
+#
+# Globals:
+#   TEMP_DIR: The root temporary directory, set to "./.temp".
+#   CONFIG_DIR: The directory for configuration files, set to "$TEMP_DIR/config".
+#
+# Outputs:
+#   Logs progress and error messages to STDOUT.
+#
+# Example:
+#   prepare_temp_dirs
 prepare_temp_dirs() {
   info "Preparing temporary directories..."
   # Use a generic temporary directory at the root.
@@ -87,7 +165,19 @@ prepare_temp_dirs() {
   success "Temporary directories created."
 }
 
-# Phase 6: Remove __pycache__ directories from each source directory
+# Removes all __pycache__ directories recursively from each directory in the SOURCE_DIRS array.
+#
+# Globals:
+#   SOURCE_DIRS - An array containing the paths of source directories to clean.
+#
+# Outputs:
+#   Logs informational messages to STDOUT and error messages to STDERR.
+#
+# Returns:
+#   Exits with status 1 if removal of any __pycache__ directory fails.
+#
+# Example:
+#   remove_pycache
 remove_pycache() {
   info "Removing '__pycache__' directories from source directories..."
   for src in "${SOURCE_DIRS[@]}"; do
@@ -96,7 +186,20 @@ remove_pycache() {
   success "__pycache__ directories removed."
 }
 
-# Phase 7: Process configuration files (remains unchanged)
+# Processes JSON configuration files and saves the processed output into the temporary configuration directory.
+#
+# Globals:
+#   CONFIG_DIR - Directory where the processed configuration files (config.json and secrets.json) are stored.
+#
+# Outputs:
+#   Writes a minified version of './ssaHAL/config/config.json' to "$CONFIG_DIR/config.json".
+#   If './ssaHAL/config/secrets.json' exists, attempts to write its minified version to "$CONFIG_DIR/secrets.json" and logs a warning if processing fails.
+#
+# Returns:
+#   Exits the script if processing of 'config.json' fails.
+#
+# Example:
+#   process_configs
 process_configs() {
   info "Processing configuration files..."
   jq -c < ./ssaHAL/config/config.json > "$CONFIG_DIR/config.json" || { error "Failed to process config.json"; exit 1; }
@@ -110,7 +213,22 @@ process_configs() {
 
 # Phase 8: Clean source directories
 # For each provided source directory, run the cleaning script and copy its cleaned content
-# to a temporary destination whose name is based on the source’s basename.
+# Cleans each source directory in SOURCE_DIRS by running a Python cleaning script and storing the cleaned output
+# in a temporary directory based on the source's basename.
+#
+# Globals:
+#   TEMP_DIR       - Temporary directory used to store cleaned directories.
+#   SOURCE_DIRS    - Array of source directory paths to be cleaned.
+#   CLEANED_DIRS   - Array that will be populated with the paths to the cleaned directories.
+#
+# Outputs:
+#   Logs informational, success, and error messages.
+#
+# Returns:
+#   None. Exits with an error code if the cleaning script fails for any source directory.
+#
+# Example:
+#   clean_source_directories
 clean_source_directories() {
   info "Cleaning source directories..."
   CLEANED_DIRS=()
@@ -122,7 +240,19 @@ clean_source_directories() {
   success "Source directories cleaned."
 }
 
-# Phase 9: Recursively compile source modules in each cleaned directory
+# Recursively compiles Python source files in each cleaned directory to frozen bytecode.
+#
+# Globals:
+#   CLEANED_DIRS - An array of directories containing cleaned Python source files.
+#
+# Outputs:
+#   Logs progress and error messages via the 'info', 'error', and 'success' functions.
+#
+# Returns:
+#   Exits with a non-zero status if directory creation or file compilation fails.
+#
+# Example:
+#   compile_modules
 compile_modules() {
   info "Compiling module files to frozen bytecode recursively..."
   for src in "${CLEANED_DIRS[@]}"; do
@@ -140,7 +270,23 @@ compile_modules() {
   success "Compilation complete."
 }
 
-# Phase 10: Upload compiled files to the device for each cleaned directory.
+# Uploads library files, configuration files, and compiled Python modules to the connected device.
+#
+# This function uses mpremote to transfer required files to the device:
+#   1. It copies library files from the local "ssaHAL/lib" directory.
+#   2. It copies configuration files from the directory specified by CONFIG_DIR.
+#   3. For each directory in the CLEANED_DIRS array, it creates a corresponding directory on the device (using the local directory's basename) and, if present, uploads compiled files from a "compiled" subdirectory.
+#
+# Globals:
+#   CONFIG_DIR   - Path to the directory containing configuration files.
+#   CLEANED_DIRS - Array of directories with cleaned source files.
+#
+# Outputs:
+#   Informational and error messages are printed to STDOUT/STDERR.
+#   Exits with an error code (1) if any file transfer operation fails.
+#
+# Example:
+#   upload_files
 upload_files() {
   info "Uploading required files..."
   mpremote cp -r ./ssaHAL/lib/ : || { error "Failed to copy lib files"; exit 1; }
@@ -174,7 +320,17 @@ upload_boot() {
   fi
 }
 
-# Phase 13: Optionally upload an example file
+# Uploads the example file to the device as "user/app.py" if an example has been specified.
+#
+# Globals:
+#   EXAMPLE_FILE - If non-empty, represents the name of the example file expected in "./ssaHAL/examples/". The function verifies its existence before uploading.
+#
+# Outputs:
+#   Logs informational, error, and success messages during its execution. In case of failure (missing file or upload issue), an error is logged and the script exits with status 1.
+#
+# Example:
+#   EXAMPLE_FILE="example.py"
+#   upload_example
 upload_example() {
   if [ -n "$EXAMPLE_FILE" ]; then
     if [ -f "./ssaHAL/examples/$EXAMPLE_FILE" ]; then
@@ -189,7 +345,30 @@ upload_example() {
   fi
 }
 
-# Main execution function: process options, then act on the passed source directories.
+# Main execution function that orchestrates the flashing process.
+#
+# This function serves as the entry point of the script. It verifies the execution environment,
+# processes command-line options, and sequentially calls helper functions to prepare, clean,
+# compile, and upload Python files to the connected device. A success message is logged upon
+# successful completion of all tasks.
+#
+# Globals:
+#   SOURCE_DIRS   - Array of source directories provided as command-line arguments.
+#   CLEANED_DIRS  - Array containing paths to cleaned source directories.
+#   UPLOAD_BOOT, NUKE_BOARD, EXAMPLE_FILE - Flags controlling optional upload and board operations.
+#   TEMP_DIR, CONFIG_DIR - Directories used for temporary storage during processing.
+#
+# Arguments:
+#   "$@" - Command-line arguments, including source directories and optional flags.
+#
+# Outputs:
+#   Logs messages to STDOUT and STDERR.
+#
+# Returns:
+#   None. Exits the script on any critical failure.
+#
+# Example:
+#   ./flash.sh src_dir1 src_dir2 --upload-boot --nuke-board
 main() {
   check_project_root
   check_device
