@@ -5,7 +5,7 @@ class Serializer:
     def dumps(obj):
         pass
 
-    def load(stream): 
+    def load(stream):
         pass
 
     def loads(string):
