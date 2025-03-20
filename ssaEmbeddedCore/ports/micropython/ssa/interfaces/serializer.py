@@ -1,6 +1,12 @@
 class Serializer:
-    def dump(obj, stream): ...
-    def dumps(obj): ...
+    def dump(obj, stream):
+        pass
 
-    def load(stream): ...
-    def loads(string): ...
+    def dumps(obj):
+        pass
+
+    def load(stream): 
+        pass
+
+    def loads(string):
+        pass
