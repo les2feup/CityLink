@@ -222,46 +222,6 @@ compile_directory() {
     success "Compilation complete in '$src'. Created $compiled_count .mpy files."
 }
 
-# Manual copy of entire directory structure
-manual_copy_directory() {
-    local src="$1"
-    local dest="$2"
-    local dest_device="$3"
-    
-    if [[ ! -d "$src" ]]; then
-        error "Source directory $src does not exist"
-        return 1
-    fi
-    
-    info "Copying files from $src to device's $dest_device..."
-    
-    # Make sure the destination exists on the device
-    mpremote mkdir "$dest_device" 2>/dev/null || true
-    
-    # First, create all directories on the device
-    find "$src" -type d | while read -r dir; do
-        rel_path=$(realpath --relative-to="$src" "$dir")
-        if [[ "$rel_path" != "." ]]; then
-            remote_dir="${dest_device}/${rel_path}"
-            debug "Creating directory: $remote_dir"
-            mpremote mkdir "$remote_dir" 2>/dev/null || true
-        fi
-    done
-    
-    # Then, copy all files
-    find "$src" -type f | while read -r file; do
-        rel_path=$(realpath --relative-to="$src" "$file")
-        remote_file="${dest_device}/${rel_path}"
-        remote_dir=$(dirname "$remote_file")
-        debug "Copying file to: $remote_file"
-        mpremote mkdir "$remote_dir" 2>/dev/null || true
-        mpremote cp "$file" "$remote_file" || { error "Failed to copy $file to $remote_file"; return 1; }
-    done
-    
-    success "All files copied from $src to device's $dest_device"
-    return 0
-}
-
 # Cleans and compiles the internal ssa directory.
 process_ssa() {
     info "Processing SSA directory..."
@@ -300,14 +260,11 @@ upload_files() {
     # Upload SSA files using manual copy for better reliability
     if [ -d "$SSA_TEMP/compiled" ]; then
         info "Uploading SSA compiled files..."
-        manual_copy_directory "$SSA_TEMP/compiled" "$SSA_TEMP/compiled" ":lib/ssa" || { 
-            error "Failed to upload SSA compiled files, trying fallback method..."
-            # Fallback method - try direct copy
-            mpremote cp -r "$SSA_TEMP/compiled/"* ":lib/ssa/" || {
-                error "Both upload methods failed for SSA. Check device connection and file permissions."
-                exit 1
-            }
+        mpremote cp -r "$SSA_TEMP/compiled/"* ":lib/ssa/" || {
+            error "Both upload methods failed for SSA. Check device connection and file permissions."
+            exit 1
         }
+
         info "Uploaded SSA to lib/ssa."
     else
         error "No compiled SSA directory found."
@@ -317,18 +274,23 @@ upload_files() {
     # Upload SSA impl files using manual copy
     if [ -d "$IMPL_TEMP/compiled" ]; then
         info "Uploading SSA implementation compiled files..."
-        manual_copy_directory "$IMPL_TEMP/compiled" "$IMPL_TEMP/compiled" ":lib/ssa_core" || {
-            error "Failed to upload SSA implementation compiled files, trying fallback method..."
-            # Fallback method - try direct copy
-            mpremote cp -r "$IMPL_TEMP/compiled/"* ":lib/ssa_core/" || {
-                error "Both upload methods failed for SSA implementation. Check device connection and file permissions."
-                exit 1
-            }
+        mpremote cp -r "$IMPL_TEMP/compiled/"* ":lib/ssa_core/" || {
+            error "Both upload methods failed for SSA implementation. Check device connection and file permissions."
+            exit 1
         }
         info "Uploaded SSA implementation to lib/ssa_core."
     else
         error "No compiled SSA implementation directory found."
         exit 1
+    fi
+
+    if [ -d "$SSA_IMPL_DIR/lib" ]; then
+        info "Uploading additional libraries from $SSA_IMPL_DIR/lib..."
+        mpremote cp -r "$SSA_IMPL_DIR/lib/"* ":lib/" || {
+            error "Failed to upload additional libraries from $SSA_IMPL_DIR/lib."
+            exit 1
+        }
+        info "Uploaded additional libraries."
     fi
 
     # Check what's on the device after uploading (debug)

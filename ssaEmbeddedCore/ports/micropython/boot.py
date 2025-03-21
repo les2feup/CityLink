@@ -6,11 +6,11 @@ def default_main(_): ...
 
 
 try:
-    from . import main
+    from main import main
 
-    main.main()
+    main()
 except ImportError:
-    print("No main module found. Running default main.")
+    print("No main module found. Proceding with initialization.")
 
 try:
     default_main()
