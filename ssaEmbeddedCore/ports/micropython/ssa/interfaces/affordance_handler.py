@@ -109,3 +109,9 @@ class AffordanceHandler:
         raise NotImplementedError(
             "Subclasses must implement builtin_action_reload_core()"
         )
+
+    def _builtin_action_set_property(self, action_input):
+        """Set the value of a property."""
+        raise NotImplementedError(
+            "Subclasses must implement builtin_action_set_property()"
+        )

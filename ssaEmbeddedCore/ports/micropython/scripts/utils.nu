@@ -2,9 +2,11 @@ export def msgpack_pub [topic: string] {
     $in | to msgpack | mosquitto_pub -t $topic -s
 }
 
-export def msgpack_sub [topic: string,
-                        --json (-j),
-                        --ignore_n (-i): int = 0] {
+export def msgpack_sub [
+    topic: string,
+    --json (-j),
+    --ignore_n (-i): int = 0
+] {
     let file = mktemp XXXX.mpk
     try {
         loop {
@@ -21,9 +23,10 @@ export def msgpack_sub [topic: string,
     }
 }
 
-export def gen_config_template [ dir: path = .,
-       --json (-j),
-       --msgpack (-m)
+export def gen_config_template [
+    dir: path = .,
+    --json (-j),
+    --msgpack (-m)
 ] {
     let secrets = {
         network : {
@@ -69,11 +72,11 @@ export def gen_config_template [ dir: path = .,
     }
 }
 
-export def flash_config [ dir: path = .,
-       --json (-j),
-       --msgpack (-m)
+export def flash_config [
+    dir: path = .,
+    --json (-j),
+    --msgpack (-m)
 ] {
-
     if $json {
         mpremote mkdir :config | ignore
         mpremote cp ($dir + "/config.json") :config/config.json
@@ -84,5 +87,39 @@ export def flash_config [ dir: path = .,
         mpremote mkdir :config | ignore
         mpremote cp ($dir + "/config.mpk") :config/config.mpk
         mpremote cp ($dir + "/secrets.mpk") :config/secrets.mpk
+    }
+}
+
+export def pub_vfs_write_main [
+    file: path,
+    thing_id?: string,
+    --json (-j),
+    --msgpack (-m)
+] {
+    let file = open $file
+
+    let action_input = {
+            "path": "main.py"
+            payload:{
+                data: ($file | encode base64)
+                hash: ($file | ^crc32 | into int -r 16 | format number | get lowerhex)
+                algo: "crc32"
+                }
+            append: false
+        }
+
+    let topic = $"ssa/($thing_id)/actions/umqtt_core/vfs/write" 
+
+    match $thing_id {
+        null => (print $action_input)
+        _ => {
+            if $json {
+                ($action_input | to json -r) | mosquitto_pub -t $topic -s
+            } else if $msgpack {
+                ($action_input | to msgpack) | mosquitto_pub -t $topic -s
+            } else {
+                print $action_input
+            }
+        }
     }
 }
