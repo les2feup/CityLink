@@ -1,7 +1,7 @@
 from ssa_core import SSACore
 
 
-@SSACore.SSACoreEntry()
+@SSACore.App()
 def default_main(_): ...
 
 
