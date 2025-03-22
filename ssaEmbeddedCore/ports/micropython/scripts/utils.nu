@@ -130,3 +130,24 @@ export def pub_core_reload [ thing_id: string ] {
 
     mosquitto_pub -t $topic -m ""
 }
+
+export def pub_registration_ack [ 
+    thing_id: string,
+    --json (-j),
+    --msgpack (-m)
+] {
+    let topic = $"ssa/($thing_id)/registration/ack"
+
+    let reg_response = {
+        "status": "success",
+        "id": (^uuidgen)
+    }
+
+    if $json {
+        ($reg_response | to json -r) | mosquitto_pub -t $topic -s
+    } else if $msgpack {
+        ($reg_response | to msgpack) | mosquitto_pub -t $topic -s
+    } else {
+        print $reg_response
+    }
+}
