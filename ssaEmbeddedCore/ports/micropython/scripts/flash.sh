@@ -14,7 +14,7 @@ error() { echo -e "${RED}[ERROR]${NC} $1"; }
 success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 info() { echo -e "${BLUE}[INFO]${NC} $1"; }
 debug() { 
-    if [[ "$DEBUG" == "true" ]] then
+    if [[ "$DEBUG" == "true" ]]; then
         echo -e "${YELLOW}[DEBUG]${NC} $1";
     fi
 }
