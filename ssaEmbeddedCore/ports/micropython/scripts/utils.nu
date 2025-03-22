@@ -1,7 +1,3 @@
-export def msgpack_pub [topic: string] {
-    $in | to msgpack | mosquitto_pub -t $topic -s
-}
-
 export def msgpack_sub [
     topic: string,
     --json (-j),
@@ -90,6 +86,10 @@ export def flash_config [
     }
 }
 
+def pub_action [ topic: string ] {
+    $in | mosquitto_pub -t $topic -s
+}
+
 export def pub_vfs_write_main [
     file: path,
     thing_id?: string,
@@ -97,11 +97,12 @@ export def pub_vfs_write_main [
     --msgpack (-m)
 ] {
     let file = open $file
+    let file = if $json { $file | encode base64 } else { $file }
 
     let action_input = {
-            "path": "main.py"
+            "path": "/main.py"
             payload:{
-                data: ($file | encode base64)
+                data: $file
                 hash: ($file | ^crc32 | into int -r 16 | format number | get lowerhex)
                 algo: "crc32"
                 }
@@ -114,12 +115,18 @@ export def pub_vfs_write_main [
         null => (print $action_input)
         _ => {
             if $json {
-                ($action_input | to json -r) | mosquitto_pub -t $topic -s
+                ($action_input | to json -r) | pub_action $topic
             } else if $msgpack {
-                ($action_input | to msgpack) | mosquitto_pub -t $topic -s
+                ($action_input | to msgpack) | pub_action $topic
             } else {
                 print $action_input
             }
         }
     }
+}
+
+export def pub_core_reload [ thing_id: string ] {
+    let topic = $"ssa/($thing_id)/actions/umqtt_core/reload" 
+
+    mosquitto_pub -t $topic -m ""
 }
