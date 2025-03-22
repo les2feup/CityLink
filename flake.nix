@@ -27,16 +27,8 @@
           sudo systemctl reload firewall
         '';
 
-        run = pkgs.writeShellScriptBin "run" ''
-          mpremote run ./ssaEmbeddedCore/ports/micropython/boot.py
-        '';
-
         flash = pkgs.writeShellScriptBin "flash" ''
           ${builtins.readFile ./ssaEmbeddedCore/ports/micropython/scripts/flash.sh}
-        '';
-
-        fw2json = pkgs.writeShellScriptBin "fw2json" ''
-          ${builtins.readFile ./ssaEmbeddedCore/ports/micropython/scripts/fw2json.sh}
         '';
       in
       {
@@ -53,9 +45,7 @@
             closefw
 
             # micropython development
-            run
             flash
-            fw2json
 
             jq # json cli parser
             rsbkb # for crc32 package
