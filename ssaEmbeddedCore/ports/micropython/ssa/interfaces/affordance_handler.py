@@ -50,25 +50,25 @@ class AffordanceHandler:
         """
         raise NotImplementedError("Subclasses must implement emit_event()")
 
-    def sync_action(func):
-        """Decorator for synchronous action handlers."""
+    def sync_executor(func):
+        """Decorator for synchronous task or action executors."""
 
         async def wrapper(self, *args, **kwargs):
             raise NotImplementedError("Subclasses must implement sync_action()")
 
         return wrapper
 
-    def async_action(func):
-        """Decorator for asynchronous action handlers."""
+    def async_executor(func):
+        """Decorator for asynchronous task or action executors."""
 
         async def wrapper(self, *args, **kwargs):
             raise NotImplementedError("Subclasses must implement async_action()")
 
         return wrapper
 
-    def register_action_handler(self, action_name, action_func, **kwargs):
+    def register_action_executor(self, action_name, action_func, **kwargs):
         """
-        Registers a new action handler.
+        Registers a new action executor.
 
         Args:
             action_name (str): The identifier of the action.

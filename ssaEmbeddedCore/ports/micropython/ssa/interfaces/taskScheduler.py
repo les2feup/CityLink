@@ -5,7 +5,7 @@ class TaskScheduler:
         """Launch the runtime and start running all registered tasks."""
         raise NotImplementedError("Subclasses must implement launch()")
 
-    def task_create(self, task_id, task_func):
+    def task_create(self, task_id, task_func, period_ms=0):
         """
         Register a task for execution.
 
@@ -16,6 +16,9 @@ class TaskScheduler:
         Args:
             task_id: A unique identifier for the task.
             task_func: A callable implementing the task's functionality.
+            period_ms: The period in milliseconds between consecutive executions of the task.
+                      If set to 0 (default), the task will execute only once (one-shot task).
+                      If greater than 0, the task will execute repeatedly at the specified interval.
 
         Raises:
             NotImplementedError: Always, as this method must be implemented by subclasses.

@@ -4,7 +4,7 @@ from .interfaces import AffordanceHandler, TaskScheduler, Serializer
 class SSACore(AffordanceHandler, TaskScheduler):
     """Base class defining the SSARuntime interface."""
 
-    def __init__(self, config_dir, fopen_mode, default_serializer: Serializer):
+    def __init__(self, config_dir, fopen_mode, default_serializer: Serializer, **kwargs):
         """Initialize SSARuntime with a required configuration dictionary."""
 
     def _load_config(self):
@@ -38,7 +38,7 @@ class SSACore(AffordanceHandler, TaskScheduler):
         """
         raise NotImplementedError("Subclasses must implement register_device()")
 
-    def SSACoreEntry(*args, **kwargs):
+    def App(*args, **kwargs):
         """Decorator to mark the entry point for the SSACore."""
 
         def main_decorator(main_func):
