@@ -28,15 +28,15 @@
         '';
 
         run = pkgs.writeShellScriptBin "run" ''
-          mpremote run ./ssaHAL/boot.py
+          mpremote run ./ssaEmbeddedCore/ports/micropython/boot.py
         '';
 
         flash = pkgs.writeShellScriptBin "flash" ''
-          ${builtins.readFile ./scripts/flash.sh}
+          ${builtins.readFile ./ssaEmbeddedCore/ports/micropython/scripts/flash.sh}
         '';
 
         fw2json = pkgs.writeShellScriptBin "fw2json" ''
-          ${builtins.readFile ./scripts/fw2json.sh}
+          ${builtins.readFile ./ssaEmbeddedCore/ports/micropython/scripts/fw2json.sh}
         '';
       in
       {
