@@ -46,7 +46,7 @@ class SSACore(AffordanceHandler, TaskScheduler):
 
             def main_wrapper():
                 """Wrapper for the main function of the SSACore."""
-                raise NotImplementedError("Subclasses must implement SSACoreEntry()")
+                raise NotImplementedError("Subclasses must implement SSACore.App() decorator")
 
             return main_wrapper
 
