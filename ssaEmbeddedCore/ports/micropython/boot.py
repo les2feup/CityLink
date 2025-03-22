@@ -11,6 +11,9 @@ try:
     main()
 except ImportError:
     print("No main module found. Proceding with initialization.")
+except Exception as e:
+    print(f"[Fatal] Uncaught exception in main module: {e}")
+    print("Loading default main module...")
 
 try:
     default_main()
