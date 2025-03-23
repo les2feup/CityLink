@@ -4,10 +4,8 @@ result*
 # Misc
 .direnv
 
-secrets.json
-
 node_modules/
 
-docs/
-
 __pycache__/
+
+config/

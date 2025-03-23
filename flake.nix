@@ -27,16 +27,8 @@
           sudo systemctl reload firewall
         '';
 
-        run = pkgs.writeShellScriptBin "run" ''
-          mpremote run ./ssaHAL/boot.py
-        '';
-
         flash = pkgs.writeShellScriptBin "flash" ''
-          ${builtins.readFile ./scripts/flash.sh}
-        '';
-
-        fw2json = pkgs.writeShellScriptBin "fw2json" ''
-        ${builtins.readFile ./scripts/fw2json.sh}
+          ${builtins.readFile ./ssaEmbeddedCore/ports/micropython/scripts/flash.sh}
         '';
       in
       {
@@ -53,12 +45,13 @@
             closefw
 
             # micropython development
-            run
             flash
-            fw2json
 
             jq # json cli parser
             rsbkb # for crc32 package
+
+            nodePackages_latest.prettier # code formatter
+            black # python code formatter
 
             mpremote # micropython remote tool
             micropython # micropython runtime and cross compiler
@@ -68,6 +61,7 @@
             deno # dev tools and runtime
 
             doxygen # documentation generator
+            plantuml # uml diagram generator
 
             python312Packages.astor # For clean.py script
             python312Packages.typing-extensions

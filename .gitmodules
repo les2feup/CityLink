@@ -1,0 +1,3 @@
+[submodule "ssaEmbeddedCore/ports/micropython/umqtt_core"]
+	path = ssaEmbeddedCore/ports/micropython/umqtt_core
+	url = git@github.com:dvalnn/SSA_uMQTTCore.git

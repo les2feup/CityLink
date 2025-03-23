@@ -1,7 +1,5 @@
 import { mqtt, ThingModelHelpers } from "../../deps.ts";
 import {
-  HTTP_HOSTNAME,
-  HTTP_PORT,
   MODEL_HOST_ADDR,
   MQTT_BROKER_ADDR,
 } from "../config/config.ts";
@@ -43,6 +41,20 @@ export function setupMQTT(
   });
 }
 
+/**
+ * Processes and registers an incoming MQTT registration message.
+ *
+ * This asynchronous function validates the message received on a topic formatted as
+ * "registration/{uuid}", ensuring that the UUID in the topic matches the one in the JSON
+ * payload and that the payload includes both a "model" and "version". It then fetches the
+ * corresponding model using the provided helper, constructs a Thing Description (TD), and
+ * registers it in the collection of hosted things.
+ *
+ * @param tmTools An instance of ThingModelHelpers used to retrieve the device model.
+ * @param hostedThings A map organizing registered Thing Descriptions by model and UUID.
+ * @param topic The MQTT topic from which the message was received, expected in "registration/{uuid}" format.
+ * @param message The message payload as a Buffer containing JSON registration data.
+ */
 async function handleRegistrationMessage(
   tmTools: ThingModelHelpers,
   hostedThings: Map<string, Map<string, WoT.ThingDescription>>,
@@ -82,15 +94,13 @@ async function handleRegistrationMessage(
   }
 
   const map = {
-    THING_MODEL: payload.model,
     THING_UUID_V4: payload.uuid,
     MQTT_BROKER_ADDR: MQTT_BROKER_ADDR,
-    MODEL_HOST_ADDR: MODEL_HOST_ADDR,
+    THING_REGISTRY_ADDR: "http://localhost:8080",
   };
 
   try {
-    const model_uri =
-      `http://${HTTP_HOSTNAME}:${HTTP_PORT}/models/${payload.model}`;
+    const model_uri = `http://${MODEL_HOST_ADDR}/models/${payload.model}`;
     const model = await tmTools.fetchModel(model_uri);
     const td = await createThingFromModel(tmTools, model, map);
     console.log(`Created TD from model: ${td.title}`);
@@ -101,7 +111,7 @@ async function handleRegistrationMessage(
       hostedThings.set(payload.model, modelMap);
     }
     modelMap.set(payload.uuid, td);
-    console.log(`Hosted thing registered: ${td.title}`);
+    console.log(`Hosted thing registered: ${td.title}:${td.id}`);
   } catch (error) {
     console.error("Error during Thing creation:", error);
   }
