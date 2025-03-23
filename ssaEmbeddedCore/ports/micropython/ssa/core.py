@@ -4,7 +4,9 @@ from .interfaces import AffordanceHandler, TaskScheduler, Serializer
 class SSACore(AffordanceHandler, TaskScheduler):
     """Base class defining the SSARuntime interface."""
 
-    def __init__(self, config_dir, fopen_mode, default_serializer: Serializer, **kwargs):
+    def __init__(
+        self, config_dir, fopen_mode, default_serializer: Serializer, **kwargs
+    ):
         """Initialize SSARuntime with a required configuration dictionary."""
 
     def _load_config(self):
@@ -46,7 +48,9 @@ class SSACore(AffordanceHandler, TaskScheduler):
 
             def main_wrapper():
                 """Wrapper for the main function of the SSACore."""
-                raise NotImplementedError("Subclasses must implement SSACore.App() decorator")
+                raise NotImplementedError(
+                    "Subclasses must implement SSACore.App() decorator"
+                )
 
             return main_wrapper
 
