@@ -8,6 +8,7 @@ class SSACore(AffordanceHandler, TaskScheduler):
         self, config_dir, fopen_mode, default_serializer: Serializer, **kwargs
     ):
         """Initialize SSARuntime with a required configuration dictionary."""
+        raise NotImplementedError("Subclasses must implement __init__()")
 
     def _load_config(self):
         """Load the configuration from the specified directory."""
@@ -18,7 +19,7 @@ class SSACore(AffordanceHandler, TaskScheduler):
         raise NotImplementedError("Subclasses must implement write_config()")
 
     def _connect(self):
-        """Attempt to the Edge Node's SSA IoT Connector"""
+        """Attempt to connect to the Edge Node's SSA IoT Connector"""
         raise NotImplementedError("Subclasses must implement connect()")
 
     def _disconnect(self):
