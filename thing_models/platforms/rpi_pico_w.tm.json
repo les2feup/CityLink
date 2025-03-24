@@ -1,0 +1,33 @@
+{
+    "@context": [
+        "https://www.w3.org/2022/wot/td/v1.1"
+    ],
+    "@type": "tm:ThingModel",
+    "title": "Raspberry Pi Pico W",
+    "description": "Thing Model for the Raspberry Pi Pico W.",
+    "version": {
+        "model": "0.1.0"
+    },
+    "links": [
+        {
+            "rel": "tm:submodel",
+            "href": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/platforms/rp2040.tm.json",
+            "type": "application/tm+json",
+            "instanceName": "MCU"
+        },
+        {
+            "rel": "tm:submodel",
+            "href": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/platforms/infineon_cyw43439.tm.json",
+            "type": "application/tm+json",
+            "instanceName": "NIC"
+        }
+    ],
+    "flash": {
+        "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/platforms/rp2040.tm.json#/properties/flash",
+        "properties": {
+            "size": {
+                "const": 2
+            }
+        }
+    }
+}

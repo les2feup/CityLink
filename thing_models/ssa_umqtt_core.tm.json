@@ -12,7 +12,7 @@
     "links": [
         {
             "rel": "tm:extends",
-            "href": "http://127.0.0.1:8080/models/ssa_core.tm",
+            "href": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/ssa_core.tm.json",
             "type": "application/tm+json"
         }
     ],
@@ -292,6 +292,21 @@
                     ],
                     "mqv:qos": 2,
                     "mqv:retain": false
+                }
+            ]
+        },
+        "ssaCoreSetProperty": {
+            "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/ssa_core.tm.json#/actions/ssaCoreSetProperty",
+            "forms": [
+                {
+                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                    "mqv:topic": "ssa/{{THING_UUID_V4}}/actions/umqtt_core/setproperty",
+                    "op": [
+                        "invokeaction"
+                    ],
+                    "mqv:qos": 2,
+                    "mqv:retain": false,
+                    "contentType": "application/json"
                 }
             ]
         }
