@@ -9,6 +9,9 @@
     },
     "id": "urn:uuid:{{THING_UUID_V4}}",
     "description": "SSA Core Thing Model. Models the functionality common to all Smart Sensor Actuator Runtimes.",
+    "tm:optional": [
+        "/actions/ssaCoreSetProperty"
+    ],
     "securityDefinitions": {
         "nosec_sc": {
             "scheme": "nosec"
@@ -20,8 +23,8 @@
             "title": "Log Level",
             "description": "Minimum log level for published log messages.",
             "tm:ref": "common_props#/properties/log_level",
-            "read_only": false,
-            "write_only": false
+            "readOnly": false,
+            "writeOnly": false
         }
     },
     "events": {
