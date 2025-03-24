@@ -25,7 +25,6 @@
                 "observeallproperties",
                 "unobserveallproperties"
             ],
-            "mqv:qos": 0,
             "contentType": "application/json"
         },
         {
@@ -35,7 +34,6 @@
                 "subscribeallevents",
                 "unsubscribeallevents"
             ],
-            "mqv:qos": 0,
             "contentType": "application/json"
         }
     ],
@@ -86,17 +84,16 @@
                         "properties": {
                             "epoch_year": {
                                 "type": "integer",
-                                "description": "Starting year for the second count field. Most systems use the Unix epoch (1970) but some (embedded) platforms might use a different epoch. Example: some micropython ports use 2000 as the epoch year",
+                                "title": "Epoch",
+                                "description": "Base year for the seconds field. Usually 1970, but some embedded systems might use a different base.",
                                 "default": 1970
                             },
                             "seconds": {
                                 "type": "integer",
+                                "title": "Seconds",
                                 "description": "Seconds since the Unix epoch."
                             }
-                        },
-                        "required": [
-                            "seconds"
-                        ]
+                        }
                     },
                     "message": {
                         "title": "Message",
@@ -207,7 +204,7 @@
                         "unsubscribeevent"
                     ],
                     "mqv:qos": 1,
-                    "mqv:retain": false,
+                    "mqv:retain": true,
                     "contentType": "application/json"
                 }
             ]
@@ -223,6 +220,7 @@
                         "invokeaction"
                     ],
                     "mqv:qos": 2,
+                    "mqv:retain": false,
                     "contentType": "application/json"
                 }
             ]
@@ -236,6 +234,7 @@
                         "invokeaction"
                     ],
                     "mqv:qos": 2,
+                    "mqv:retain": false,
                     "contentType": "application/json"
                 }
             ]
@@ -244,8 +243,14 @@
             "input": {
                 "properties": {
                     "payload": {
-                        "algo": {
-                            "const": "crc32"
+                        "properties": {
+                            "data": {
+                                "type": "string",
+                                "contentEncoding": "base64"
+                            },
+                            "algo": {
+                                "const": "crc32"
+                            }
                         }
                     }
                 }
@@ -258,6 +263,7 @@
                         "invokeaction"
                     ],
                     "mqv:qos": 2,
+                    "mqv:retain": false,
                     "contentType": "application/json"
                 }
             ]
@@ -271,6 +277,7 @@
                         "invokeaction"
                     ],
                     "mqv:qos": 2,
+                    "mqv:retain": false,
                     "contentType": "application/json"
                 }
             ]
@@ -284,20 +291,7 @@
                         "invokeaction"
                     ],
                     "mqv:qos": 2,
-                    "contentType": "application/json"
-                }
-            ]
-        },
-        "ssaCoreSetProperty": {
-            "forms": [
-                {
-                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "ssa/{{THING_UUID_V4}}/actions/umqtt_core/set_property",
-                    "op": [
-                        "invokeaction"
-                    ],
-                    "mqv:qos": 2,
-                    "contentType": "application/json"
+                    "mqv:retain": false
                 }
             ]
         }

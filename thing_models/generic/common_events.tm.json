@@ -1,0 +1,34 @@
+{
+    "type": "tm:ThingModel",
+    "title": "common_events",
+    "description": "Common events that can be imported by different Thing Models.",
+    "version": {
+        "model": "0.1.0"
+    },
+    "events": {
+        "log_message": {
+            "title": "Log Message",
+            "description": "Log message from a device.",
+            "data": {
+                "type": "object",
+                "properties": {
+                    "level": {
+                        "tm:ref": "common_props#/properties/log_level"
+                    },
+                    "message": {
+                        "title": "Message",
+                        "description": "Log message.",
+                        "type": "string"
+                    },
+                    "epoch_timestamp": {
+                        "tm:ref": "common_props#/properties/epoch_timestamp"
+                    }
+                },
+                "required": [
+                    "level",
+                    "message"
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,55 @@
+{
+    "type": "tm:ThingModel",
+    "title": "common_props",
+    "description": "Common properties that can be imported by different Thing Models.",
+    "version": {
+        "model": "0.1.0"
+    },
+    "properties": {
+        "epoch_timestamp": {
+            "title": "Epoch Timestamp",
+            "description": "The number of seconds elapsed since the time base.",
+            "type": "object",
+            "readOnly": true,
+            "writeOnly": false,
+            "properties": {
+                "time_base": {
+                    "title": "Time Base",
+                    "description": "The time base used to calculate the epoch timestamp. Usually corresponds to the UNIX epoch, but some embedded systems might use a different time base.",
+                    "type": "integer",
+                    "default": 1970
+                },
+                "timestamp": {
+                    "title": "Seconds Timestamp",
+                    "description": "The number of seconds elapsed since the time base.",
+                    "type": "integer",
+                    "minimum": 0
+                }
+            },
+            "required": [
+                "timestamp"
+            ]
+        },
+        "uptime": {
+            "title": "Uptime",
+            "description": "The number of seconds the device has been running.",
+            "type": "integer",
+            "readOnly": true,
+            "writeOnly": false,
+            "minimum": 0
+        },
+        "log_level": {
+            "title": "Log Level",
+            "description": "Levels of severity for log messages",
+            "type": "string",
+            "enum": [
+                "trace",
+                "debug",
+                "info",
+                "warn",
+                "error",
+                "fatal"
+            ]
+        }
+    }
+}
