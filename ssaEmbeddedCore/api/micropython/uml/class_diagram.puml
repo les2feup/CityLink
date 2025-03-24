@@ -1,0 +1,53 @@
+@startuml
+
+title SSAEmbeddedCore micropython bindings
+
+interface AffordanceHandler {
+  +__init__(config)
+  +create_property(prop_name, prop_value, **kwargs)
+  +get_property(prop_name, **kwargs)
+  +set_property(prop_name, prop_value, **kwargs)
+  +emit_event(event_name, event_data, **kwargs)
+  +sync_executor(func)
+  +async_executor(func)
+  +register_action_executor(action_name, action_func, **kwargs)
+  -_invoke_action(action_name, action_input, **kwargs)
+  -_builtin_action_vfs_read(action_input)
+  -_builtin_action_vfs_write(action_input)
+  -_builtin_action_vfs_list(action_input)
+  -_builtin_action_vfs_delete(action_input)
+  -_builtin_action_reload_core(action_input)
+  -_builtin_action_set_property(action_input)
+}
+
+interface Serializer {
+  +dump(obj, stream)
+  +dumps(obj)
+  +load(stream)
+  +loads(string)
+}
+
+interface TaskScheduler {
+  -_start_scheduler(main_task)
+  +task_create(task_id, task_func, period_ms=0)
+  +task_cancel(task_id)
+  +task_sleep_s(s)
+  +task_sleep_ms(ms)
+}
+
+Interface SSACore {
+  +__init__(config_dir, fopen_mode, default_serializer: Serializer, **kwargs)
+  -_load_config()
+  -_write_config(update_dict)
+  -_connect()
+  -_disconnect()
+  -_listen(blocking)
+  -_register_device()
+  +App(*args, **kwargs)
+}
+
+SSACore ..|> AffordanceHandler
+SSACore ..|> TaskScheduler
+SSACore ..> Serializer
+
+@enduml
