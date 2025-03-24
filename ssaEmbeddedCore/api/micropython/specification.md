@@ -14,7 +14,8 @@ Runtimes implemented according to this specification should extend the [SSA Core
 - [Implementation Guidelines](#implementation-guidelines)
 - [Configuration and Default Values](#configuration-and-default-values)
 - [Additional Notes](#additional-notes)
-- [References](#references)
+- [Compliant Implementations](#compliant-implementations)
+- [UML Diagrams](#uml-diagrams)
 
 ## Micropython API Interfaces
 
@@ -45,7 +46,7 @@ Key responsibilities include property management, event emission, and action exe
 ### Serializer
 The `Serializer` interface standardizes the Python serialization API.
 By default, it should utilize the built-in `json` module if no alternative is provided.
-This interface exists to enable dependency injection in the `SSACore` implemetation and allow for easy swapping of serialization libraries.
+This interface exists to enable dependency injection in the `SSACore` implementation and allow for easy swapping of serialization libraries.
 
 **Key Methods:**
 - `dump(obj, stream)`
@@ -99,7 +100,7 @@ The `SSACore` interface is the core of the Micropython implementation. It integr
 - **`config_dir`:**  
   Defaults to `./config` if not provided.
 - **`fopen_mode`:**  
-  Defaults to `"text"` (implying "r/w" mode). Used to differenciate between plain-text and binary serialization.
+  Defaults to `"text"` (implying "r/w" mode). Used to differentiate between plain-text and binary serialization.
 - **`serializer`:**  
   Defaults to the built-in `json` module.
 - Additional configuration can be passed via `*args` and `**kwargs`. Unused parameters should be ignored to maintain interoperability between different runtimes.
@@ -124,18 +125,23 @@ Typically, the `App` decorator should:
   3. Connect to the SSA network.
   4. Register the device.
   5. Wait for registration confirmation.
-  6. Setup the core properties and actions.
+  6. Set up the core properties and actions.
   7. Execute the user-defined main function.
   8. Start the scheduler and listen for incoming requests.
 
 ## The SSA Bootloader
 The SSA Bootloader is a separate utility from concrete runtime implementations. It depends on the SSACore interface and is responsible for loading the runtime and executing the main function.
 
-Should the runtime instance initialized with the user-defined main function fail or exit unexpectedly, the SSA Bootloader falls back to an "empty" initalization, which only supports the runtimes' built-in affordances, as per the runtime thing model.
+Should the runtime instance initialized with the user-defined main function fail or exit unexpectedly, the SSA Bootloader falls back to an "empty" initialization, which only supports the runtimes' built-in affordances, as per the runtime thing model.
 
 Micropython runtimes should adhere to this specification to ensure interoperability with the SSA Bootloader and compatibility with micropython applications developed for the SSA Embedded Core.
 
 ## Compliant implementations
-Compliant implementations of this specification are added to this this repository as submodules and their thing models are added to the [thing_models](https://github.com/dvalnn/SmartSensorActuator/tree/main/thing_models)/runtimes directory.
+Compliant implementations of this specification are added to this repository as submodules and their thing models are added to the [thing_models](https://github.com/dvalnn/SmartSensorActuator/tree/main/thing_models)/runtimes directory.
 
-Currently, the only compliant implementation is the [SSA_uMQTTCore](https://github.com/dvalnn/SSA_uMQTTCore) runtime which uses the MQTT over WiFi for communication. This runtime was developed and tested using the Raspberry Pi Pico W board, but should be compatible with other micropython boards with WiFi capabilities.
+Currently, the only compliant implementation is the [SSA_uMQTTCore](https://github.com/dvalnn/SSA_uMQTTCore) runtime which uses the MQTT over WiFi for communication. This runtime was developed and tested using the Raspberry Pi Pico W board but should be compatible with other micropython boards with WiFi capabilities.
+
+## UML Diagrams
+
+### Interfaces class diagram
+![ClassDiagram](./uml/class_diagram.png)
