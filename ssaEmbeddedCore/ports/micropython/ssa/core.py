@@ -26,7 +26,7 @@ class SSACore(AffordanceHandler, TaskScheduler):
         """Disconnect from the network."""
         raise NotImplementedError("Subclasses must implement disconnect()")
 
-    def _listen(self, blocking):
+    def _listen(self):
         """Listen and handle incoming requests."""
         raise NotImplementedError("Subclasses must implement listen()")
 
