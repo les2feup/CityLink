@@ -9,6 +9,9 @@
     },
     "id": "urn:uuid:{{THING_UUID_V4}}",
     "description": "SSA Core Thing Model. Models the functionality common to all Smart Sensor Actuator Runtimes.",
+    "tm:optional": [
+        "/actions/ssaCoreSetProperty"
+    ],
     "securityDefinitions": {
         "nosec_sc": {
             "scheme": "nosec"
@@ -16,16 +19,19 @@
     },
     "security": "nosec_sc",
     "properties": {
-        "coreStatus": {
-            "title": "Core Status",
-            "description": "Status of the SSA Core.",
-            "readOnly": true,
-            "writeOnly": false,
-            "enum": [
-                "idle",
-                "error",
-                "healthy"
-            ]
+        "log_level": {
+            "title": "Log Level",
+            "description": "Minimum log level for published log messages.",
+            "tm:ref": "common_props#/properties/log_level",
+            "readOnly": false,
+            "writeOnly": false
+        }
+    },
+    "events": {
+        "ssaCoreLog": {
+            "title": "SSA Core Log",
+            "description": "Log message from the SSA Core.",
+            "tm:ref": "common_events#/events/log_message"
         }
     },
     "actions": {
@@ -89,12 +95,12 @@
                             "hash": {
                                 "type": "string",
                                 "title": "Hash",
-                                "description": "Hash of the data to write."
+                                "description": "Hash calculated from the 'data' field contents."
                             },
                             "algo": {
                                 "type": "string",
                                 "title": "Algorithm",
-                                "description": "Hash algorithm used to generate the hash.",
+                                "description": "Hash algorithm used to generate the hash."
                             }
                         }
                     },
@@ -105,7 +111,7 @@
                     }
                 },
                 "required": [
-                    "file",
+                    "path",
                     "payload"
                 ]
             }
@@ -140,6 +146,45 @@
             "description": "Force a reload the SSA Core firmware.",
             "safe": false,
             "idempotent": false
+        },
+        "ssaCoreSetProperty": {
+            "input": {
+                "properties": {
+                    "property": {
+                        "type": "string",
+                        "title": "Property",
+                        "description": "Property to set."
+                    },
+                    "value": {
+                        "title": "Value",
+                        "description": "Value to set the property to.",
+                        "oneof": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "array"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "property",
+                    "value"
+                ]
+            }
         }
     }
 }

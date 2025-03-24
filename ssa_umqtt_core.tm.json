@@ -25,8 +25,7 @@
                 "observeallproperties",
                 "unobserveallproperties"
             ],
-            "mqv:qos": 0,
-            "contentType": "application/vnd.msgpack"
+            "contentType": "application/json"
         },
         {
             "href": "mqtt://{{MQTT_BROKER_ADDR}}",
@@ -35,8 +34,7 @@
                 "subscribeallevents",
                 "unsubscribeallevents"
             ],
-            "mqv:qos": 0,
-            "contentType": "application/vnd.msgpack"
+            "contentType": "application/json"
         }
     ],
     "properties": {
@@ -53,7 +51,7 @@
                     ],
                     "mqv:qos": 1,
                     "mqv:retain": true,
-                    "contentType": "application/vnd.msgpack"
+                    "contentType": "application/json"
                 }
             ]
         }
@@ -84,10 +82,11 @@
                         "type": "object",
                         "title": "Epoch Timestamp",
                         "properties": {
-                            "Epoch": {
+                            "epoch_year": {
                                 "type": "integer",
                                 "title": "Epoch",
-                                "description": "Epoch timestamp."
+                                "description": "Base year for the seconds field. Usually 1970, but some embedded systems might use a different base.",
+                                "default": 1970
                             },
                             "seconds": {
                                 "type": "integer",
@@ -137,7 +136,10 @@
                                                     "description": "Size of the file in bytes."
                                                 }
                                             },
-                                            "required": ["path", "type"]
+                                            "required": [
+                                                "path",
+                                                "type"
+                                            ]
                                         }
                                     }
                                 }
@@ -203,7 +205,7 @@
                     ],
                     "mqv:qos": 1,
                     "mqv:retain": true,
-                    "contentType": "application/vnd.msgpack"
+                    "contentType": "application/json"
                 }
             ]
         }
@@ -219,7 +221,7 @@
                     ],
                     "mqv:qos": 2,
                     "mqv:retain": false,
-                    "contentType": "application/vnd.msgpack"
+                    "contentType": "application/json"
                 }
             ]
         },
@@ -233,7 +235,7 @@
                     ],
                     "mqv:qos": 2,
                     "mqv:retain": false,
-                    "contentType": "application/vnd.msgpack"
+                    "contentType": "application/json"
                 }
             ]
         },
@@ -241,8 +243,14 @@
             "input": {
                 "properties": {
                     "payload": {
-                        "algo": {
-                            "const": "crc32"
+                        "properties": {
+                            "data": {
+                                "type": "string",
+                                "contentEncoding": "base64"
+                            },
+                            "algo": {
+                                "const": "crc32"
+                            }
                         }
                     }
                 }
@@ -256,7 +264,7 @@
                     ],
                     "mqv:qos": 2,
                     "mqv:retain": false,
-                    "contentType": "application/vnd.msgpack"
+                    "contentType": "application/json"
                 }
             ]
         },
@@ -270,7 +278,7 @@
                     ],
                     "mqv:qos": 2,
                     "mqv:retain": false,
-                    "contentType": "application/vnd.msgpack"
+                    "contentType": "application/json"
                 }
             ]
         },

@@ -1,0 +1,51 @@
+{
+    "@context": [
+        "https://www.w3.org/2022/wot/td/v1.1"
+    ],
+    "@type": "tm:ThingModel",
+    "title": "Infineon CYW43439",
+    "description": "Thing Model for the Infineon CYW43439 Wi-Fi and Bluetooth module.",
+    "version": {
+        "model": "0.1.0"
+    },
+    "properties": {
+        "wifi": {
+            "title": "Wi-Fi",
+            "description": "Wi-Fi properties of the Infineon CYW43439.",
+            "type": "object",
+            "properties": {
+                "band": {
+                    "title": "Band",
+                    "description": "Wi-Fi band.",
+                    "type": "string",
+                    "const": "2.4 GHz",
+                    "readOnly": true,
+                    "writeOnly": false
+                },
+                "mode": {
+                    "title": "Mode",
+                    "description": "Wi-Fi mode.",
+                    "type": "string",
+                    "const": "802.11n",
+                    "readOnly": true,
+                    "writeOnly": false
+                }
+            }
+        },
+        "bluetooth": {
+            "title": "Bluetooth",
+            "description": "Bluetooth properties of the Infineon CYW43439.",
+            "type": "object",
+            "properties": {
+                "version": {
+                    "title": "Version",
+                    "description": "Bluetooth version.",
+                    "type": "string",
+                    "const": "5.4",
+                    "readOnly": true,
+                    "writeOnly": false
+                }
+            }
+        }
+    }
+}
