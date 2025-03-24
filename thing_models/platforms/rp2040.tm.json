@@ -1,0 +1,212 @@
+{
+    "@context": [
+        "https://www.w3.org/2022/wot/td/v1.1"
+    ],
+    "@type": "tm:ThingModel",
+    "title": "RP2040",
+    "description": "Thing Model for the Raspberry Pi RP2040 microcontroller.",
+    "version": {
+        "model": "0.1.0"
+    },
+    "properties": {
+        "cores": {
+            "title": "Cores",
+            "description": "Number of cores in the RP2040.",
+            "type": "object",
+            "properties": {
+                "core": {
+                    "title": "Core",
+                    "description": "Core type.",
+                    "type": "string",
+                    "const": "ARM_Cortex_M0+",
+                    "readOnly": true,
+                    "writeOnly": false
+                },
+                "count": {
+                    "title": "Count",
+                    "description": "Number of cores.",
+                    "type": "integer",
+                    "const": 2,
+                    "readOnly": true,
+                    "writeOnly": false
+                }
+            }
+        },
+        "SRAM": {
+            "title": "SRAM",
+            "description": "Size of the SRAM in the RP2040.",
+            "type": "integer",
+            "const": 264,
+            "unit": "kB",
+            "readOnly": true,
+            "writeOnly": false
+        },
+        "flash": {
+            "title": "Flash",
+            "description": "Available flash memory for the RP2040",
+            "type": "object",
+            "properties": {
+                "interface": {
+                    "title": "Interface",
+                    "description": "Flash memory interface.",
+                    "type": "string",
+                    "const": "QSPI",
+                    "readOnly": true,
+                    "writeOnly": false
+                },
+                "size": {
+                    "title": "Size",
+                    "description": "Flash memory size.",
+                    "type": "integer",
+                    "default": 0,
+                    "maximum": 16,
+                    "unit": "MB",
+                    "readOnly": true,
+                    "writeOnly": false
+                }
+            }
+        },
+        "DMA": {
+            "title": "DMA",
+            "description": "Direct Memory Access.",
+            "type": "object",
+            "properties": {
+                "channels": {
+                    "title": "Channels",
+                    "description": "Number of DMA channels.",
+                    "type": "integer",
+                    "const": 12,
+                    "readOnly": true,
+                    "writeOnly": false
+                }
+            }
+        },
+        "USB": {
+            "title": "USB",
+            "description": "Universal Serial Bus.",
+            "type": "object",
+            "properties": {
+                "version": {
+                    "title": "Version",
+                    "description": "USB version.",
+                    "type": "string",
+                    "const": "2.0",
+                    "readOnly": true,
+                    "writeOnly": false
+                }
+            }
+        },
+        "peripherals": {
+            "title": "Peripherals",
+            "description": "Available peripherals in the RP2040.",
+            "type": "object",
+            "properties": {
+                "UART": {
+                    "title": "UART",
+                    "description": "Universal Asynchronous Receiver/Transmitter.",
+                    "type": "object",
+                    "properties": {
+                        "channels": {
+                            "title": "Channels",
+                            "description": "Number of UART channels.",
+                            "type": "integer",
+                            "const": 2,
+                            "readOnly": true,
+                            "writeOnly": false
+                        }
+                    }
+                },
+                "SPI": {
+                    "title": "SPI",
+                    "description": "Serial Peripheral Interface.",
+                    "type": "object",
+                    "properties": {
+                        "channels": {
+                            "title": "Channels",
+                            "description": "Number of SPI channels.",
+                            "type": "integer",
+                            "const": 2,
+                            "readOnly": true,
+                            "writeOnly": false
+                        }
+                    }
+                },
+                "I2C": {
+                    "title": "I2C",
+                    "description": "Inter-Integrated Circuit.",
+                    "type": "object",
+                    "properties": {
+                        "channels": {
+                            "title": "Channels",
+                            "description": "Number of I2C channels.",
+                            "type": "integer",
+                            "const": 2,
+                            "readOnly": true,
+                            "writeOnly": false
+                        }
+                    }
+                },
+                "PWM": {
+                    "title": "PWM",
+                    "description": "Pulse Width Modulation.",
+                    "type": "object",
+                    "properties": {
+                        "channels": {
+                            "title": "Channels",
+                            "description": "Number of PWM channels.",
+                            "type": "integer",
+                            "const": 16,
+                            "readOnly": true,
+                            "writeOnly": false
+                        }
+                    }
+                },
+                "ADC": {
+                    "title": "ADC",
+                    "description": "Analog-to-Digital Converter.",
+                    "type": "object",
+                    "properties": {
+                        "channels": {
+                            "title": "Channels",
+                            "description": "Number of ADC channels.",
+                            "type": "integer",
+                            "const": 4,
+                            "readOnly": true,
+                            "writeOnly": false
+                        }
+                    }
+                },
+                "GPIO": {
+                    "title": "GPIO",
+                    "description": "General Purpose Input/Output.",
+                    "type": "object",
+                    "properties": {
+                        "pins": {
+                            "title": "Pins",
+                            "description": "Number of GPIO pins.",
+                            "type": "integer",
+                            "const": 30,
+                            "readOnly": true,
+                            "writeOnly": false
+                        }
+                    }
+                },
+                "PIO_State_Machine": {
+                    "title": "PIO State Machine",
+                    "description": "Programmable I/O State Machine.",
+                    "type": "object",
+                    "properties": {
+                        "state_machines": {
+                            "title": "State Machines",
+                            "description": "Number of PIO state machines.",
+                            "type": "integer",
+                            "const": 8,
+                            "readOnly": true,
+                            "writeOnly": false
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
