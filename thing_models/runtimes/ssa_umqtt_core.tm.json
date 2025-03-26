@@ -45,8 +45,8 @@
                     "mqv:topic": "ssa/{{THING_UUID_V4}}/properties/logLevel",
                     "op": [
                         "readproperty",
-                        "subscribeproperty",
-                        "unsubscribeproperty"
+                        "observeproperty",
+                        "unobserveproperty"
                     ],
                     "mqv:qos": 1,
                     "mqv:retain": true,
