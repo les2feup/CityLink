@@ -9,7 +9,7 @@
         "model": "0.1.0"
     },
     "properties": {
-        "epoch_timestamp": {
+        "epochTimestamp": {
             "title": "Epoch Timestamp",
             "description": "The number of seconds elapsed since the time base.",
             "type": "object",
@@ -41,7 +41,7 @@
             "writeOnly": false,
             "minimum": 0
         },
-        "log_level": {
+        "logLevel": {
             "title": "Log Level",
             "description": "Levels of severity for log messages",
             "type": "string",

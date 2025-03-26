@@ -9,22 +9,22 @@
         "model": "0.1.0"
     },
     "events": {
-        "log_message": {
+        "logMessage": {
             "title": "Log Message",
             "description": "Log message from a device.",
             "data": {
                 "type": "object",
                 "properties": {
                     "level": {
-                        "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/generic/common_props.tm.json#/properties/log_level"
+                        "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/generic/common_props.tm.json#/properties/logLevel"
                     },
                     "message": {
                         "title": "Message",
                         "description": "Log message.",
                         "type": "string"
                     },
-                    "epoch_timestamp": {
-                        "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/generic/common_props.tm.json#/properties/epoch_timestamp"
+                    "timestamp": {
+                        "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/generic/common_props.tm.json#/properties/epochTimestamp"
                     }
                 },
                 "required": [

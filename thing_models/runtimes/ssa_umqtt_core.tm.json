@@ -38,11 +38,11 @@
         }
     ],
     "properties": {
-        "log_level": {
+        "logLevel": {
             "forms": [
                 {
                     "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "ssa/{{THING_UUID_V4}}/properties/log_level",
+                    "mqv:topic": "ssa/{{THING_UUID_V4}}/properties/logLevel",
                     "op": [
                         "readproperty",
                         "subscribeproperty",

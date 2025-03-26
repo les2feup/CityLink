@@ -19,10 +19,10 @@
     },
     "security": "nosec_sc",
     "properties": {
-        "log_level": {
+        "logLevel": {
             "title": "Log Level",
             "description": "Minimum log level for published log messages.",
-            "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/generic/common_props.tm.json#/properties/log_level",
+            "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/generic/common_props.tm.json#/properties/logLevel",
             "readOnly": false,
             "writeOnly": false
         }
@@ -31,7 +31,7 @@
         "ssaCoreLog": {
             "title": "SSA Core Log",
             "description": "Log message from the SSA Core.",
-            "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/generic/common_events.tm.json#/events/log_message"
+            "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/generic/common_events.tm.json#/events/logMessage"
         }
     },
     "actions": {
