@@ -38,16 +38,15 @@
         }
     ],
     "properties": {
-        "coreStatus": {
-            "observable": true,
+        "log_level": {
             "forms": [
                 {
                     "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "ssa/{{THING_UUID_V4}}/properties/umqtt_core/status",
+                    "mqv:topic": "ssa/{{THING_UUID_V4}}/properties/log_level",
                     "op": [
                         "readproperty",
-                        "observeproperty",
-                        "unobserveproperty"
+                        "subscribeproperty",
+                        "unsubscribeproperty"
                     ],
                     "mqv:qos": 1,
                     "mqv:retain": true,
