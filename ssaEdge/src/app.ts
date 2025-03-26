@@ -1,8 +1,12 @@
-import { Application, ThingModel, ThingDescription, ThingModelHelpers } from "../deps.ts";
-import { loadAllThingModels } from "./services/thingModelService.ts";
+import {
+  Application,
+  ThingDescription,
+  ThingModel,
+  ThingModelHelpers,
+} from "../deps.ts";
 import { setupMQTT } from "./controllers/mqttController.ts";
-import { createAppRouter} from "./routes/index.ts";
-import { HTTP_PORT, HTTP_HOSTNAME } from "./config/config.ts";
+import { createAppRouter } from "./routes/index.ts";
+import { HTTP_HOSTNAME, HTTP_PORT } from "./config/config.ts";
 
 export function startApp(): void {
   // Shared state: Map<model, Map<uuid, ThingDescription>>
@@ -10,19 +14,8 @@ export function startApp(): void {
   const hostedModels = new Map<string, ThingModel>();
   const tmTools = new ThingModelHelpers();
 
-  loadAllThingModels()
-    .then((models) => {
-      for (const [name, model] of models) {
-        hostedModels.set(name, model);
-      }
-      console.log(`Loaded ${models.size} thing models`);
-    })
-    .catch((error) => {
-      console.error(`Failed to load thing models: ${error.message}`);
-    });
-
   // Initialize MQTT handler
-  setupMQTT(tmTools, hostedThings);
+  setupMQTT(tmTools, hostedModels, hostedThings);
 
   // Initialize HTTP server
   const router = createAppRouter(hostedThings, hostedModels);

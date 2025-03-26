@@ -4,7 +4,7 @@ export interface Version {
 }
 
 export interface RegistrationPayload {
-  uuid: string;
-  model: string;
+  name: string;
+  href: string;
   version: Version;
 }
