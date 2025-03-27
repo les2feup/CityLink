@@ -13,8 +13,6 @@ Interaction Affordances API. Devices that run the SSA-EmbC are designated as SSA
 - The SSA Edge Connector is meant to be deployed at network edge nodes to automate the discovery and configuration of (new) SSA Things and
 to instantiate the Thing Descriptions of SSA Things based on the TM representing their functionality.
 
-### 
-
 ## Thing Models for lifecycle management.
 
 While the main focus of the W3C WoT Standard is the Thing Description, when dealing with the orchestration of large dynamic IoT systems, the TM can be
