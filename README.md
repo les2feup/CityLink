@@ -45,17 +45,17 @@ The component diagram below highlights a possible deployment scenario for these 
 ### Building blocks of an SSA Thing's Thing Model
 
 While the TM is an (optional) extension of the WoT's TD, SSA Things must necessarily be associated with a valid Thing Model available to the network.
-A Thing's thing model dictates what features the thing implements and provides a template for the instantiation of its unique TD during the registration 
+A Thing's thing model dictates what features the Thing implements and provides a template for the instantiation of its unique TD during the registration 
 phase.
 
-The TM of an SSA Thing also dictates its basic characteristics and its supported feature set.
+The TM of an SSA Thing also dictates its essential characteristics and its supported feature set.
 
 ### SSA Thing Model Framework
 
-An SSA Thing Thing Model is a composition of two base Thing Models, enriched with application specific affordances.
-The base thing modles include:
+An SSA Thing Thing Model is a composition of two base Thing Models enriched with application-specific affordances.
+The base thing models include:
 - The platform model describes the computational platform and peripherals of the SSA Thing.
-- The runtime model represents the SSA Embedded Core instance running on the SSA Thing, which in turn dictates the Thing's basic affordances.
+- The runtime model represents the SSA Embedded Core instance running on the SSA Thing, which dictates the Thing's basic affordances.
 
 ![Thing Model Class Diagram](uml/tm_relations.png)
 
@@ -88,7 +88,7 @@ For instance, the Thing Model for an SSA Temperature Sensor could be composed as
     "properties": {
         "temperature": {
             "type": "number",
-            "unit": "degree celsius",
+            "unit": "degree Celsius",
             "readOnly": true,
             "observable": true,
             "description": "Temperature of the sensor",
@@ -109,8 +109,8 @@ For instance, the Thing Model for an SSA Temperature Sensor could be composed as
 }
 ```
 
-The base Thing models in this care are, the SSA uMQTT Embedded Core (instance name SSAEmbC) and the Raspberry Pi Pico W Thing Model (instance name platform)
+The base Thing models, in this case, are the SSA uMQTT Embedded Core (instance name SSAEmbC) and the Raspberry Pi Pico W Thing Model (instance name platform)
 The uMQTT Embedded Core is an implementation of the [Micropython Embedded Core](https://github.com/dvalnn/SmartSensorActuator/blob/main/thing_models/ssa_core.tm.json) 
 using MQTT as the communication protocol and JSON as the serialization format.
 
-In terms of application-specific affordances, this TM lists only the "temperature" property, which can be read and observed by WoT clients.
+Regarding application-specific affordances, this TM lists only the "temperature" property, which can be read and observed by WoT clients.
