@@ -3,7 +3,7 @@
 left to right direction
 skinparam nodesep 100
 
-() "\t\tWoT API" as wotProt
+() "  Interaction Affordances" as wotProt
 
 database "Thing Registry" as db {
     folder "Thing Models" as tms {
@@ -18,16 +18,16 @@ database "App Registry" as appDB {
 
 node "SSA Edge Node" as edgeNode {
 
-    [SSA IoT Connector] as ssaIoT
+    [SSA Edge Connector] as ssaIoT
     [Thing Registry Client] as tRClient
 
     ssaIoT -u-> tRClient : uses
     ssaIoT -r-> appDB : fetch app code
 }
 
-node "SSA IoT Device" as device {
-    [SSA Runtime] as ssaRt
-    [User Application] as userApp
+node "SSA Thing" as device {
+    [SSA Embedded Core] as ssaRt
+    [Application Code] as userApp
 
     [Hardware Drivers] as hwd
     [Sensors / Actuators] as hw
@@ -43,6 +43,6 @@ tRClient -u-> tms : fetch Thing Model(s)
 
 ssaIoT -d..> ssaRt : update app code
 ssaRt -u..> ssaIoT : announce self
-ssaRt -r..> wotProt: expose self
+ssaRt -r..> wotProt: \n\nprovides
 
 @enduml
