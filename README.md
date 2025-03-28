@@ -21,16 +21,28 @@ IoT networks that operate according to the benefit from the following feature se
 SSA IoT Networks also benefit from all the advantages of using Linked Data and the WoT. These include:
  - The ability to dynamically discover and filter devices connected to the networks based on their characteristics.
  - Easy data model extension via the JSON-LD context.
- - Compatibility with graph and linked data database engines. 
+ - Compatibility with graph and linked data database engines and the SPARQL semantic search API.
  - Data interoperability with external networks or services without compromising semantic integrity.
 
 ### SSA Network Components
 
-Apart from the _EmbC_ and the _EdgeC_, a Smart Sensor Actuator network counts on some more building blocks to enable its operation.
-TODO....
+Apart from the Embedded Core runtime and the Edge Connector, a Smart Sensor Actuator network counts on more building blocks to enable its operation.
+
+An SSA Network depends on a (centralized) registry for the Thing Models available to the network. This registry must be accessible to the edge nodes 
+of the network so that Thing Models can be fetched and used to instantiate Thing Descriptions.
+The thing registry can also store Thing Description instances depending on the concrete network architecture. This way, a thing registry can act as a
+top-level Thing Description Server or Thing Description Directory, per the W3C Web of Things Discovery specification.
+
+Another dependency is a (centralized) application code registry. This component stores application code that implements the functionality described 
+by its attributed Thing Model. The application code can then be pushed to connected SSA Things as part of the registration and bootstrap process or
+as part of a dynamic reconfiguration request.
+
+The component diagram below highlights a possible deployment scenario for these components.
+
+![Non-proxy deployment](uml/component_selfd.png)
 
 
-### Building blocks of an SSA Thing
+### Building blocks of an SSA Thing's Thing Model
 
 While the TM is an (optional) extension of the WoT's TD, SSA Things must necessarily be associated with a valid Thing Model available to the network.
 A Thing's thing model dictates what features the thing implements and provides a template for the instantiation of its unique TD during the registration 
@@ -40,10 +52,65 @@ The TM of an SSA Thing also dictates its basic characteristics and its supported
 
 ### SSA Thing Model Framework
 
-An SSA Thing Model is a composition of 2 or more Thing Models. The Platform model, the Runtime/Core model, and one (or more) Application Models.
+An SSA Thing Thing Model is a composition of two base Thing Models, enriched with application specific affordances.
+The base thing modles include:
 - The platform model describes the computational platform and peripherals of the SSA Thing.
-- The runtime model represents the SSA-EmbC instance running on the SSA Thing and its core (immutable) feature set.
-- The application model represents an instrumentation of the runtime of the SSA Thing to provide additional affordances and can be dynamically changed
-at runtime by the SSA Network.
+- The runtime model represents the SSA Embedded Core instance running on the SSA Thing, which in turn dictates the Thing's basic affordances.
 
 ![Thing Model Class Diagram](uml/tm_relations.png)
+
+For instance, the Thing Model for an SSA Temperature Sensor could be composed as such:
+
+``` json
+{
+    "@context": [
+        "https://www.w3.org/2022/wot/td/v1.1"
+    ],
+    "@type": "tm:ThingModel",
+    "title": "tempSensor",
+    "version": {
+        "model": "0.1.0"
+    },
+    "links": [
+        {
+            "rel": "tm:submodel",
+            "href": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/runtimes/ssa_umqtt_core.tm.json",
+            "type": "application/td+json",
+            "instanceName": "SSAEmbC"
+        },
+        {
+            "rel": "tm:submodel",
+            "href": "https://github.com/dvalnn/SmartSensorActuator/blob/main/thing_models/platforms/rpi_pico_w.tm.json",
+            "type": "application/td+json",
+            "instanceName": "platform"
+        }
+    ],
+    "properties": {
+        "temperature": {
+            "type": "number",
+            "unit": "degree celsius",
+            "readOnly": true,
+            "observable": true,
+            "description": "Temperature of the sensor",
+            "forms": [
+                {
+                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
+                    "mqv:topic": "ssa/{{THING_UUID_V4}}/properties/tempSensor/temperature",
+                    "op": [
+                        "readproperty",
+                        "observeproperty",
+                        "unobserveproperty"
+                    ],
+                    "contentType": "application/json"
+                }
+            ]
+        }
+    }
+}
+```
+
+The base Thing models in this care are, the SSA uMQTT Embedded Core (instance name SSAEmbC) and the Raspberry Pi Pico W Thing Model (instance name platform)
+The uMQTT Embedded Core is an implementation of the [Micropython Embedded Core](https://github.com/dvalnn/SmartSensorActuator/blob/main/thing_models/ssa_core.tm.json) 
+using MQTT as the communication protocol and JSON as the serialization format.
+
+In terms of application-specific affordances, this TM lists only the "temperature" property, which can be read and observed by WoT clients.
