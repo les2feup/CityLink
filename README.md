@@ -30,8 +30,8 @@ Apart from the Embedded Core runtime and the Edge Connector, a Smart Sensor Actu
 
 An SSA Network depends on a (centralized) registry for the Thing Models available to the network. This registry must be accessible to the edge nodes 
 of the network so that Thing Models can be fetched and used to instantiate Thing Descriptions.
-The thing registry can also store Thing Description instances depending on the concrete network architecture. This way, a thing registry can act as a
-top-level Thing Description Server or Thing Description Directory, per the W3C Web of Things Discovery specification.
+The thing registry can also store Thing Description instances depending on the concrete network architecture. This way, a thing model registry can also
+act as a top-level Thing Description Directory, per the W3C Web of Things Discovery specification.
 
 Another dependency is a (centralized) application code registry. This component stores application code that implements the functionality described 
 by its attributed Thing Model. The application code can then be pushed to connected SSA Things as part of the registration and bootstrap process or
@@ -54,8 +54,8 @@ The TM of an SSA Thing also dictates its essential characteristics and its suppo
 
 An SSA Thing's TM is a composition of two base Thing Models enriched with application-specific affordances.
 The base thing models include:
-- The platform model, which describes the computational platform and peripherals of the SSA Thing.
-- The runtime model, which represents the SSA Embedded Core instance running on the SSA Thing and dictates the Thing's basic affordances.
+- **The platform model**: describes the computational platform and peripherals of the SSA Thing.
+- **The embedded core model**: represents the SSA Embedded Core instance running on the SSA Thing and dictates the Thing's basic affordances.
 
 ![Thing Model Class Diagram](uml/tm_relations.png)
 
@@ -90,12 +90,15 @@ For instance, the Thing Model for an SSA Temperature Sensor could be composed as
             "type": "number",
             "unit": "degree Celsius",
             "readOnly": true,
+            "writeOnly": false,
             "observable": true,
             "description": "Temperature of the sensor",
             "forms": [
                 {
                     "href": "mqtt://{{MQTT_BROKER_ADDR}}",
                     "mqv:topic": "ssa/{{THING_UUID_V4}}/properties/tempSensor/temperature",
+                    "mqv:retain": true,
+                    "mqv:qos": 1,
                     "op": [
                         "readproperty",
                         "observeproperty",
@@ -113,4 +116,5 @@ The base Thing models, in this case, are the SSA uMQTT Embedded Core (instance n
 The uMQTT Embedded Core is an implementation of the [Micropython Embedded Core](https://github.com/dvalnn/SmartSensorActuator/blob/main/thing_models/ssa_core.tm.json) 
 using MQTT as the communication protocol and JSON as the serialization format.
 
-Regarding application-specific affordances, this TM lists only the "temperature" property, which can be read and observed by WoT clients.
+Regarding application-specific affordances, this TM lists only the "temperature" property, which WoT clients may read or observe. For more context, see the 
+[WoT MQTT Protocol Binding Template](https://w3c.github.io/wot-binding-templates/bindings/protocols/mqtt/index.html)
