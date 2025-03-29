@@ -1,0 +1,27 @@
+@startuml
+
+class "SSA Thing" as ssat {
+        Instance specific metadata
+    }
+
+abstract class "SSA Thing TM" as ttm {
+        Application specific affordances
+    }
+
+abstract class "SSA Embedded Core TM" as rtm {
+        Core runtime affordances
+    }
+
+abstract class "Platform TM" as ptm {
+        Computational Platform characteristics
+    }
+
+ttm "*" --* "1" ptm
+ttm "*" --* "1" rtm
+
+ssat ..|> ttm
+
+
+hide empty members
+
+@enduml
