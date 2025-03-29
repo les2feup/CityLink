@@ -13,16 +13,16 @@ to WoT's Interaction Affordances API. Devices that run the SSA-EmbC are designat
 to instantiate the Thing Descriptions of SSA Things based on the TM representing their functionality.
 
 IoT networks that operate according to the benefit from the following feature set:
- - **Semantic interoperability of data**, facilitated by JSON-LD, RDF, and the WoT context.
- - **Standardized communication interfaces** between IoT devices powered by the WoT's properties-actions-events paradigm.
- - **Automated bootstrapping** of new devices into the network via the SSA Edge Connectors and the registration protocol.
- - **Over-the-air updates** of application code and/or device configuration using the tools provided by the SSA Embedded Core.
+- **Semantic interoperability of data**, facilitated by JSON-LD, RDF, and the WoT context.
+- **Standardized communication interfaces** between IoT devices powered by the WoT's properties-actions-events paradigm.
+- **Automated bootstrapping** of new devices into the network via the SSA Edge Connectors and the registration protocol.
+- **Over-the-air updates** of application code and/or device configuration using the tools provided by the SSA Embedded Core.
 
 SSA IoT Networks also benefit from all the advantages of using Linked Data and the WoT. These include:
- - The ability to dynamically discover and filter devices connected to the networks based on their characteristics.
- - Easy data model extension via the JSON-LD context.
- - Compatibility with graph and linked data database engines and the SPARQL semantic search API.
- - Data interoperability with external networks or services without compromising semantic integrity.
+- The ability to dynamically discover and filter devices connected to the networks based on their characteristics.
+- Easy data model extension via the JSON-LD context.
+- Compatibility with graph and linked data database engines and the SPARQL semantic search API.
+- Data interoperability with external networks or services without compromising semantic integrity.
 
 ### SSA Network Components
 
@@ -50,12 +50,12 @@ phase.
 
 The TM of an SSA Thing also dictates its essential characteristics and its supported feature set.
 
-### SSA Thing Model Framework
+### Thing Model Framework
 
-An SSA Thing Thing Model is a composition of two base Thing Models enriched with application-specific affordances.
+An SSA Thing's TM is a composition of two base Thing Models enriched with application-specific affordances.
 The base thing models include:
-- The platform model describes the computational platform and peripherals of the SSA Thing.
-- The runtime model represents the SSA Embedded Core instance running on the SSA Thing, which dictates the Thing's basic affordances.
+- The platform model, which describes the computational platform and peripherals of the SSA Thing.
+- The runtime model, which represents the SSA Embedded Core instance running on the SSA Thing and dictates the Thing's basic affordances.
 
 ![Thing Model Class Diagram](uml/tm_relations.png)
 
