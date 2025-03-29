@@ -4,7 +4,7 @@ class "SSA Thing" as ssat {
         Instance specific metadata
     }
 
-abstract class "SSA Thing TM" as ttm {
+abstract class "SSA Application TM" as ttm {
         Application specific affordances
     }
 
