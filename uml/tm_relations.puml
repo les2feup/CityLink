@@ -1,26 +1,35 @@
 @startuml
 
-class "SSA Thing" as ssat {
-        Instance specific metadata
-    }
+skinparam nodesep 100
 
-abstract class "SSA Application TM" as ttm {
-        Application specific affordances
-    }
+class "SSA Thing" as ssat << (D, orchid) Thing Description >>
 
-abstract class "SSA Embedded Core TM" as rtm {
-        Core runtime affordances
-    }
+class "SSA Application Base" as abtm  << (M, cyan) Thing Model, Protocol-agnostic >>
 
-abstract class "Platform TM" as ptm {
-        Computational Platform characteristics
-    }
+class "SSA Application" as atm << (M, cyan) Thing Model >>
 
-ttm "*" --* "1" ptm
-ttm "*" --* "1" rtm
+class "SSA Embedded Core Base" as rbtm << (M, cyan) Thing Model, Protocol-agnostic >>
 
-ssat ..|> ttm
+class "SSA Embedded Core" as rtm << (M, cyan) Thing Model >>
 
+class "Platform" as ptm << (M, cyan) Thing Model >>
+
+class "SSA Edge Connector" as ectm << (M, cyan) Thing Model >>
+
+protocol "SSA Connector API" as capi << Protocol-specific >>
+
+ssat ..|> atm : instantiates
+atm "0..*"..> "0..1" abtm : extends
+
+atm "0..*" -right--* "1" ptm : references
+atm "0..*" -left--* "1" rtm : references
+
+rtm -up--|> rbtm : extends
+
+rtm ..|> capi : implements
+ectm ..|> capi : implements
+
+rtm "0..*" -left..> "1" ectm : interfaces with
 
 hide empty members
 
