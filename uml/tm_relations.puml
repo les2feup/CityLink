@@ -16,18 +16,13 @@ class "Platform" as ptm << (M, cyan) Thing Model >>
 
 class "SSA Edge Connector" as ectm << (M, cyan) Thing Model >>
 
-protocol "SSA Connector API" as capi << Protocol-specific >>
-
 ssat ..|> atm : instantiates
 atm "0..*"..> "0..1" abtm : extends
 
 atm "0..*" -right--* "1" ptm : references
 atm "0..*" -left--* "1" rtm : references
 
-rtm -up--|> rbtm : extends
-
-rtm ..|> capi : implements
-ectm ..|> capi : implements
+rtm "0..*" ..> "0..1"rbtm : extends
 
 rtm "0..*" -left..> "1" ectm : interfaces with
 
