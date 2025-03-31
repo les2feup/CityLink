@@ -18,11 +18,11 @@ database "App Registry" as appDB {
 
 node "SSA Edge Node" as edgeNode {
 
-    [SSA Edge Connector] as ssaIoT
+    [SSA Edge Connector] as ssaCon
     [Thing Registry Client] as tRClient
 
-    ssaIoT -u-> tRClient : uses
-    ssaIoT -r-> appDB : fetch app code
+    ssaCon -u-> tRClient : uses
+    ssaCon -r-> appDB : fetch app code
 }
 
 node "SSA Thing" as device {
@@ -32,8 +32,8 @@ node "SSA Thing" as device {
     [Hardware Drivers] as hwd
     [Sensors / Actuators] as hw
 
-    hwd -d- hw
-    ssaRt -l- hwd : uses
+    hwd -d- hw : interfaces
+    ssaRt -l-> hwd : uses
     ssaRt -d-> userApp: runs
     userApp -u-> ssaRt: uses
 }
@@ -41,8 +41,8 @@ node "SSA Thing" as device {
 tRClient -u-> tds : register \nThing Description(s)
 tRClient -u-> tms : fetch Thing Model(s)
 
-ssaIoT -d..> ssaRt : update app code
-ssaRt -u..> ssaIoT : announce self
+ssaCon -d..> ssaRt : manage, update
+ssaRt -u..> ssaCon : register
 ssaRt -r..> wotProt: \n\nprovides
 
 @enduml
