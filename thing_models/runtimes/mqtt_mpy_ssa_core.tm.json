@@ -8,11 +8,16 @@
     "version": {
         "model": "0.1.0"
     },
-    "description": "Models the core functionality of the SSA uMQTT runtime, an ssa runtime implemented using micropython that uses MQTT as the underlying communication protocol.",
+    "description": "Models the core functionality of the SSA uMQTT Embedded Core runtime, an implementation of the generic SSA micropython EmbC TM that uses MQTT as the underlying communications protocol.",
     "links": [
         {
             "rel": "tm:extends",
             "href": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/mpy_ssa_core.tm.json",
+            "type": "application/tm+json"
+        },
+        {
+            "rel": "controlledBy",
+            "href": "https://example.org/ssa-mqtt-edge-controller.tm.json",
             "type": "application/tm+json"
         }
     ],
