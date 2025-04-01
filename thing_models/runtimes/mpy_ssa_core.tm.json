@@ -3,12 +3,12 @@
         "https://www.w3.org/2022/wot/td/v1.1"
     ],
     "@type": "tm:ThingModel",
-    "title": "ssa_core",
+    "title": "MPY SSA Core",
     "version": {
         "model": "0.1.0"
     },
     "id": "urn:uuid:{{THING_UUID_V4}}",
-    "description": "SSA Core Thing Model. Models the functionality common to all Smart Sensor Actuator Runtimes.",
+    "description": "SSA Core Thing Model for micropython implementations. Models the functionality common to all micropython Smart Sensor Actuator Runtimes.",
     "tm:optional": [
         "/actions/ssaCoreSetProperty"
     ],

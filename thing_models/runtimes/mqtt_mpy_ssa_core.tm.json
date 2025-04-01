@@ -4,7 +4,7 @@
         "https://raw.githubusercontent.com/w3c/wot-binding-templates/refs/heads/main/bindings/protocols/mqtt/context.jsonld"
     ],
     "@type": "tm:ThingModel",
-    "title": "ssa_umqtt_core",
+    "title": "MQTT MPY SSA Core",
     "version": {
         "model": "0.1.0"
     },
@@ -12,14 +12,14 @@
     "links": [
         {
             "rel": "tm:extends",
-            "href": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/ssa_core.tm.json",
+            "href": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/mpy_ssa_core.tm.json",
             "type": "application/tm+json"
         }
     ],
     "forms": [
         {
-            "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-            "mqv:filter": "ssa/{{THING_UUID_V4}}/properties/#",
+            "href": "{{SSA_THING_HREF_BASE}}",
+            "mqv:filter": "{{SSA_THING_PROPERTY_NAME}}/#",
             "op": [
                 "readallproperties",
                 "observeallproperties",
@@ -28,8 +28,8 @@
             "contentType": "application/json"
         },
         {
-            "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-            "mqv:filter": "ssa/{{THING_UUID_V4}}/events/#",
+            "href": "{{SSA_THING_HREF_BASE}}",
+            "mqv:filter": "{{SSA_THING_EVENT_NAME}}/#",
             "op": [
                 "subscribeallevents",
                 "unsubscribeallevents"
@@ -41,8 +41,8 @@
         "logLevel": {
             "forms": [
                 {
-                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "ssa/{{THING_UUID_V4}}/properties/logLevel",
+                    "href": "{{SSA_THING_HREF_BASE}}",
+                    "mqv:filter": "{{SSA_THING_PROPERTY_NAME}}/logLevel",
                     "op": [
                         "readproperty",
                         "observeproperty",
@@ -196,8 +196,8 @@
             },
             "forms": [
                 {
-                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "ssa/{{THING_UUID_V4}}/events/umqtt_core/vfs/report",
+                    "href": "{{SSA_THING_HREF_BASE}}",
+                    "mqv:filter": "{{SSA_THING_EVENT_NAME}}/vfs/report",
                     "op": [
                         "subscribeevent",
                         "unsubscribeevent"
@@ -213,8 +213,8 @@
         "ssaVFSListAction": {
             "forms": [
                 {
-                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "ssa/{{THING_UUID_V4}}/actions/umqtt_core/vfs/list",
+                    "href": "{{SSA_THING_HREF_BASE}}",
+                    "mqv:topic": "{{SSA_THING_ACTION_NAME}}/vfs/list",
                     "op": [
                         "invokeaction"
                     ],
@@ -227,8 +227,8 @@
         "ssaVFSReadAction": {
             "forms": [
                 {
-                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "ssa/{{THING_UUID_V4}}/actions/umqtt_core/vfs/read",
+                    "href": "{{SSA_THING_HREF_BASE}}",
+                    "mqv:topic": "{{SSA_THING_ACTION_NAME}}/vfs/read",
                     "op": [
                         "invokeaction"
                     ],
@@ -256,8 +256,8 @@
             },
             "forms": [
                 {
-                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "ssa/{{THING_UUID_V4}}/actions/umqtt_core/vfs/write",
+                    "href": "{{SSA_THING_HREF_BASE}}",
+                    "mqv:topic": "{{SSA_THING_ACTION_NAME}}/vfs/write",
                     "op": [
                         "invokeaction"
                     ],
@@ -270,8 +270,8 @@
         "ssaVFSDeleteAction": {
             "forms": [
                 {
-                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "ssa/{{THING_UUID_V4}}/actions/umqtt_core/vfs/delete",
+                    "href": "{{SSA_THING_HREF_BASE}}",
+                    "mqv:topic": "{{SSA_THING_ACTION_NAME}}/vfs/delete",
                     "op": [
                         "invokeaction"
                     ],
@@ -284,8 +284,8 @@
         "ssaCoreReload": {
             "forms": [
                 {
-                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "ssa/{{THING_UUID_V4}}/actions/umqtt_core/reload",
+                    "href": "{{SSA_THING_HREF_BASE}}",
+                    "mqv:topic": "{{SSA_THING_ACTION_NAME}}/reload",
                     "op": [
                         "invokeaction"
                     ],
@@ -298,8 +298,8 @@
             "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/ssa_core.tm.json#/actions/ssaCoreSetProperty",
             "forms": [
                 {
-                    "href": "mqtt://{{MQTT_BROKER_ADDR}}",
-                    "mqv:topic": "ssa/{{THING_UUID_V4}}/actions/umqtt_core/setproperty",
+                    "href": "{{SSA_THING_HREF_BASE}}",
+                    "mqv:topic": "{{SSA_THING_ACTION_NAME}}/setproperty",
                     "op": [
                         "invokeaction"
                     ],
