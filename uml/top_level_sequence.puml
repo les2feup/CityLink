@@ -1,0 +1,63 @@
+@startuml
+!pragma teoz true
+skinparam style strictuml
+
+actor developer as dev
+
+participant "IoT Device" as iotdev
+participant "Edge Node" as node
+database "Thing DB" as db
+database "App Storage" as store
+
+actor consumer
+
+activate dev
+dev -> db : define application API -- Thing Model (TM)
+dev -> store : write application code implementing TM API
+
+create node
+dev -> node: deploy edge connector
+
+loop : for each deployed device
+
+    create iotdev
+    dev -> iotdev : flash SSA\nfirmware
+    dev -> iotdev : boot &\nconfigure
+    deactivate dev
+    activate iotdev
+    
+    iotdev -> node : registration
+    
+    activate node
+    node -> node : init device\nregistration
+    & node --> iotdev : ack
+    
+    activate node
+    node -> db : fetch Model
+    node -> store : get application code\nimplementing the Model
+    
+    node -> node : create TD
+    deactivate node
+
+    node -> iotdev : upload app\ncode
+    iotdev --> node : ack
+    
+    node -> db : store TD
+    node -> consumer: provide application instance model\n -- Thing Description (TD)
+    deactivate node
+    activate consumer
+    
+    iotdev -> iotdev : run app
+    & consumer -> consumer : learn device\nAPI from TD
+    
+    loop : normal operation
+        consumer -> iotdev : api request
+        iotdev --> consumer : response
+    end loop
+    
+    deactivate iotdev
+    deactivate consumer
+
+end loop
+
+@enduml

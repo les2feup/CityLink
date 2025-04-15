@@ -1,0 +1,50 @@
+@startuml
+!pragma teoz true
+skinparam style strictuml
+
+actor consumer
+
+participant "IoT Device" as iotdev
+participant "Edge Node" as node
+database "Thing DB" as db
+database "App Storage" as store
+
+group setup
+    db <-o?: new TM\t
+    &store <-o?: new App\t
+end group
+
+& loop : normal operation
+    activate consumer
+    activate iotdev
+
+    consumer -> iotdev : api request
+    iotdev --> consumer : response
+
+    deactivate consumer
+    deactivate iotdev
+end loop
+
+== Thing Mutation == 
+
+activate consumer
+consumer -> node : device mutation request
+
+activate node
+    
+    node -> db : get new TM
+    node -> store : get TM application code
+
+    node -> node : update device TD
+
+    node -> iotdev : upload code
+    activate iotdev
+        iotdev --> node : ack
+        iotdev -> iotdev : run new app
+    deactivate iotdev
+
+return provide updated TD
+
+consumer -> consumer : learn new API\nfrom TD
+
+@enduml 
