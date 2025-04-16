@@ -1,0 +1,32 @@
+@startuml
+allowmixing
+skinparam linetype ortho
+hide empty members
+
+cloud "Thing Model\nRepository" as tmStore << GitHub >>
+
+node "x86_64 Linux machine" as pc {
+    class "Edge Connector" as con << MQTT & HTTP>>
+    database "Thing DB" as db << in-memory >>
+    component "Web Interface" as web << HTTP >>
+    component "Mosquitto Broker" as broker << MQTT >>
+    collections "Application Storage" as col << local file system >>
+
+    con <-d-> broker
+    con <-l-> db
+    web -d-> db
+    con -r[hidden]- web
+    col <-u- con
+}
+
+node "Raspberry Pi Pico W" as pico {
+    class "Embedded Core Runtime" as rt << Micropython+MQTT>>
+}
+
+pico -u[hidden]- pc
+broker -u[hidden]- pc
+con -> tmStore
+
+rt <-l-> broker
+
+@enduml
