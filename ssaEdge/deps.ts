@@ -8,7 +8,12 @@ export { default as mqtt } from "npm:mqtt";
 
 export type { Buffer } from "node:buffer";
 export type { ThingModel } from "npm:wot-thing-model-types";
-export type { ThingDescription } from "npm:wot-thing-description-types";
+export type {
+  AnyUri,
+  BaseLinkElement,
+  LinkElement,
+  ThingDescription,
+} from "npm:wot-thing-description-types";
 
 export { ThingModelHelpers } from "./eclipse-thingweb/thing-model/src/thing-model.ts";
 export type { CompositionOptions } from "./eclipse-thingweb/thing-model/src/thing-model.ts";
