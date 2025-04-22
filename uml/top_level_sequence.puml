@@ -4,60 +4,56 @@ skinparam style strictuml
 
 actor developer as dev
 
-participant "IoT Device" as iotdev
+participant "End Node" as iotdev
 participant "Edge Node" as node
 database "Thing DB" as db
 database "App Storage" as store
 
 actor consumer
 
-activate dev
-dev -> db : define application API -- Thing Model (TM)
-dev -> store : write application code implementing TM API
+group init
+create iotdev
+dev -> iotdev : flash
+dev -> iotdev : configure \n& deploy
+activate iotdev
+end 
 
-create node
-dev -> node: deploy edge connector
+group registration
+    
+iotdev -> node : registration
+    
+activate node
+node -> node : init end-node\nregistration
+& node --> iotdev : ack
 
-loop : for each deployed device
+activate node
+node -> db : fetch Model
+node -> store : get application code\nimplementing the Model
 
-    create iotdev
-    dev -> iotdev : flash SSA\nfirmware
-    dev -> iotdev : boot &\nconfigure
-    deactivate dev
-    activate iotdev
-    
-    iotdev -> node : registration
-    
-    activate node
-    node -> node : init device\nregistration
-    & node --> iotdev : ack
-    
-    activate node
-    node -> db : fetch Model
-    node -> store : get application code\nimplementing the Model
-    
-    node -> node : create TD
-    deactivate node
+node -> node : create TD
+deactivate node
 
-    node -> iotdev : upload app\ncode
-    iotdev --> node : ack
-    
-    node -> db : store TD
-    node -> consumer: provide application instance model\n -- Thing Description (TD)
-    deactivate node
-    activate consumer
-    
-    iotdev -> iotdev : run app
-    & consumer -> consumer : learn device\nAPI from TD
-    
-    loop : normal operation
-        consumer -> iotdev : api request
-        iotdev --> consumer : response
-    end loop
-    
-    deactivate iotdev
-    deactivate consumer
+node -> iotdev : upload app\ncode
+iotdev --> node : ack
 
+node -> db : store TD
+end
+
+activate consumer
+consumer -> node: get TD
+node --> consumer: provide TD
+deactivate node
+
+iotdev -> iotdev : run app
+& consumer -> consumer : get API
+
+loop : normal operation
+    consumer -> iotdev : API request
+    iotdev --> consumer : response
 end loop
+
+deactivate iotdev
+deactivate consumer
+
 
 @enduml

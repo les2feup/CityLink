@@ -4,31 +4,13 @@ skinparam style strictuml
 
 actor consumer
 
-participant "IoT Device" as iotdev
+participant "End Node" as iotdev
 participant "Edge Node" as node
 database "Thing DB" as db
 database "App Storage" as store
 
-group setup
-    db <-o?: new TM\t
-    &store <-o?: new App\t
-end group
-
-& loop : normal operation
-    activate consumer
-    activate iotdev
-
-    consumer -> iotdev : api request
-    iotdev --> consumer : response
-
-    deactivate consumer
-    deactivate iotdev
-end loop
-
-== Thing Mutation == 
-
 activate consumer
-consumer -> node : device mutation request
+consumer -> node : device adaptation request
 
 activate node
     
