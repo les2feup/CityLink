@@ -10,23 +10,20 @@ database "Thing DB" as db
 database "App Storage" as store
 
 activate consumer
-consumer -> node : device adaptation request
+consumer -> node : end node adaptation\nrequest
 
 activate node
     
     node -> db : get new TM
-    node -> store : get TM application code
+    node -> store : get new application
 
-    node -> node : update device TD
+    node -> node : update end\nnode TD
 
-    node -> iotdev : upload code
+    node -> iotdev : upload app
     activate iotdev
         iotdev --> node : ack
         iotdev -> iotdev : run new app
     deactivate iotdev
 
 return provide updated TD
-
-consumer -> consumer : learn new API\nfrom TD
-
 @enduml 

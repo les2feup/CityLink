@@ -12,40 +12,38 @@ database "App Storage" as store
 actor consumer
 
 group init
-create iotdev
-dev -> iotdev : flash
-dev -> iotdev : configure \n& deploy
-activate iotdev
+    dev -> iotdev : flash
+    dev -> iotdev : configure \n& deploy
+    activate iotdev
 end 
 
 group registration
+    iotdev -> node : registration
+        
+    activate node
+    node -> node : init end-node\nregistration
+    & node --> iotdev : ack
     
-iotdev -> node : registration
+    activate node
+    node -> db : fetch Model
+    node -> store : get application code\nimplementing the Model
     
-activate node
-node -> node : init end-node\nregistration
-& node --> iotdev : ack
-
-activate node
-node -> db : fetch Model
-node -> store : get application code\nimplementing the Model
-
-node -> node : create TD
-deactivate node
-
-node -> iotdev : upload app\ncode
-iotdev --> node : ack
-
-node -> db : store TD
+    node -> node : create TD
+    deactivate node
+    
+    node -> iotdev : upload app\ncode
+    iotdev --> node : ack
+    deactivate iotdev
+    
+    node -> db : store TD
+    & iotdev -> iotdev : run app
+    activate iotdev
 end
 
 activate consumer
 consumer -> node: get TD
 node --> consumer: provide TD
 deactivate node
-
-iotdev -> iotdev : run app
-& consumer -> consumer : get API
 
 loop : normal operation
     consumer -> iotdev : API request
@@ -54,6 +52,5 @@ end loop
 
 deactivate iotdev
 deactivate consumer
-
 
 @enduml
