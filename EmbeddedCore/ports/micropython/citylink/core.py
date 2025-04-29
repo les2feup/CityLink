@@ -1,8 +1,8 @@
 from .interfaces import AffordanceHandler, TaskScheduler, Serializer
 
 
-class SSACore(AffordanceHandler, TaskScheduler):
-    """Base class defining the SSARuntime interface."""
+class EmbeddedCore(AffordanceHandler, TaskScheduler):
+    """Base class defining the CityLink EmbeddedCore interface."""
 
     def __init__(
         self, config_dir, fopen_mode, default_serializer: Serializer, **kwargs
@@ -42,15 +42,15 @@ class SSACore(AffordanceHandler, TaskScheduler):
         raise NotImplementedError("Subclasses must implement register_device()")
 
     def App(*args, **kwargs):
-        """Decorator to mark the entry point for the SSACore."""
+        """Decorator to mark the entry point for the EmbeddedCore."""
 
         def main_decorator(main_func):
-            """Decorates the main function of the SSACore."""
+            """Decorates the main function of the EmbeddedCore."""
 
             def main_wrapper():
-                """Wrapper for the main function of the SSACore."""
+                """Wrapper for the main function of the EmbeddedCore."""
                 raise NotImplementedError(
-                    "Subclasses must implement SSACore.App() decorator"
+                    "Subclasses must implement EmbeddedCore.App() decorator"
                 )
 
             return main_wrapper

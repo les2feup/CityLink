@@ -1,8 +1,8 @@
-from ssa_core import SSACore
+from citylink import EmbeddedCore
 
 
-@SSACore.App()
-def default_main(_): ...
+@EmbeddedCore.App()
+def default_main(_): ... # Just run the base runtime
 
 
 try:

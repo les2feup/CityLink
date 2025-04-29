@@ -1,6 +1,6 @@
 @startuml
 
-title SSAEmbeddedCore micropython bindings
+title CityLink Embedded Core micropython bindings
 
 interface AffordanceHandler {
   +__init__(config)
@@ -35,7 +35,7 @@ interface TaskScheduler {
   +task_sleep_ms(ms)
 }
 
-Interface SSACore {
+Interface EmbeddedCore {
   +__init__(config_dir, fopen_mode, default_serializer: Serializer, **kwargs)
   -_load_config()
   -_write_config(update_dict)
@@ -46,8 +46,8 @@ Interface SSACore {
   +App(*args, **kwargs)
 }
 
-SSACore ..|> AffordanceHandler
-SSACore ..|> TaskScheduler
-SSACore ..> Serializer
+EmbeddedCore ..|> AffordanceHandler
+EmbeddedCore ..|> TaskScheduler
+EmbeddedCore ..> Serializer
 
 @enduml
