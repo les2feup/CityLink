@@ -1,0 +1,53 @@
+{
+    "@context": "https://www.w3.org/2022/wot/td/v1.1",
+    "@type": "tm:ThingModel",
+    "title": "Simple Temperature Sensor",
+    "version": {
+        "model": "0.1.0"
+    },
+    "properties": {
+        "temperature": {
+            "title": "Temperature sample",
+            "description": "The current temperature value in degrees Celsius",
+            "type": "integer",
+            "min": 0,
+            "max": 50,
+            "readOnly": true,
+            "writeOnly": false
+        }
+    },
+    "events": {
+        "overheating": {
+            "title": "Overheating event",
+            "description": "Triggered when the temperature exceeds a certain threshold",
+            "data": {
+                "type": "object",
+                "properties": {
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "The time when the event was triggered"
+                    },
+                    "alarm": {
+                        "type": "boolean",
+                        "description": "Indicates if the alarm is active"
+                    },
+                    "temperature": {
+                        "type": "integer",
+                        "description": "The temperature value that triggered the event"
+                    }
+                }
+            }
+        }
+    },
+    "actions": {
+        "toggleAlarm": {
+            "title": "Toggle alarm",
+            "description": "Toggle the alarm state",
+            "input": {
+                "type": "boolean",
+                "description": "Alarm state (on/off) to set"
+            }
+        }
+    }
+}

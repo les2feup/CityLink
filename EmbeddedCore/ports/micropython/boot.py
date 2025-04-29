@@ -2,7 +2,7 @@ from citylink import EmbeddedCore
 
 
 @EmbeddedCore.App()
-def default_main(_): ... # Just run the base runtime
+def default_main(_): ...  # Just run the base runtime
 
 
 try:
