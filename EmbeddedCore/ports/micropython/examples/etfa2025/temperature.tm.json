@@ -2,9 +2,17 @@
     "@context": "https://www.w3.org/2022/wot/td/v1.1",
     "@type": "tm:ThingModel",
     "title": "Simple Temperature Sensor",
+    "description": "Simple temperature sensor with alarm functionality. Base application model meant to be extended by concrete implementations.",
     "version": {
         "model": "0.1.0"
     },
+    "links": [
+        {
+            "rel": "describes",
+            "href": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/EmbeddedCore/ports/micropython/examples/etfa2025/temperature.py",
+            "type": "text/x-python"
+        }
+    ],
     "properties": {
         "temperature": {
             "title": "Temperature sample",

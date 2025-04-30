@@ -16,7 +16,7 @@
                 "type": "object",
                 "properties": {
                     "level": {
-                        "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/generic/common_props.tm.json#/properties/logLevel"
+                        "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/generic/common_props.tm.json#/properties/logLevel"
                     },
                     "message": {
                         "title": "Message",
@@ -24,7 +24,7 @@
                         "type": "string"
                     },
                     "timestamp": {
-                        "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/generic/common_props.tm.json#/properties/epochTimestamp"
+                        "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/generic/common_props.tm.json#/properties/epochTimestamp"
                     }
                 },
                 "required": [

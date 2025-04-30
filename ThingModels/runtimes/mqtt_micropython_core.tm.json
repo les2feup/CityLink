@@ -4,27 +4,27 @@
         "https://raw.githubusercontent.com/w3c/wot-binding-templates/refs/heads/main/bindings/protocols/mqtt/context.jsonld"
     ],
     "@type": "tm:ThingModel",
-    "title": "MQTT MPY SSA Core",
+    "title": "MQTT Micropython Embedded Core",
+    "description": "Models the core functionality of the CityLink uMQTT Embedded Core runtime, an implementation of the generic micropython EmbC TM that uses MQTT as the underlying communications protocol.",
     "version": {
         "model": "0.1.0"
     },
-    "description": "Models the core functionality of the SSA uMQTT Embedded Core runtime, an implementation of the generic SSA micropython EmbC TM that uses MQTT as the underlying communications protocol.",
     "links": [
         {
             "rel": "tm:extends",
-            "href": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/mpy_ssa_core.tm.json",
+            "href": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/micropython_core.tm.json",
             "type": "application/tm+json"
         },
         {
             "rel": "controlledBy",
-            "href": "https://example.org/ssa-mqtt-edge-controller.tm.json",
+            "href": "https://example.org/mqtt-edge-controller.tm.json",
             "type": "application/tm+json"
         }
     ],
     "forms": [
         {
-            "href": "{{SSA_THING_HREF_BASE}}",
-            "mqv:filter": "{{SSA_THING_PROPERTY_NAME}}/#",
+            "href": "{{CITYLINK_HREF_BASE}}",
+            "mqv:filter": "{{CITYLINK_PROPERTY_NAME}}/#",
             "op": [
                 "readallproperties",
                 "observeallproperties",
@@ -33,8 +33,8 @@
             "contentType": "application/json"
         },
         {
-            "href": "{{SSA_THING_HREF_BASE}}",
-            "mqv:filter": "{{SSA_THING_EVENT_NAME}}/#",
+            "href": "{{CITYLINK_HREF_BASE}}",
+            "mqv:filter": "{{CITYLINK_EVENT_NAME}}/#",
             "op": [
                 "subscribeallevents",
                 "unsubscribeallevents"
@@ -46,8 +46,8 @@
         "logLevel": {
             "forms": [
                 {
-                    "href": "{{SSA_THING_HREF_BASE}}",
-                    "mqv:filter": "{{SSA_THING_PROPERTY_NAME}}/logLevel",
+                    "href": "{{CITYLINK_HREF_BASE}}",
+                    "mqv:filter": "{{CITYLINK_PROPERTY_NAME}}/logLevel",
                     "op": [
                         "readproperty",
                         "observeproperty",
@@ -61,7 +61,7 @@
         }
     },
     "events": {
-        "coreVFSActionResponse": {
+        "VFSActionResponse": {
             "title": "Core VFS Action Response",
             "description": "Response for the last Virtual File System action.",
             "data": {
@@ -99,9 +99,9 @@
                             }
                         }
                     },
-                    "message": {
-                        "title": "Message",
-                        "description": "Message associated with the last action performed on the Virtual File System.",
+                    "mege": {
+                        "title": "Mege",
+                        "description": "Mege associated with the last action performed on the Virtual File System.",
                         "oneof": [
                             {
                                 "type": "object",
@@ -187,8 +187,8 @@
                             },
                             {
                                 "type": "string",
-                                "title": "Error Message",
-                                "description": "Error message associated with the last action performed on the Virtual File System."
+                                "title": "Error Mege",
+                                "description": "Error mege associated with the last action performed on the Virtual File System."
                             }
                         ]
                     }
@@ -196,13 +196,13 @@
                 "required": [
                     "action",
                     "error",
-                    "message"
+                    "mege"
                 ]
             },
             "forms": [
                 {
-                    "href": "{{SSA_THING_HREF_BASE}}",
-                    "mqv:filter": "{{SSA_THING_EVENT_NAME}}/vfs/report",
+                    "href": "{{CITYLINK_HREF_BASE}}",
+                    "mqv:filter": "{{CITYLINK_EVENT_NAME}}/vfs/report",
                     "op": [
                         "subscribeevent",
                         "unsubscribeevent"
@@ -215,11 +215,11 @@
         }
     },
     "actions": {
-        "ssaVFSListAction": {
+        "VFSListAction": {
             "forms": [
                 {
-                    "href": "{{SSA_THING_HREF_BASE}}",
-                    "mqv:topic": "{{SSA_THING_ACTION_NAME}}/vfs/list",
+                    "href": "{{CITYLINK_HREF_BASE}}",
+                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/vfs/list",
                     "op": [
                         "invokeaction"
                     ],
@@ -229,11 +229,11 @@
                 }
             ]
         },
-        "ssaVFSReadAction": {
+        "VFSReadAction": {
             "forms": [
                 {
-                    "href": "{{SSA_THING_HREF_BASE}}",
-                    "mqv:topic": "{{SSA_THING_ACTION_NAME}}/vfs/read",
+                    "href": "{{CITYLINK_HREF_BASE}}",
+                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/vfs/read",
                     "op": [
                         "invokeaction"
                     ],
@@ -243,7 +243,7 @@
                 }
             ]
         },
-        "ssaVFSWriteAction": {
+        "VFSWriteAction": {
             "input": {
                 "properties": {
                     "payload": {
@@ -261,8 +261,8 @@
             },
             "forms": [
                 {
-                    "href": "{{SSA_THING_HREF_BASE}}",
-                    "mqv:topic": "{{SSA_THING_ACTION_NAME}}/vfs/write",
+                    "href": "{{CITYLINK_HREF_BASE}}",
+                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/vfs/write",
                     "op": [
                         "invokeaction"
                     ],
@@ -272,11 +272,11 @@
                 }
             ]
         },
-        "ssaVFSDeleteAction": {
+        "VFSDeleteAction": {
             "forms": [
                 {
-                    "href": "{{SSA_THING_HREF_BASE}}",
-                    "mqv:topic": "{{SSA_THING_ACTION_NAME}}/vfs/delete",
+                    "href": "{{CITYLINK_HREF_BASE}}",
+                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/vfs/delete",
                     "op": [
                         "invokeaction"
                     ],
@@ -286,11 +286,11 @@
                 }
             ]
         },
-        "ssaCoreReload": {
+        "coreReload": {
             "forms": [
                 {
-                    "href": "{{SSA_THING_HREF_BASE}}",
-                    "mqv:topic": "{{SSA_THING_ACTION_NAME}}/reload",
+                    "href": "{{CITYLINK_HREF_BASE}}",
+                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/reload",
                     "op": [
                         "invokeaction"
                     ],
@@ -299,12 +299,12 @@
                 }
             ]
         },
-        "ssaCoreSetProperty": {
-            "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/ssa_core.tm.json#/actions/ssaCoreSetProperty",
+        "setProperty": {
+            "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/runtimes/micropython_core.tm.json#/actions/setProperty",
             "forms": [
                 {
-                    "href": "{{SSA_THING_HREF_BASE}}",
-                    "mqv:topic": "{{SSA_THING_ACTION_NAME}}/setproperty",
+                    "href": "{{CITYLINK_HREF_BASE}}",
+                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/setproperty",
                     "op": [
                         "invokeaction"
                     ],

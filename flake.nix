@@ -28,7 +28,7 @@
         '';
 
         flash = pkgs.writeShellScriptBin "flash" ''
-          ${builtins.readFile ./ssaEmbeddedCore/ports/micropython/scripts/flash.sh}
+          ${builtins.readFile ./EmbeddedCore/ports/micropython/scripts/flash.sh}
         '';
       in
       {

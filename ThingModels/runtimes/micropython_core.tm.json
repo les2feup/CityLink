@@ -3,14 +3,14 @@
         "https://www.w3.org/2022/wot/td/v1.1"
     ],
     "@type": "tm:ThingModel",
-    "title": "MPY SSA Core",
+    "title": "Micropython Embedded Core Base",
+    "description": "Base CityLink Embedded Core Thing Model for micropython implementations. Meant to be extended by concrete implementations.",
     "version": {
         "model": "0.1.0"
     },
     "id": "urn:uuid:{{THING_UUID_V4}}",
-    "description": "SSA Core Thing Model for micropython implementations. Models the functionality common to all micropython Smart Sensor Actuator Runtimes.",
     "tm:optional": [
-        "/actions/ssaCoreSetProperty"
+        "/actions/setProperty"
     ],
     "securityDefinitions": {
         "nosec_sc": {
@@ -21,22 +21,21 @@
     "properties": {
         "logLevel": {
             "title": "Log Level",
-            "description": "Minimum log level for published log messages.",
-            "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/generic/common_props.tm.json#/properties/logLevel",
+            "description": "Minimum log level for published log meges.",
+            "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/generic/common_props.tm.json#/properties/logLevel",
             "readOnly": false,
             "writeOnly": false
         }
     },
     "events": {
-        "ssaCoreLog": {
-            "title": "SSA Core Log",
-            "description": "Log message from the SSA Core.",
-            "tm:ref": "https://raw.githubusercontent.com/dvalnn/SmartSensorActuator/refs/heads/main/thing_models/generic/common_events.tm.json#/events/logMessage"
+        "log": {
+            "title": "Embedded Core Log Message",
+            "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/generic/common_events.tm.json#/events/logMege"
         }
     },
     "actions": {
-        "ssaVFSListAction": {
-            "title": "SSA VFS List Action",
+        "VFSListAction": {
+            "title": "VFS List Action",
             "description": "List the contents of a directory in the Virtual File System.",
             "safe": true,
             "idempotent": false,
@@ -59,8 +58,8 @@
                 ]
             }
         },
-        "ssaVFSReadAction": {
-            "title": "SSA VFS Read Action",
+        "VFSReadAction": {
+            "title": "VFS Read Action",
             "description": "Read the contents of a file in the Virtual File System.",
             "safe": true,
             "idempotent": false,
@@ -70,8 +69,8 @@
                 "description": "File to read."
             }
         },
-        "ssaVFSWriteAction": {
-            "title": "SSA VFS Write Action",
+        "VFSWriteAction": {
+            "title": "VFS Write Action",
             "description": "Write to a file in the Virtual File System.",
             "safe": false,
             "idempotent": false,
@@ -116,8 +115,8 @@
                 ]
             }
         },
-        "ssaVFSDeleteAction": {
-            "title": "SSA VFS Delete Action",
+        "VFSDeleteAction": {
+            "title": "VFS Delete Action",
             "description": "Delete a file or directory in the Virtual File System.",
             "safe": false,
             "idempotent": false,
@@ -141,13 +140,13 @@
                 ]
             }
         },
-        "ssaCoreReload": {
-            "title": "SSA Core Reload",
-            "description": "Force a reload the SSA Core firmware.",
+        "coreReload": {
+            "title": "Embedded Core Reload",
+            "description": "Force a reload the Embedded Core runtime.",
             "safe": false,
             "idempotent": false
         },
-        "ssaCoreSetProperty": {
+        "setProperty": {
             "input": {
                 "properties": {
                     "property": {
