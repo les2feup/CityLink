@@ -11,19 +11,19 @@
     "links": [
         {
             "rel": "tm:submodel",
-            "href": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/thing_models/platforms/rp2040.tm.json",
+            "href": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/platform/rp2040.tm.json",
             "type": "application/tm+json",
             "instanceName": "MCU"
         },
         {
             "rel": "tm:submodel",
-            "href": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/thing_models/platforms/infineon_cyw43439.tm.json",
+            "href": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModel/platform/infineon_cyw43439.tm.json",
             "type": "application/tm+json",
             "instanceName": "NIC"
         }
     ],
     "flash": {
-        "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/thing_models/platforms/rp2040.tm.json#/properties/flash",
+        "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModel/platform/rp2040.tm.json#/properties/flash",
         "properties": {
             "size": {
                 "const": 2

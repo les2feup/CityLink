@@ -148,40 +148,21 @@
         },
         "setProperty": {
             "input": {
+                "type": "object",
                 "properties": {
-                    "property": {
+                    "pname": {
                         "type": "string",
-                        "title": "Property",
-                        "description": "Property to set."
+                        "title": "Property Name",
+                        "description": "Name of the property to set."
                     },
-                    "value": {
-                        "title": "Value",
-                        "description": "Value to set the property to.",
-                        "oneof": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "boolean"
-                            },
-                            {
-                                "type": "integer"
-                            },
-                            {
-                                "type": "number"
-                            },
-                            {
-                                "type": "object"
-                            },
-                            {
-                                "type": "array"
-                            }
-                        ]
+                    "pval": {
+                        "title": "Property value",
+                        "description": "Value to set the property to."
                     }
                 },
                 "required": [
-                    "property",
-                    "value"
+                    "pname",
+                    "pvalue"
                 ]
             }
         }

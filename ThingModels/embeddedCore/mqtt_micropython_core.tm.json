@@ -12,7 +12,7 @@
     "links": [
         {
             "rel": "tm:extends",
-            "href": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/micropython_core.tm.json",
+            "href": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/embeddedCore/micropython_core.tm.json",
             "type": "application/tm+json"
         },
         {
@@ -300,11 +300,11 @@
             ]
         },
         "setProperty": {
-            "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/runtimes/micropython_core.tm.json#/actions/setProperty",
+            "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/embeddedCore/micropython_core.tm.json#/actions/setProperty",
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF_BASE}}",
-                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/setproperty",
+                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/setProperty",
                     "op": [
                         "invokeaction"
                     ],
