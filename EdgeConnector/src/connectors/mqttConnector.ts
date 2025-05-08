@@ -8,7 +8,7 @@ import type { RegistrationPayload } from "../models/registration.ts";
 /**
  * Sets up the MQTT connection and subscribes to the registration topic.
  */
-export function setupMQTT(
+export function initMQTTConnector(
   tmTools: ThingModelHelpers,
   hostedModels: Map<string, ThingModel>,
   hostedThings: Map<string, Map<string, ThingDescription>>,
@@ -16,12 +16,15 @@ export function setupMQTT(
   const client = mqtt.connect(`mqtt://${MQTT_BROKER_ADDR}`);
 
   client.on("connect", () => {
-    client.subscribe("ssa/+/registration", (err) => {
+    client.subscribe("citylink/+/registration", (err: Error) => {
       if (err) {
         console.error("Error subscribing to registration topic:", err);
         // Emit an event or implement a retry mechanism
         // For example:
-        setTimeout(() => setupMQTT(tmTools, hostedModels, hostedThings), 5000); // Retry after 5 seconds
+        setTimeout(
+          () => initMQTTConnector(tmTools, hostedModels, hostedThings),
+          5000,
+        ); // Retry after 5 seconds
         return;
       }
       console.log(
@@ -104,6 +107,8 @@ async function instantiateThing(
     throw new Error("Model title is missing");
   }
 
+  //TODO: Add missing supported template strings.
+  //TODO: Add support for a custom template map received from the registration payload.
   const map = {
     THING_UUID_V4: thingUUID,
     MQTT_BROKER_ADDR: MQTT_BROKER_ADDR,
@@ -140,13 +145,15 @@ async function handleRegistrationMessage(
   client: mqtt.MqttClient,
   tmTools: ThingModelHelpers,
   hostedModels: Map<string, ThingModel>,
-  hostedThings: Map<string, Map<string, WoT.ThingDescription>>,
+  hostedThings: Map<string, Map<string, ThingDescription>>,
   topic: string,
   message: Buffer,
 ): Promise<void> {
   console.log(`Received message on topic ${topic}: ${message.toString()}`);
   const parts = topic.split("/");
-  if (parts.length !== 3 || parts[0] !== "ssa" || parts[2] !== "registration") {
+  if (
+    parts.length !== 3 || parts[0] !== "citylink" || parts[2] !== "registration"
+  ) {
     console.error("Invalid topic format:", topic);
     return;
   }
@@ -169,8 +176,8 @@ async function handleRegistrationMessage(
 
     await instantiateThing(thingUUID, model, tmTools, hostedThings);
     client.publish(
-      `ssa/${thingID}/registration/ack`,
-      JSON.stringify({ status: "", id: thingUUID }),
+      `citylink/${thingID}/registration/ack`,
+      JSON.stringify({ status: "sucess", id: thingUUID }),
     );
   } catch (error: unknown) {
     let message: string = "Unknown error during Thing creation";
@@ -180,9 +187,9 @@ async function handleRegistrationMessage(
       message = error;
     }
 
-    console.error("Error during Thing creation:", error);
+    console.error("Error during Thing creation:", message);
     client.publish(
-      `ssa/${thingID}/registration/ack`,
+      `citylink/${thingID}/registration/ack`,
       JSON.stringify({ status: "error", message }),
     );
   }

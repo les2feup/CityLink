@@ -2,7 +2,7 @@
 import { Router } from "../../deps.ts";
 import { createTDRouter } from "./tdRoutes.ts";
 import { createTMRouter } from "./tmRoutes.ts";
-import type { ThingModel, ThingDescription} from "../../deps.ts";
+import type { ThingDescription, ThingModel } from "../../deps.ts";
 
 export function createAppRouter(
   hostedThings: Map<string, Map<string, ThingDescription>>,
@@ -21,14 +21,14 @@ export function createAppRouter(
     ctx.response.body = `
       <html>
         <head>
-          <title>Welcome to the WoT Edge Node Demo</title>
+          <title>Welcome to the CityLink Edge Node Demo</title>
         </head>
         <body>
-          <h1>Welcome to the WoT Application</h1>
+          <h1>Welcome to the CityLink Edge Connector home page</h1>
           <p>Navigate to:</p>
           <ul>
-            <li><a href="/things">Things</a></li>
-            <li><a href="/models">Models</a></li>
+            <li><a href="/things">Thing Descriptions</a></li>
+            <li><a href="/models">Thing Models</a></li>
           </ul>
         </body>
       </html>

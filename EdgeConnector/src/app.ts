@@ -4,7 +4,7 @@ import {
   ThingModel,
   ThingModelHelpers,
 } from "../deps.ts";
-import { setupMQTT } from "./controllers/mqttController.ts";
+import { initMQTTConnector } from "./connectors/mqttConnector.ts";
 import { createAppRouter } from "./routes/index.ts";
 import { HTTP_HOSTNAME, HTTP_PORT } from "./config/config.ts";
 
@@ -15,7 +15,7 @@ export function startApp(): void {
   const tmTools = new ThingModelHelpers();
 
   // Initialize MQTT handler
-  setupMQTT(tmTools, hostedModels, hostedThings);
+  initMQTTConnector(tmTools, hostedModels, hostedThings);
 
   // Initialize HTTP server
   const router = createAppRouter(hostedThings, hostedModels);
