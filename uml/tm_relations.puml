@@ -1,30 +1,30 @@
 @startuml
 
-skinparam nodesep 100
+skinparam nodesep 80
 
-class "SSA Thing" as ssat << (D, orchid) Thing Description >>
+class "End Node TD" as ssat << (D, orchid) Thing Description >>
 
-class "SSA Application Base" as abtm  << (M, cyan) Thing Model, Protocol-agnostic >>
+class "Generic Application" as abtm  << (M, cyan) Thing Model, Protocol-agnostic >>
 
-class "SSA Application" as atm << (M, cyan) Thing Model >>
+class "Application" as atm << (M, cyan) Thing Model >>
 
-class "SSA Embedded Core Base" as rbtm << (M, cyan) Thing Model, Protocol-agnostic >>
+class "Generic Embedded Core" as rbtm << (M, cyan) Thing Model, Protocol-agnostic >>
 
-class "SSA Embedded Core" as rtm << (M, cyan) Thing Model >>
+class "Embedded Core" as rtm << (M, cyan) Thing Model >>
 
 class "Platform" as ptm << (M, cyan) Thing Model >>
 
-class "SSA Edge Connector" as ectm << (M, cyan) Thing Model >>
+class "Edge Connector" as ectm << (M, cyan) Thing Model >>
 
-ssat ..|> atm : instantiates
+ssat ..|> atm : instantiated\nfrom
 atm "0..*"..> "0..1" abtm : extends
 
-atm "0..*" -right--* "1" ptm : references
-atm "0..*" -left--* "1" rtm : references
+atm "0..*" -right--* "1" ptm : extends /\nsubmodels
+atm "0..*" -left--* "1" rtm : extends /\nsubmodels
 
 rtm "0..*" ..> "0..1"rbtm : extends
 
-rtm "0..*" -left..> "1" ectm : interfaces with
+rtm "0..*" -left..> "1" ectm : Controlled By
 
 hide empty members
 
