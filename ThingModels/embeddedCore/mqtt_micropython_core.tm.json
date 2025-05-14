@@ -23,8 +23,8 @@
     ],
     "forms": [
         {
-            "href": "{{CITYLINK_HREF_BASE}}",
-            "mqv:filter": "{{CITYLINK_PROPERTY_NAME}}/#",
+            "href": "{{CITYLINK_HREF}}",
+            "mqv:filter": "{{CITYLINK_PROPERTY}}/#",
             "op": [
                 "readallproperties",
                 "observeallproperties",
@@ -33,8 +33,8 @@
             "contentType": "application/json"
         },
         {
-            "href": "{{CITYLINK_HREF_BASE}}",
-            "mqv:filter": "{{CITYLINK_EVENT_NAME}}/#",
+            "href": "{{CITYLINK_HREF}}",
+            "mqv:filter": "{{CITYLINK_EVENT}}/#",
             "op": [
                 "subscribeallevents",
                 "unsubscribeallevents"
@@ -46,8 +46,8 @@
         "logLevel": {
             "forms": [
                 {
-                    "href": "{{CITYLINK_HREF_BASE}}",
-                    "mqv:filter": "{{CITYLINK_PROPERTY_NAME}}/logLevel",
+                    "href": "{{CITYLINK_HREF}}",
+                    "mqv:filter": "{{CITYLINK_PROPERTY}}/logLevel",
                     "op": [
                         "readproperty",
                         "observeproperty",
@@ -201,8 +201,8 @@
             },
             "forms": [
                 {
-                    "href": "{{CITYLINK_HREF_BASE}}",
-                    "mqv:filter": "{{CITYLINK_EVENT_NAME}}/vfs/report",
+                    "href": "{{CITYLINK_HREF}}",
+                    "mqv:filter": "{{CITYLINK_EVENT}}/vfs/report",
                     "op": [
                         "subscribeevent",
                         "unsubscribeevent"
@@ -218,8 +218,8 @@
         "VFSListAction": {
             "forms": [
                 {
-                    "href": "{{CITYLINK_HREF_BASE}}",
-                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/vfs/list",
+                    "href": "{{CITYLINK_HREF}}",
+                    "mqv:topic": "{{CITYLINK_ACTION}}/vfs/list",
                     "op": [
                         "invokeaction"
                     ],
@@ -232,8 +232,8 @@
         "VFSReadAction": {
             "forms": [
                 {
-                    "href": "{{CITYLINK_HREF_BASE}}",
-                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/vfs/read",
+                    "href": "{{CITYLINK_HREF}}",
+                    "mqv:topic": "{{CITYLINK_ACTION}}/vfs/read",
                     "op": [
                         "invokeaction"
                     ],
@@ -261,8 +261,8 @@
             },
             "forms": [
                 {
-                    "href": "{{CITYLINK_HREF_BASE}}",
-                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/vfs/write",
+                    "href": "{{CITYLINK_HREF}}",
+                    "mqv:topic": "{{CITYLINK_ACTION}}/vfs/write",
                     "op": [
                         "invokeaction"
                     ],
@@ -275,8 +275,8 @@
         "VFSDeleteAction": {
             "forms": [
                 {
-                    "href": "{{CITYLINK_HREF_BASE}}",
-                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/vfs/delete",
+                    "href": "{{CITYLINK_HREF}}",
+                    "mqv:topic": "{{CITYLINK_ACTION}}/vfs/delete",
                     "op": [
                         "invokeaction"
                     ],
@@ -289,8 +289,8 @@
         "coreReload": {
             "forms": [
                 {
-                    "href": "{{CITYLINK_HREF_BASE}}",
-                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/reload",
+                    "href": "{{CITYLINK_HREF}}",
+                    "mqv:topic": "{{CITYLINK_ACTION}}/reload",
                     "op": [
                         "invokeaction"
                     ],
@@ -303,8 +303,8 @@
             "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/embeddedCore/micropython_core.tm.json#/actions/setProperty",
             "forms": [
                 {
-                    "href": "{{CITYLINK_HREF_BASE}}",
-                    "mqv:topic": "{{CITYLINK_ACTION_NAME}}/setProperty",
+                    "href": "{{CITYLINK_HREF}}",
+                    "mqv:topic": "{{CITYLINK_ACTION}}/setProperty",
                     "op": [
                         "invokeaction"
                     ],

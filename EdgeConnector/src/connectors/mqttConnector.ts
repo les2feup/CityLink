@@ -110,8 +110,8 @@ async function instantiateThing(
   //TODO: Add missing supported template strings.
   //TODO: Add support for a custom template map received from the registration payload.
   const map = {
-    THING_UUID_V4: thingUUID,
-    MQTT_BROKER_ADDR: MQTT_BROKER_ADDR,
+    CITYLINK_ID: thingUUID,
+    CITYLINK_HREF: MQTT_BROKER_ADDR,
   };
 
   const td = await createThingFromModel(tmTools, model, map);

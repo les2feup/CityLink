@@ -8,7 +8,7 @@
     "version": {
         "model": "0.1.0"
     },
-    "id": "urn:uuid:{{THING_UUID_V4}}",
+    "id": "{{CITYLINK_ID}}",
     "tm:optional": [
         "/actions/setProperty"
     ],
