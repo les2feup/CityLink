@@ -300,7 +300,6 @@
             ]
         },
         "setProperty": {
-            "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/embeddedCore/micropython_core.tm.json#/actions/setProperty",
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",

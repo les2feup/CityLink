@@ -58,7 +58,7 @@
             },
             "forms": [
                 {
-                    "href": "{{CITYLINK_HREF}}",
+                    "href": "{{MQTT_HREF}}",
                     "mqv:topic": "citylink/{nodeID}/registration",
                     "contentType": "application/json",
                     "op": [
@@ -97,10 +97,6 @@
                     {
                         "type": "object",
                         "properties": {
-                            "id": {
-                                "type": "string",
-                                "description": "Newly generated unique identifier for the end node."
-                            },
                             "status": {
                                 "type": "string",
                                 "description": "Status of the registration process."
@@ -111,7 +107,6 @@
                             }
                         },
                         "required": [
-                            "id",
                             "status",
                             "message"
                         ]
@@ -120,7 +115,7 @@
             },
             "forms": [
                 {
-                    "href": "{{CITYLINK_HREF}}",
+                    "href": "{{{MQTT_HREF}}",
                     "mqv:topic": "citylink/{nodeID}/registration/ack",
                     "contentType": "application/json",
                     "op": [

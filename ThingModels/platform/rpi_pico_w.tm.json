@@ -17,7 +17,7 @@
         },
         {
             "rel": "tm:submodel",
-            "href": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModel/platform/infineon_cyw43439.tm.json",
+            "href": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/platform/infineon_cyw43439.tm.json",
             "type": "application/tm+json",
             "instanceName": "NIC"
         }
