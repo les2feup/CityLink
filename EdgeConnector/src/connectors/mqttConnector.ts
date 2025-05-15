@@ -8,21 +8,22 @@ import type { RegistrationPayload } from "../models/registration.ts";
 /**
  * Sets up the MQTT connection and subscribes to the registration topic.
  */
-export function initMQTTConnector(
+export function launchMQTTConnnector(
   tmTools: ThingModelHelpers,
   hostedModels: Map<string, ThingModel>,
   hostedThings: Map<string, Map<string, ThingDescription>>,
+  onError?: (error: Error) => void,
 ): void {
-  const client = mqtt.connect(`mqtt://${MQTT_BROKER_ADDR}`);
+  const client = mqtt.connect(`${MQTT_BROKER_ADDR}`);
 
   client.on("connect", () => {
-    client.subscribe("citylink/+/registration", (err: Error) => {
+    client.subscribe("citylink/+/registration", (err) => {
       if (err) {
         console.error("Error subscribing to registration topic:", err);
         // Emit an event or implement a retry mechanism
         // For example:
         setTimeout(
-          () => initMQTTConnector(tmTools, hostedModels, hostedThings),
+          () => launchMQTTConnnector(tmTools, hostedModels, hostedThings),
           5000,
         ); // Retry after 5 seconds
         return;
@@ -45,7 +46,9 @@ export function initMQTTConnector(
   });
 
   client.on("error", (error: Error) => {
-    console.error("MQTT client encountered an error:", error);
+    if (onError) {
+      onError(error);
+    }
   });
 }
 
@@ -60,40 +63,43 @@ function parseAndValidatePayload(
     return new Error("Error parsing registration payload as JSON: " + error);
   }
 
-  if (!payload.name) {
-    return new Error("Registration payload 'name' property is missing");
-  }
-
-  if (!payload.href) {
-    console.error("Registration payload missing 'href' property");
-    return new Error("Registration payload 'href' property is missing");
+  if (!payload.tmHref) {
+    return new Error("Required 'tmHref' property is missing");
   }
 
   if (!payload.version || !payload.version.instance || !payload.version.model) {
-    return new Error("Registration payload 'version' is missing or invalid");
+    return new Error("Required 'version' is missing or invalid");
   }
 
   return payload;
 }
 
+const modelCache: Map<string, ThingModel> = new Map<string, ThingModel>();
+
 async function getThingModel(
-  modelName: string,
-  modelHref: string,
+  tmMetadata: RegistrationPayload,
   hostedModels: Map<string, ThingModel>,
   tmTools: ThingModelHelpers,
 ): Promise<ThingModel> {
-  let model = hostedModels.get(modelName);
-  if (model) {
-    return model;
+  const cacheKey = `${tmMetadata.tmHref}-${tmMetadata.version.instance}`;
+  if (modelCache.has(cacheKey)) {
+    return modelCache.get(cacheKey)!;
   }
 
-  //TODO: Setting a timeout for fetching the model
-  model = await tmTools.fetchModel(modelHref);
+  const model = await tmTools.fetchModel(tmMetadata.tmHref);
+  if (model.version !== tmMetadata.version.model) {
+    throw new Error(
+      `Model version mismatch: expected ${tmMetadata.version.model}, got ${model.version}`,
+    );
+  }
+  if (!model.title && !tmMetadata.tmTitle) {
+    throw new Error("Model title is missing");
+  }
   if (!model.title) {
-    model.title = modelName;
+    model.title = tmMetadata.tmTitle;
   }
 
-  hostedModels.set(model.title, model);
+  hostedModels.set(model.title!, model);
   return model;
 }
 
@@ -168,8 +174,7 @@ async function handleRegistrationMessage(
     }
 
     const model = await getThingModel(
-      payload.name,
-      payload.href,
+      payload,
       hostedModels,
       tmTools,
     );

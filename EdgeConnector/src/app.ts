@@ -4,9 +4,14 @@ import {
   ThingModel,
   ThingModelHelpers,
 } from "../deps.ts";
-import { initMQTTConnector } from "./connectors/mqttConnector.ts";
+import { launchMQTTConnnector } from "./connectors/mqttConnector.ts";
 import { createAppRouter } from "./routes/index.ts";
 import { HTTP_HOSTNAME, HTTP_PORT } from "./config/config.ts";
+
+function mqttOnErrorCb(error: Error): void {
+  console.error("MQTT error:", error);
+  // Handle the error (e.g., log it, retry connection, etc.)
+}
 
 export function startApp(): void {
   // Shared state: Map<model, Map<uuid, ThingDescription>>
@@ -15,7 +20,7 @@ export function startApp(): void {
   const tmTools = new ThingModelHelpers();
 
   // Initialize MQTT handler
-  initMQTTConnector(tmTools, hostedModels, hostedThings);
+  launchMQTTConnnector(tmTools, hostedModels, hostedThings, mqttOnErrorCb);
 
   // Initialize HTTP server
   const router = createAppRouter(hostedThings, hostedModels);

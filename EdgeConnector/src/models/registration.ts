@@ -4,7 +4,7 @@ export interface Version {
 }
 
 export interface RegistrationPayload {
-  name: string;
-  href: string;
+  tmTitle?: string;
+  tmHref: string;
   version: Version;
 }
