@@ -74,6 +74,40 @@ function parseAndValidatePayload(
   return payload;
 }
 
+function validateModelVersion(
+  model: ThingModel,
+  expectedVersion: string,
+): Error | null {
+  if (!model.version) {
+    return new Error("Model version is missing");
+  }
+
+  if (typeof model.version == "string") {
+    if (model.version !== expectedVersion) {
+      return new Error(
+        `Model version mismatch: expected ${expectedVersion}, got ${model.version}`,
+      );
+    }
+    return null;
+  }
+
+  if (typeof model.version != "object") {
+    return new Error("Model version is not a string or object");
+  }
+
+  if (!model.version.model) {
+    return new Error("Model version is missing 'model' property");
+  }
+
+  if (model.version.model !== expectedVersion) {
+    return new Error(
+      `Model version mismatch: expected ${expectedVersion}, got ${model.version.model}`,
+    );
+  }
+
+  return null;
+}
+
 const modelCache: Map<string, ThingModel> = new Map<string, ThingModel>();
 
 async function getThingModel(
@@ -87,11 +121,11 @@ async function getThingModel(
   }
 
   const model = await tmTools.fetchModel(tmMetadata.tmHref);
-  if (model.version !== tmMetadata.version.model) {
-    throw new Error(
-      `Model version mismatch: expected ${tmMetadata.version.model}, got ${model.version}`,
-    );
+  const versionError = validateModelVersion(model, tmMetadata.version.model);
+  if (versionError) {
+    throw versionError;
   }
+
   if (!model.title && !tmMetadata.tmTitle) {
     throw new Error("Model title is missing");
   }
@@ -100,6 +134,7 @@ async function getThingModel(
   }
 
   hostedModels.set(model.title!, model);
+  modelCache.set(cacheKey, model);
   return model;
 }
 
@@ -116,12 +151,12 @@ async function instantiateThing(
   //TODO: Add missing supported template strings.
   //TODO: Add support for a custom template map received from the registration payload.
   const map = {
-    CITYLINK_ID: thingUUID,
+    CITYLINK_ID: `urn:uuid:${thingUUID}`,
     CITYLINK_HREF: MQTT_BROKER_ADDR,
+    CITYLINK_PROPERTY: `citylink/${thingUUID}/properties`,
+    CITYLINK_ACTION: `citylink/${thingUUID}/actions`,
+    CITYLINK_EVENT: `citylink/${thingUUID}/events`,
   };
-
-  const td = await createThingFromModel(tmTools, model, map);
-  console.log(`Created TD from model: ${td.title}`);
 
   let modelMap = hostedThings.get(model.title);
   if (!modelMap) {
@@ -129,8 +164,17 @@ async function instantiateThing(
     hostedThings.set(model.title, modelMap);
   }
 
-  modelMap.set(thingUUID, td);
-  console.log(`Hosted thing registered: ${td.title}:${td.id}`);
+  const thingDescriptions = await createThingFromModel(tmTools, model, map);
+  thingDescriptions.forEach((td, index) => {
+    if (!td.title) {
+      throw new Error("Thing Description title is missing");
+    }
+    td.id = `${map.CITYLINK_ID}${(index > 0) ? `:submodel:${index}` : ""}`;
+    modelMap.set(td.id, td);
+    console.log(
+      `New Thing Description registered: title ${td.title} id ${td.id}`,
+    );
+  });
 }
 
 /**

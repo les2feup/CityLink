@@ -17,13 +17,11 @@ export async function createThingFromModel(
   tmTools: ThingModelHelpers,
   model: ThingModel,
   map: Record<string, unknown>,
-): Promise<ThingDescription> {
+): Promise<ThingDescription[]> {
   const options: CompositionOptions = {
     map,
-    selfComposition: true,
+    selfComposition: false,
   };
-  const [thing] = (await tmTools.getPartialTDs(model, options)) as
-    | ThingDescription[]
-    | [];
-  return thing;
+  const things = await tmTools.getPartialTDs(model, options);
+  return things as ThingDescription[];
 }

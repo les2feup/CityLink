@@ -8,7 +8,6 @@
     "version": {
         "model": "0.1.0"
     },
-    "id": "{{CITYLINK_ID}}",
     "tm:optional": [
         "/actions/setProperty"
     ],
