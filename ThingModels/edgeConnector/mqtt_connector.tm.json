@@ -1,0 +1,135 @@
+{
+    "@context": [
+        "https://www.w3.org/2022/wot/td/v1.1",
+        "https://raw.githubusercontent.com/w3c/wot-binding-templates/refs/heads/main/bindings/protocols/mqtt/context.jsonld"
+    ],
+    "@type": "tm:ThingModel",
+    "title": "Edge connector for MQTT",
+    "description": "This TD describes a CityLink Edge Connector for MQTT.",
+    "version": {
+        "model": "0.1.0"
+    },
+    "securityDefinitions": {
+        "nosec_sc": {
+            "scheme": "nosec"
+        }
+    },
+    "security": "nosec_sc",
+    "uriVariables": {
+        "nodeID": {
+            "type": "string",
+            "description": "Unique identifier for the end node prior to registration."
+        }
+    },
+    "actions": {
+        "endNodeRegistration": {
+            "title": "End Node Registration",
+            "description": "Register a new end node with the connector.",
+            "input": {
+                "type": "object",
+                "properties": {
+                    "tmTitle": {
+                        "type": "string",
+                        "title": "Thing Model Title",
+                        "description": "Title of the TM the end node is based on."
+                    },
+                    "tmHref": {
+                        "type": "string",
+                        "description": "Type of the end node to register."
+                    },
+                    "version": {
+                        "type": "object",
+                        "properties": {
+                            "model": {
+                                "type": "string",
+                                "description": "Thing Model version"
+                            },
+                            "instance": {
+                                "type": "string",
+                                "description": "End node instance version"
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "tmHref",
+                    "version"
+                ]
+            },
+            "forms": [
+                {
+                    "href": "{{CITYLINK_HREF}}",
+                    "mqv:topic": "citylink/{nodeID}/registration",
+                    "contentType": "application/json",
+                    "op": [
+                        "invokeaction"
+                    ],
+                    "mqv:qos": 2,
+                    "mqv:retain": false
+                }
+            ]
+        }
+    },
+    "events": {
+        "endNodeRegistrationResponse": {
+            "title": "End Node Registration Response",
+            "description": "Response to the end node registration request.",
+            "data": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "Newly generated unique identifier for the end node."
+                            },
+                            "status": {
+                                "type": "string",
+                                "description": "Status of the registration process.",
+                                "const": "success"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "status"
+                        ]
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "Newly generated unique identifier for the end node."
+                            },
+                            "status": {
+                                "type": "string",
+                                "description": "Status of the registration process."
+                            },
+                            "message": {
+                                "type": "string",
+                                "description": "Message describing the status."
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "status",
+                            "message"
+                        ]
+                    }
+                ]
+            },
+            "forms": [
+                {
+                    "href": "{{CITYLINK_HREF}}",
+                    "mqv:topic": "citylink/{nodeID}/registration/ack",
+                    "contentType": "application/json",
+                    "op": [
+                        "subscribeevent"
+                    ],
+                    "mqv:qos": 2,
+                    "mqv:retain": false
+                }
+            ]
+        }
+    }
+}
