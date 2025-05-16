@@ -4,26 +4,23 @@ import {
   ThingModel,
   ThingModelHelpers,
 } from "../deps.ts";
-import { launchMQTTConnnector } from "./connectors/mqttConnector.ts";
-import { createAppRouter } from "./routes/index.ts";
+import * as mqttConnector from "./connectors/mqttConnector.ts";
+import { createRouter } from "./routes/index.ts";
 import { HTTP_HOSTNAME, HTTP_PORT } from "./config/config.ts";
-
-function mqttOnErrorCb(error: Error): void {
-  console.error("MQTT error:", error);
-  // Handle the error (e.g., log it, retry connection, etc.)
-}
 
 export function startApp(): void {
   // Shared state: Map<model, Map<uuid, ThingDescription>>
-  const hostedThings = new Map<string, Map<string, ThingDescription>>();
-  const hostedModels = new Map<string, ThingModel>();
+  const hostedTDs = new Map<string, Map<string, ThingDescription>>();
+  const hostedTMs = new Map<string, ThingModel>();
   const tmTools = new ThingModelHelpers();
 
   // Initialize MQTT handler
-  launchMQTTConnnector(tmTools, hostedModels, hostedThings, mqttOnErrorCb);
+  mqttConnector.launch(tmTools, hostedTMs, hostedTDs, (error: Error) => {
+    console.error("MQTT error:", error);
+  });
 
   // Initialize HTTP server
-  const router = createAppRouter(hostedThings, hostedModels);
+  const router = createRouter(hostedTDs, hostedTMs);
   const app = new Application();
   app.use(router.routes());
   app.use(router.allowedMethods());

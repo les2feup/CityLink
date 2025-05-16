@@ -23,7 +23,8 @@
     "npm:path-to-regexp@^6.3.0": "6.3.0",
     "npm:wot-thing-description-types@*": "1.1.0-09-November-2023",
     "npm:wot-thing-model-types@*": "1.1.0-09-November-2023",
-    "npm:wot-typescript-definitions@*": "0.8.0-SNAPSHOT.29"
+    "npm:wot-typescript-definitions@*": "0.8.0-SNAPSHOT.29",
+    "npm:zod@*": "3.24.4"
   },
   "jsr": {
     "@oak/commons@1.0.0": {
@@ -397,6 +398,9 @@
     },
     "ws@8.18.0": {
       "integrity": "sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw=="
+    },
+    "zod@3.24.4": {
+      "integrity": "sha512-OdqJE9UDRPwWsrHjLN2F8bPxvwJBK22EHLWtanu0LSYr5YqzsaaW3RMgmjwr8Rypg5k+meEJdSPXJZXE/yqOMg=="
     }
   },
   "workspace": {

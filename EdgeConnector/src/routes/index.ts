@@ -4,7 +4,7 @@ import { createTDRouter } from "./tdRoutes.ts";
 import { createTMRouter } from "./tmRoutes.ts";
 import type { ThingDescription, ThingModel } from "../../deps.ts";
 
-export function createAppRouter(
+export function createRouter(
   hostedThings: Map<string, Map<string, ThingDescription>>,
   hostedModels: Map<string, ThingModel>,
 ): Router {

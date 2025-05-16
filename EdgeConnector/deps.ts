@@ -17,3 +17,5 @@ export type {
 
 export { ThingModelHelpers } from "./eclipse-thingweb/thing-model/src/thing-model.ts";
 export type { CompositionOptions } from "./eclipse-thingweb/thing-model/src/thing-model.ts";
+
+export { z } from "npm:zod";

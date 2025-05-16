@@ -3,12 +3,12 @@ import { MQTT_BROKER_ADDR } from "../config/config.ts";
 import { createThingFromModel } from "../services/thingModelService.ts";
 
 import type { Buffer, ThingDescription, ThingModel } from "../../deps.ts";
-import type { RegistrationPayload } from "../models/registration.ts";
+import { RegistrationPayload } from "../models/registration.ts";
 
 /**
  * Sets up the MQTT connection and subscribes to the registration topic.
  */
-export function launchMQTTConnnector(
+export function launch(
   tmTools: ThingModelHelpers,
   hostedModels: Map<string, ThingModel>,
   hostedThings: Map<string, Map<string, ThingDescription>>,
@@ -23,7 +23,7 @@ export function launchMQTTConnnector(
         // Emit an event or implement a retry mechanism
         // For example:
         setTimeout(
-          () => launchMQTTConnnector(tmTools, hostedModels, hostedThings),
+          () => launch(tmTools, hostedModels, hostedThings),
           5000,
         ); // Retry after 5 seconds
         return;
@@ -52,26 +52,21 @@ export function launchMQTTConnnector(
   });
 }
 
-function parseAndValidatePayload(
+function parsePayload(
   message: Buffer,
 ): RegistrationPayload | Error {
-  let payload: RegistrationPayload;
+  const json = JSON.parse(message.toString());
+  const parsed = RegistrationPayload.safeParse(json);
 
-  try {
-    payload = JSON.parse(message.toString());
-  } catch (error) {
-    return new Error("Error parsing registration payload as JSON: " + error);
+  if (!parsed.success) {
+    return new Error(
+      `Invalid registration payload: ${
+        JSON.stringify(parsed.error.issues, null, 2)
+      }`,
+    );
   }
 
-  if (!payload.tmHref) {
-    return new Error("Required 'tmHref' property is missing");
-  }
-
-  if (!payload.version || !payload.version.instance || !payload.version.model) {
-    return new Error("Required 'version' is missing or invalid");
-  }
-
-  return payload;
+  return parsed.data;
 }
 
 function validateModelVersion(
@@ -148,7 +143,6 @@ async function instantiateThing(
     throw new Error("Model title is missing");
   }
 
-  //TODO: Add missing supported template strings.
   //TODO: Add support for a custom template map received from the registration payload.
   const map = {
     CITYLINK_ID: `urn:uuid:${thingUUID}`,
@@ -177,20 +171,6 @@ async function instantiateThing(
   });
 }
 
-/**
- * Processes and registers an incoming MQTT registration message.
- *
- * This asynchronous function validates the message received on a topic formatted as
- * "registration/{uuid}", ensuring that the UUID in the topic matches the one in the JSON
- * payload and that the payload includes both a "model" and "version". It then fetches the
- * corresponding model using the provided helper, constructs a Thing Description (TD), and
- * registers it in the collection of hosted things.
- *
- * @param tmTools An instance of ThingModelHelpers used to retrieve the device model.
- * @param hostedThings A map organizing registered Thing Descriptions by model and UUID.
- * @param topic The MQTT topic from which the message was received, expected in "registration/{uuid}" format.
- * @param message The message payload as a Buffer containing JSON registration data.
- */
 async function handleRegistrationMessage(
   client: mqtt.MqttClient,
   tmTools: ThingModelHelpers,
@@ -212,7 +192,7 @@ async function handleRegistrationMessage(
   const thingUUID = randomUUID();
 
   try {
-    const payload = parseAndValidatePayload(message);
+    const payload = parsePayload(message);
     if (payload instanceof Error) {
       throw payload;
     }
