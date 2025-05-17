@@ -1,9 +1,12 @@
-import { mqtt, randomUUID, ThingModelHelpers } from "../../deps.ts";
 import { MQTT_BROKER_ADDR } from "../config/config.ts";
-import { createThingFromModel } from "../services/thingModelService.ts";
-
-import type { Buffer, ThingDescription, ThingModel } from "../../deps.ts";
+import { fetchAppManifest } from "../services/appManifestService.ts";
 import { RegistrationPayload } from "../models/registration.ts";
+import { mqtt, randomUUID, ThingModelHelpers } from "../../deps.ts";
+import type { Buffer, ThingDescription, ThingModel } from "../../deps.ts";
+import {
+  fetchThingModel,
+  instantiateTDs,
+} from "../services/thingModelService.ts";
 
 /**
  * Sets up the MQTT connection and subscribes to the registration topic.
@@ -52,7 +55,7 @@ export function launch(
   });
 }
 
-function parsePayload(
+function parseRegistrationMessage(
   message: Buffer,
 ): RegistrationPayload | Error {
   const json = JSON.parse(message.toString());
@@ -69,71 +72,7 @@ function parsePayload(
   return parsed.data;
 }
 
-function validateModelVersion(
-  model: ThingModel,
-  expectedVersion: string,
-): Error | null {
-  if (!model.version) {
-    return new Error("Model version is missing");
-  }
-
-  if (typeof model.version == "string") {
-    if (model.version !== expectedVersion) {
-      return new Error(
-        `Model version mismatch: expected ${expectedVersion}, got ${model.version}`,
-      );
-    }
-    return null;
-  }
-
-  if (typeof model.version != "object") {
-    return new Error("Model version is not a string or object");
-  }
-
-  if (!model.version.model) {
-    return new Error("Model version is missing 'model' property");
-  }
-
-  if (model.version.model !== expectedVersion) {
-    return new Error(
-      `Model version mismatch: expected ${expectedVersion}, got ${model.version.model}`,
-    );
-  }
-
-  return null;
-}
-
-const modelCache: Map<string, ThingModel> = new Map<string, ThingModel>();
-
-async function getThingModel(
-  tmMetadata: RegistrationPayload,
-  hostedModels: Map<string, ThingModel>,
-  tmTools: ThingModelHelpers,
-): Promise<ThingModel> {
-  const cacheKey = `${tmMetadata.tmHref}-${tmMetadata.version.instance}`;
-  if (modelCache.has(cacheKey)) {
-    return modelCache.get(cacheKey)!;
-  }
-
-  const model = await tmTools.fetchModel(tmMetadata.tmHref);
-  const versionError = validateModelVersion(model, tmMetadata.version.model);
-  if (versionError) {
-    throw versionError;
-  }
-
-  if (!model.title && !tmMetadata.tmTitle) {
-    throw new Error("Model title is missing");
-  }
-  if (!model.title) {
-    model.title = tmMetadata.tmTitle;
-  }
-
-  hostedModels.set(model.title!, model);
-  modelCache.set(cacheKey, model);
-  return model;
-}
-
-async function instantiateThing(
+async function instantiateTD(
   thingUUID: string,
   model: ThingModel,
   tmTools: ThingModelHelpers,
@@ -158,7 +97,7 @@ async function instantiateThing(
     hostedThings.set(model.title, modelMap);
   }
 
-  const thingDescriptions = await createThingFromModel(tmTools, model, map);
+  const thingDescriptions = await instantiateTDs(tmTools, model, map);
   thingDescriptions.forEach((td, index) => {
     if (!td.title) {
       throw new Error("Thing Description title is missing");
@@ -188,25 +127,29 @@ async function handleRegistrationMessage(
     return;
   }
 
-  const thingID = parts[1];
-  const thingUUID = randomUUID();
+  const endNodeID = parts[1];
+  const generatedUUID = randomUUID();
 
   try {
-    const payload = parsePayload(message);
+    const payload = parseRegistrationMessage(message);
     if (payload instanceof Error) {
       throw payload;
     }
 
-    const model = await getThingModel(
-      payload,
-      hostedModels,
-      tmTools,
-    );
+    const manifest = await fetchAppManifest(payload.manifest);
+    if (manifest instanceof Error) {
+      throw manifest;
+    }
 
-    await instantiateThing(thingUUID, model, tmTools, hostedThings);
+    const model = await fetchThingModel(tmTools, manifest.wot.tm);
+    if (model instanceof Error) {
+      throw model;
+    }
+
+    await instantiateTD(generatedUUID, model, tmTools, hostedThings);
     client.publish(
-      `citylink/${thingID}/registration/ack`,
-      JSON.stringify({ status: "sucess", id: thingUUID }),
+      `citylink/${endNodeID}/registration/ack`,
+      JSON.stringify({ status: "sucess", id: generatedUUID }),
     );
   } catch (error: unknown) {
     let message: string = "Unknown error during Thing creation";
@@ -218,7 +161,7 @@ async function handleRegistrationMessage(
 
     console.error("Error during Thing creation:", message);
     client.publish(
-      `citylink/${thingID}/registration/ack`,
+      `citylink/${endNodeID}/registration/ack`,
       JSON.stringify({ status: "error", message }),
     );
   }

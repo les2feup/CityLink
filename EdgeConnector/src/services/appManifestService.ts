@@ -5,9 +5,17 @@ import {
   DlMetadataItem,
 } from "../models/appManifest.ts";
 
+import cache from "./cacheService.ts";
+
 export async function fetchAppManifest(
   url: string,
 ): Promise<AppManifest | Error> {
+  // before fetching, try the manifest cache
+  const cachedManifest = cache.getManifest(url);
+  if (cachedManifest) {
+    return cachedManifest;
+  }
+
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -22,6 +30,8 @@ export async function fetchAppManifest(
         }`,
       );
     }
+
+    cache.setManifest(url, parsed.data);
     return parsed.data;
   } catch (error) {
     return new Error(`Error fetching app manifest: ${error}`);
@@ -57,6 +67,12 @@ export async function fetchAppSrc(
 async function fetchSingleFile(
   mdata: DlMetadataItem,
 ): Promise<FetchSuccess | FetchError> {
+  // before fetching, try the file cache
+  const cachedFile = cache.getFile(mdata.url);
+  if (cachedFile) {
+    return { name: mdata.name, url: mdata.url, content: cachedFile };
+  }
+
   try {
     const response = await fetch(mdata.url);
     if (!response.ok) {
@@ -88,6 +104,7 @@ async function fetchSingleFile(
         };
       }
     }
+    cache.setFile(mdata.url, content);
     return { name: mdata.name, url: mdata.url, content };
   } catch (error) {
     return {

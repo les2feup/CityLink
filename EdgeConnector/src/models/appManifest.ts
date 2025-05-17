@@ -1,5 +1,4 @@
 import { z } from "../../deps.ts";
-import { WoTVersion } from "./version.ts";
 
 export const DlContentTypes = z.union(
   [z.record(z.any()), z.string(), z.instanceof(Uint8Array)],
@@ -21,12 +20,23 @@ export const DlMetadata = z.array(DlMetadataItem).refine(
 );
 export type DlMetadata = z.infer<typeof DlMetadata>;
 
+export const WoTVersion = z.object({
+  instance: z.string(),
+  model: z.string(),
+});
+export type WoTVersion = z.infer<typeof WoTVersion>;
+
+export const TmMetadata = z.object({
+  title: z.string().optional(),
+  href: z.string().url(),
+  version: WoTVersion,
+});
+export type TmMetadata = z.infer<typeof TmMetadata>;
+
 export const AppManifest = z.object({
-  strategy: z.enum(["single", "multi"]),
   download: DlMetadata,
   wot: z.object({
-    tmHref: z.string().url(),
-    version: WoTVersion,
+    tm: TmMetadata,
   }),
 });
 export type AppManifest = z.infer<typeof AppManifest>;
