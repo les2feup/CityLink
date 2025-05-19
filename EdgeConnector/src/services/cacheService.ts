@@ -47,6 +47,20 @@ export function getTD(
   return tdCache.get(model)?.get(uuid);
 }
 
+export function getTDbyUUID(
+  uuid: string,
+): ThingDescription | undefined {
+  for (const [model, map] of tdCache.entries()) {
+    if (map.has(uuid)) {
+      console.debug(`Found TD for UUID "${uuid}" in model "${model}".`);
+      return map.get(uuid);
+    }
+    console.debug(`TD for UUID "${uuid}" not found in model "${model}".`);
+  }
+  console.debug(`TD for UUID "${uuid}" not found in any model.`);
+  return undefined;
+}
+
 export function setTD(
   modelTitle: string,
   uuid: string,
@@ -96,6 +110,7 @@ export default {
   getTM,
   setTM,
   getTD,
+  getTDbyUUID,
   setTD,
   getTDMap,
   getAppContent,

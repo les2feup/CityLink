@@ -33,7 +33,7 @@
         }
     },
     "actions": {
-        "VFSListAction": {
+        "VFSList": {
             "title": "VFS List Action",
             "description": "List the contents of a directory in the Virtual File System.",
             "safe": true,
@@ -57,7 +57,7 @@
                 ]
             }
         },
-        "VFSReadAction": {
+        "VFSRead": {
             "title": "VFS Read Action",
             "description": "Read the contents of a file in the Virtual File System.",
             "safe": true,
@@ -68,7 +68,7 @@
                 "description": "File to read."
             }
         },
-        "VFSWriteAction": {
+        "VFSWrite": {
             "title": "VFS Write Action",
             "description": "Write to a file in the Virtual File System.",
             "safe": false,
@@ -114,7 +114,7 @@
                 ]
             }
         },
-        "VFSDeleteAction": {
+        "VFSDelete": {
             "title": "VFS Delete Action",
             "description": "Delete a file or directory in the Virtual File System.",
             "safe": false,

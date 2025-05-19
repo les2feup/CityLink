@@ -215,7 +215,7 @@
         }
     },
     "actions": {
-        "VFSListAction": {
+        "VFSList": {
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
@@ -229,7 +229,7 @@
                 }
             ]
         },
-        "VFSReadAction": {
+        "VFSRead": {
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
@@ -243,7 +243,7 @@
                 }
             ]
         },
-        "VFSWriteAction": {
+        "VFSWrite": {
             "input": {
                 "properties": {
                     "payload": {
@@ -272,7 +272,7 @@
                 }
             ]
         },
-        "VFSDeleteAction": {
+        "VFSDelete": {
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",

@@ -2,6 +2,7 @@
 import { Router } from "../../deps.ts";
 import { createTDRouter } from "./tdRoutes.ts";
 import { createTMRouter } from "./tmRoutes.ts";
+import { createApadationProtocolRouter } from "./adaptation.ts";
 
 export function createRouter(): Router {
   const router = new Router();
@@ -11,6 +12,8 @@ export function createRouter(): Router {
 
   // Merge the models routes
   router.use(createTMRouter().routes());
+
+  router.use(createApadationProtocolRouter().routes());
 
   router.get("/", (ctx) => {
     ctx.response.type = "text/html";
