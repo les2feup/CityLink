@@ -1,4 +1,4 @@
-import { AdaptationSchema } from "./adaptation.ts";
+import { AdaptationSchema } from "./adaptationSchema.ts";
 import { assert, randomUUID, z } from "../../deps.ts";
 
 Deno.test("AdaptationSchema should validate a valid object", () => {

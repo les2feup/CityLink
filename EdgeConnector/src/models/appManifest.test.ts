@@ -17,6 +17,8 @@ Deno.test("AppManifest parses valid manifest", () => {
         filename: "firmware.bin",
         url: "https://example.com/fw.bin",
         contentType: "binary",
+        sha256:
+          "708d6f0d7890c49d4345d073285f4e18ea8ecc7c5fcbc44d3c3e329dbddc17e5",
       },
     ],
     wot: {
@@ -39,8 +41,10 @@ Deno.test("AppManifest uses default contentType if not specified", () => {
   const manifest = {
     download: [
       {
-        name: "firmware.bin",
+        filename: "firmware.bin",
         url: "https://example.com/fw.bin",
+        sha256:
+          "708d6f0d7890c49d4345d073285f4e18ea8ecc7c5fcbc44d3c3e329dbddc17e5",
       },
     ],
     wot: {
@@ -83,8 +87,10 @@ Deno.test("AppManifest throws on invalid download URL", () => {
   const manifest = {
     download: [
       {
-        name: "firmware.bin",
+        filename: "firmware.bin",
         url: "not-a-url",
+        sha256:
+          "708d6f0d7890c49d4345d073285f4e18ea8ecc7c5fcbc44d3c3e329dbddc17e5",
       },
     ],
     wot: {
@@ -102,5 +108,63 @@ Deno.test("AppManifest throws on invalid download URL", () => {
     () => AppManifest.parse(manifest),
     z.ZodError,
     "Invalid url",
+  );
+});
+
+Deno.test("AppManifest throws on invalid contentType", () => {
+  const manifest = {
+    download: [
+      {
+        filename: "firmware.bin",
+        url: "https://example.com/fw.bin",
+        contentType: "invalid-type",
+        sha256:
+          "708d6f0d7890c49d4345d073285f4e18ea8ecc7c5fcbc44d3c3e329dbddc17e5",
+      },
+    ],
+    wot: {
+      tm: {
+        href: "https://example.com/tm.jsonld",
+        version: {
+          instance: "1.0.0",
+          model: "1.0.0",
+        },
+      },
+    },
+  };
+
+  assert.throws(
+    () => AppManifest.parse(manifest),
+    z.ZodError,
+    "Invalid enum value. Expected 'json' | 'text' | 'binary', received 'invalid-type'",
+  );
+});
+
+Deno.test("AppManifest throws on invalid sha256 format", () => {
+  const manifest: AppManifest = {
+    download: [
+      {
+        filename: "firmware.bin",
+        url: "https://example.com/fw.bin",
+        contentType: "binary",
+        sha256: "adsd",
+      },
+    ],
+    wot: {
+      tm: {
+        title: "Device TM",
+        href: "https://example.com/tm.jsonld",
+        version: {
+          instance: "1.0.0",
+          model: "1.0.0",
+        },
+      },
+    },
+  };
+
+  assert.throws(
+    () => AppManifest.parse(manifest),
+    z.ZodError,
+    "Invalid sha256 format",
   );
 });

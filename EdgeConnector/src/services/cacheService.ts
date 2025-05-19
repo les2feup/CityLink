@@ -6,7 +6,7 @@ import { ThingDescription, ThingModel } from "../../deps.ts";
 // for this proof-of-concept implementation.
 
 const manifestCache = new Map<string, AppManifest>();
-const dlCache = new Map<string, AppContentTypes>();
+const appCache = new Map<string, AppContentTypes>();
 
 const tmCache = new Map<string, ThingModel>();
 const tmUrlCache = new Map<string, string>();
@@ -64,15 +64,15 @@ export function getTDMap(
   return tdCache.get(modelTitle);
 }
 
-export function getDlContent(fileUrl: string): AppContentTypes | undefined {
-  return dlCache.get(fileUrl);
+export function getAppContent(fileUrl: string): AppContentTypes | undefined {
+  return appCache.get(fileUrl);
 }
 
-export function setDlContent(
+export function setAppContent(
   fileUrl: string,
   file: AppContentTypes,
 ): void {
-  dlCache.set(fileUrl, file);
+  appCache.set(fileUrl, file);
 }
 
 export function rawTDCache(): Map<string, Map<string, ThingDescription>> {
@@ -87,7 +87,7 @@ export function clear(): void {
   manifestCache.clear();
   tmCache.clear();
   tdCache.clear();
-  dlCache.clear();
+  appCache.clear();
 }
 
 export default {
@@ -98,8 +98,8 @@ export default {
   getTD,
   setTD,
   getTDMap,
-  getDlContent,
-  setDlContent,
+  getAppContent,
+  setAppContent,
   rawTDCache,
   rawTMCache,
   clear,

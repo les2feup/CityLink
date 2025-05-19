@@ -12,7 +12,7 @@ export const AppManifest = z.object({
     contentType: z.enum(["json", "text", "binary"]).optional().default(
       "binary",
     ),
-    sha256: z.string(),
+    sha256: z.string().regex(/^[a-f0-9]{64}$/),
   })).refine((items) => items.length > 0, {
     message: "At least one download item is required",
   }),

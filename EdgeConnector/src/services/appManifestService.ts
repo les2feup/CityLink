@@ -66,7 +66,7 @@ async function fetchSingleFile(
   mdata: DownloadMetadataItem,
 ): Promise<FetchSuccess | FetchError> {
   // before fetching, try the file cache
-  const cachedFile = cache.getDlContent(mdata.url);
+  const cachedFile = cache.getAppContent(mdata.url);
   if (cachedFile) {
     return { name: mdata.filename, url: mdata.url, content: cachedFile };
   }
@@ -119,7 +119,7 @@ async function fetchSingleFile(
       };
     }
 
-    cache.setDlContent(mdata.url, content);
+    cache.setAppContent(mdata.url, content);
     return { name: mdata.filename, url: mdata.url, content };
   } catch (error) {
     return {
