@@ -14,7 +14,7 @@ Deno.test("AppManifest parses valid manifest", () => {
   const manifest: AppManifest = {
     download: [
       {
-        name: "firmware.bin",
+        filename: "firmware.bin",
         url: "https://example.com/fw.bin",
         contentType: "binary",
       },

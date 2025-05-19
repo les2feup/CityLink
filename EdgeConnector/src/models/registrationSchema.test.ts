@@ -1,4 +1,4 @@
-import { RegistrationSchema } from "./registration.ts";
+import { RegistrationSchema } from "./registrationSchema.ts";
 import { assert, z } from "../../deps.ts";
 
 Deno.test("valid registration with explicit tmOnly", () => {

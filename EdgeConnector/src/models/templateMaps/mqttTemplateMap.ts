@@ -72,3 +72,25 @@ export const TemplateMapMQTT = z
   });
 
 export type TemplateMapMQTT = z.infer<typeof TemplateMapMQTT>;
+
+export function createTemplateMapMQTT(
+  brokerURL: string,
+  endNodeUUID: string,
+): TemplateMapMQTT | Error {
+  const map = {
+    CITYLINK_ID: `urn:uuid:${endNodeUUID}`,
+    CITYLINK_HREF: brokerURL,
+    CITYLINK_PROPERTY: `citylink/${endNodeUUID}/properties`,
+    CITYLINK_ACTION: `citylink/${endNodeUUID}/actions`,
+    CITYLINK_EVENT: `citylink/${endNodeUUID}/events`,
+  };
+
+  const parsed = TemplateMapMQTT.safeParse(map);
+  if (!parsed.success) {
+    return new Error(
+      `Invalid template map: ${JSON.stringify(parsed.error.format(), null, 2)}`,
+    );
+  }
+
+  return parsed.data;
+}

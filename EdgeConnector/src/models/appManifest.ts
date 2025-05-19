@@ -7,11 +7,12 @@ export type AppContentTypes = z.infer<typeof AppContentTypes>;
 
 export const AppManifest = z.object({
   download: z.array(z.object({
-    name: z.string(),
+    filename: z.string(),
     url: z.string().url(),
     contentType: z.enum(["json", "text", "binary"]).optional().default(
       "binary",
     ),
+    sha256: z.string(),
   })).refine((items) => items.length > 0, {
     message: "At least one download item is required",
   }),
