@@ -1,11 +1,22 @@
-import {
-  AppManifest,
-  DlContentTypes,
-  DlMetadata,
-  DlMetadataItem,
-} from "../models/appManifest.ts";
+import { AppContentTypes, AppManifest } from "../models/appManifest.ts";
 
 import cache from "./cacheService.ts";
+
+type DownloadMetadata = AppManifest["download"];
+type DownloadMetadataItem = DownloadMetadata[number];
+
+type FetchSuccess = {
+  name: string;
+  url: string;
+  content: AppContentTypes;
+};
+
+type FetchError = {
+  url: string;
+  error: Error;
+};
+
+type FetchResult = FetchSuccess | FetchError;
 
 export async function fetchAppManifest(
   url: string,
@@ -38,21 +49,8 @@ export async function fetchAppManifest(
   }
 }
 
-type FetchSuccess = {
-  name: string;
-  url: string;
-  content: DlContentTypes;
-};
-
-type FetchError = {
-  url: string;
-  error: Error;
-};
-
-type FetchResult = FetchSuccess | FetchError;
-
 export async function fetchAppSrc(
-  download: DlMetadata,
+  download: DownloadMetadata,
 ): Promise<FetchResult[]> {
   const results: FetchResult[] = [];
   const fetchPromises = download.map(async (mdata) => {
@@ -65,10 +63,10 @@ export async function fetchAppSrc(
 }
 
 async function fetchSingleFile(
-  mdata: DlMetadataItem,
+  mdata: DownloadMetadataItem,
 ): Promise<FetchSuccess | FetchError> {
   // before fetching, try the file cache
-  const cachedFile = cache.getFile(mdata.url);
+  const cachedFile = cache.getDlContent(mdata.url);
   if (cachedFile) {
     return { name: mdata.name, url: mdata.url, content: cachedFile };
   }
@@ -82,7 +80,7 @@ async function fetchSingleFile(
       };
     }
 
-    let content: DlContentTypes;
+    let content: AppContentTypes;
     switch (mdata.contentType) {
       case "json": {
         content = await response.json();
@@ -104,7 +102,7 @@ async function fetchSingleFile(
         };
       }
     }
-    cache.setFile(mdata.url, content);
+    cache.setDlContent(mdata.url, content);
     return { name: mdata.name, url: mdata.url, content };
   } catch (error) {
     return {
