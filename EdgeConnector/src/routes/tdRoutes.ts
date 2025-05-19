@@ -1,13 +1,12 @@
-import { Router, ThingDescription } from "../../deps.ts";
+import { Router } from "../../deps.ts";
+import cache from "./../services/cacheService.ts";
 
-export function createTDRouter(
-  hostedThings: Map<string, Map<string, ThingDescription>>,
-): Router {
+export function createTDRouter(): Router {
   const router = new Router();
 
   // List available Thing models (keys)
   router.get("/things", (ctx) => {
-    const models = [...hostedThings.keys()];
+    const models = [...cache.rawTDCache().keys()];
     const links = models
       .map((model) => `<li><a href="/things/${model}">${model}</a></li>`)
       .join("");
@@ -26,7 +25,7 @@ export function createTDRouter(
   // List things for a given model
   router.get("/things/:model", (ctx) => {
     const model = ctx.params.model;
-    const things = hostedThings.get(model!);
+    const things = cache.getTDMap(model!);
     if (things) {
       const links = [...things.keys()]
         .map((uuid) =>
@@ -49,23 +48,17 @@ export function createTDRouter(
     }
   });
 
-  // Display a specific Thing
+  // Display a specific TD
   router.get("/things/:model/:uuid", (ctx) => {
     const model = ctx.params.model;
     const uuid = ctx.params.uuid;
-    const things = hostedThings.get(model!);
-    if (things) {
-      const thing = things.get(uuid!);
-      if (thing) {
-        ctx.response.type = "application/json";
-        ctx.response.body = thing;
-      } else {
-        ctx.response.status = 404;
-        ctx.response.body = "Thing not found";
-      }
+    const TD = cache.getTD(model!, uuid!);
+    if (TD) {
+      ctx.response.type = "application/json";
+      ctx.response.body = TD;
     } else {
       ctx.response.status = 404;
-      ctx.response.body = "Model not found";
+      ctx.response.body = "Thing not found";
     }
   });
 

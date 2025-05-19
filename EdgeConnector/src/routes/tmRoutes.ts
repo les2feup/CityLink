@@ -1,14 +1,12 @@
 import { Router } from "../../deps.ts";
-import type { ThingModel } from "../../deps.ts";
+import cache from "./../services/cacheService.ts";
 
-export function createTMRouter(
-  hostedModels: Map<string, ThingModel>,
-): Router {
+export function createTMRouter(): Router {
   const router = new Router();
 
   // List all hosted models with links
   router.get("/models", (ctx) => {
-    const modelNames = [...hostedModels.keys()];
+    const modelNames = [...cache.rawTMCache().keys()];
     const links = modelNames
       .map((model) => `<li><a href="/models/${model}">${model}</a></li>`)
       .join("");
@@ -26,19 +24,13 @@ export function createTMRouter(
 
   // Display the JSON of a specific Thing Model
   router.get("/models/:model", (ctx) => {
-    const modelName = ctx.params.model;
-    if (!modelName) {
-      ctx.response.status = 400;
-      ctx.response.body = "Model name is required";
+    const model = cache.getTM(ctx.params.model!);
+    if (model) {
+      ctx.response.type = "application/json";
+      ctx.response.body = model;
     } else {
-      const model = hostedModels.get(modelName);
-      if (model) {
-        ctx.response.type = "application/json";
-        ctx.response.body = model;
-      } else {
-        ctx.response.status = 404;
-        ctx.response.body = "Model not found";
-      }
+      ctx.response.status = 404;
+      ctx.response.body = "Model not found";
     }
   });
 

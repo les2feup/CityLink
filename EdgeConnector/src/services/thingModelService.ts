@@ -1,6 +1,6 @@
 // src/services/thingModelService.ts
 import { ThingDescription, ThingModel, ThingModelHelpers } from "../../deps.ts";
-import { TmMetadata } from "../models/appManifest.ts";
+import { AppManifest } from "../models/appManifest.ts";
 import type { CompositionOptions } from "../../deps.ts";
 import cache from "./cacheService.ts";
 
@@ -15,7 +15,6 @@ import cache from "./cacheService.ts";
  * @returns The first generated Thing Description.
  */
 export async function instantiateTDs(
-  tmTools: ThingModelHelpers,
   model: ThingModel,
   map: Record<string, unknown>,
 ): Promise<ThingDescription[]> {
@@ -23,14 +22,18 @@ export async function instantiateTDs(
     map,
     selfComposition: false,
   };
+  const tmTools = new ThingModelHelpers();
   const things = await tmTools.getPartialTDs(model, options);
   return things as ThingDescription[];
 }
 
+type TmMetadata = AppManifest["wot"]["tm"];
+
 export async function fetchThingModel(
-  tmTools: ThingModelHelpers,
   metadata: TmMetadata,
 ): Promise<ThingModel | Error> {
+  const tmTools = new ThingModelHelpers();
+
   // before fetching, try the model cache
   const cachedModel = cache.getTM(metadata.href);
   let fetchedModel: ThingModel | undefined;

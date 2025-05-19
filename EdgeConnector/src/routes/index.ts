@@ -2,19 +2,15 @@
 import { Router } from "../../deps.ts";
 import { createTDRouter } from "./tdRoutes.ts";
 import { createTMRouter } from "./tmRoutes.ts";
-import type { ThingDescription, ThingModel } from "../../deps.ts";
 
-export function createRouter(
-  hostedThings: Map<string, Map<string, ThingDescription>>,
-  hostedModels: Map<string, ThingModel>,
-): Router {
+export function createRouter(): Router {
   const router = new Router();
 
   // Merge the things routes
-  router.use(createTDRouter(hostedThings).routes());
+  router.use(createTDRouter().routes());
 
   // Merge the models routes
-  router.use(createTMRouter(hostedModels).routes());
+  router.use(createTMRouter().routes());
 
   router.get("/", (ctx) => {
     ctx.response.type = "text/html";
