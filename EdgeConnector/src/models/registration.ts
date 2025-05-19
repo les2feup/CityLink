@@ -1,7 +1,7 @@
 import { z } from "../../deps.ts";
 
-export const RegistrationPayload = z.object({
+export const RegistrationSchema = z.object({
   manifest: z.string().url(),
   tmOnly: z.boolean().optional().default(false),
 });
-export type RegistrationPayload = z.infer<typeof RegistrationPayload>;
+export type RegistrationSchema = z.infer<typeof RegistrationSchema>;
