@@ -5,6 +5,7 @@
     "jsr:@oak/oak@*": "17.1.4",
     "jsr:@std/assert@1": "1.0.11",
     "jsr:@std/bytes@1": "1.0.5",
+    "jsr:@std/crypto@*": "1.0.4",
     "jsr:@std/crypto@1": "1.0.4",
     "jsr:@std/encoding@1": "1.0.7",
     "jsr:@std/encoding@^1.0.7": "1.0.7",
@@ -32,7 +33,7 @@
       "dependencies": [
         "jsr:@std/assert",
         "jsr:@std/bytes",
-        "jsr:@std/crypto",
+        "jsr:@std/crypto@1",
         "jsr:@std/encoding@1",
         "jsr:@std/http",
         "jsr:@std/media-types"

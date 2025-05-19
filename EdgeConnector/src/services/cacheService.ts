@@ -9,6 +9,7 @@ const manifestCache = new Map<string, AppManifest>();
 const dlCache = new Map<string, AppContentTypes>();
 
 const tmCache = new Map<string, ThingModel>();
+const tmUrlCache = new Map<string, string>();
 const tdCache = new Map<string, Map<string, ThingDescription>>();
 
 export function getManifest(
@@ -24,12 +25,19 @@ export function setManifest(
   manifestCache.set(manifestUrl, manifest);
 }
 
-export function getTM(tmUrl: string): ThingModel | undefined {
-  return tmCache.get(tmUrl);
+export function getTM(
+  key: string,
+): ThingModel | undefined {
+  return tmCache.get(key) ?? tmCache.get(tmUrlCache.get(key) ?? "");
 }
 
-export function setTM(tmUrl: string, tm: ThingModel): void {
-  tmCache.set(tmUrl, tm);
+export function setTM(
+  tm: ThingModel,
+  title: string,
+  tmUrl: string,
+): void {
+  tmUrlCache.set(tmUrl, title);
+  tmCache.set(title, tm);
 }
 
 export function getTD(

@@ -1,31 +1,7 @@
 // src/services/thingModelService.ts
-import { ThingDescription, ThingModel, ThingModelHelpers } from "../../deps.ts";
+import { ThingModel, ThingModelHelpers } from "../../deps.ts";
 import { AppManifest } from "../models/appManifest.ts";
-import type { CompositionOptions } from "../../deps.ts";
 import cache from "./cacheService.ts";
-
-/**
- * Generates a Thing Description from the provided Thing Model.
- *
- * This asynchronous function configures composition options using the specified mapping object with self-composition enabled.
- * It then invokes the helper to generate partial Thing Descriptions and returns the first generated description.
- *
- * @param model - The Thing Model to be composed into a Thing Description.
- * @param map - Custom composition mappings to be applied during composition.
- * @returns The first generated Thing Description.
- */
-export async function instantiateTDs(
-  model: ThingModel,
-  map: Record<string, unknown>,
-): Promise<ThingDescription[]> {
-  const options: CompositionOptions = {
-    map,
-    selfComposition: false,
-  };
-  const tmTools = new ThingModelHelpers();
-  const things = await tmTools.getPartialTDs(model, options);
-  return things as ThingDescription[];
-}
 
 type TmMetadata = AppManifest["wot"]["tm"];
 
@@ -45,14 +21,19 @@ export async function fetchThingModel(
     return new Error(`Failed to fetch Thing Model from ${metadata.href}`);
   }
 
-  const tm = (cachedModel || fetchedModel) as ThingModel;
+  const tm = cachedModel ?? fetchedModel!;
   const versionError = validateModelVersion(tm, metadata.version.model);
   if (versionError) {
     return versionError;
   }
 
+  const title = metadata.title ?? tm.title;
+  if (!title) {
+    return new Error("Model title is missing");
+  }
+
   if (!cachedModel) {
-    cache.setTM(metadata.href, tm);
+    cache.setTM(tm, title, metadata.href);
   }
 
   return tm;

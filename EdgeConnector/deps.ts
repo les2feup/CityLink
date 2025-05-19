@@ -1,7 +1,7 @@
 export { Router } from "jsr:@oak/oak/router";
 export { Application } from "jsr:@oak/oak/application";
 
-export { randomUUID } from "node:crypto";
+export { createHash, randomUUID } from "node:crypto";
 export { default as assert } from "node:assert";
 
 export { default as mqtt } from "npm:mqtt";

@@ -1,23 +1,20 @@
-import { MQTT_BROKER_ADDR } from "../config/config.ts";
-import { fetchAppManifest } from "../services/appManifestService.ts";
-import { RegistrationPayload } from "../models/registration.ts";
-import { mqtt, randomUUID, ThingModelHelpers } from "../../deps.ts";
-import type { Buffer, ThingDescription, ThingModel } from "../../deps.ts";
+import { MQTT_BROKER_URL } from "../config/config.ts";
+import { RegistrationSchema } from "../models/registrationSchema.ts";
+import { fetchThingModel } from "../services/tmService.ts";
+import { instantiateTDs, InstantiationOpts } from "../services/tdService.ts";
+import { Buffer, mqtt, randomUUID } from "../../deps.ts";
 import {
-  fetchThingModel,
-  instantiateTDs,
-} from "../services/thingModelService.ts";
+  fetchAppManifest,
+  fetchAppSrc,
+  FetchError,
+  FetchResult,
+  FetchSuccess,
+} from "../services/appManifestService.ts";
 
-/**
- * Sets up the MQTT connection and subscribes to the registration topic.
- */
-export function launch(
-  tmTools: ThingModelHelpers,
-  hostedModels: Map<string, ThingModel>,
-  hostedThings: Map<string, Map<string, ThingDescription>>,
+export function init(
   onError?: (error: Error) => void,
 ): void {
-  const client = mqtt.connect(`${MQTT_BROKER_ADDR}`);
+  const client = mqtt.connect(`${MQTT_BROKER_URL}`);
 
   client.on("connect", () => {
     client.subscribe("citylink/+/registration", (err) => {
@@ -26,7 +23,7 @@ export function launch(
         // Emit an event or implement a retry mechanism
         // For example:
         setTimeout(
-          () => launch(tmTools, hostedModels, hostedThings),
+          () => init(onError),
           5000,
         ); // Retry after 5 seconds
         return;
@@ -40,9 +37,6 @@ export function launch(
   client.on("message", (topic: string, message: Buffer) => {
     handleRegistrationMessage(
       client,
-      tmTools,
-      hostedModels,
-      hostedThings,
       topic,
       message,
     );
@@ -57,9 +51,9 @@ export function launch(
 
 function parseRegistrationMessage(
   message: Buffer,
-): RegistrationPayload | Error {
+): RegistrationSchema | Error {
   const json = JSON.parse(message.toString());
-  const parsed = RegistrationPayload.safeParse(json);
+  const parsed = RegistrationSchema.safeParse(json);
 
   if (!parsed.success) {
     return new Error(
@@ -72,49 +66,8 @@ function parseRegistrationMessage(
   return parsed.data;
 }
 
-async function instantiateTD(
-  thingUUID: string,
-  model: ThingModel,
-  tmTools: ThingModelHelpers,
-  hostedThings: Map<string, Map<string, ThingDescription>>,
-) {
-  if (!model.title) {
-    throw new Error("Model title is missing");
-  }
-
-  //TODO: Add support for a custom template map received from the registration payload.
-  const map = {
-    CITYLINK_ID: `urn:uuid:${thingUUID}`,
-    CITYLINK_HREF: MQTT_BROKER_ADDR,
-    CITYLINK_PROPERTY: `citylink/${thingUUID}/properties`,
-    CITYLINK_ACTION: `citylink/${thingUUID}/actions`,
-    CITYLINK_EVENT: `citylink/${thingUUID}/events`,
-  };
-
-  let modelMap = hostedThings.get(model.title);
-  if (!modelMap) {
-    modelMap = new Map<string, ThingDescription>();
-    hostedThings.set(model.title, modelMap);
-  }
-
-  const thingDescriptions = await instantiateTDs(tmTools, model, map);
-  thingDescriptions.forEach((td, index) => {
-    if (!td.title) {
-      throw new Error("Thing Description title is missing");
-    }
-    td.id = `${map.CITYLINK_ID}${(index > 0) ? `:submodel:${index}` : ""}`;
-    modelMap.set(td.id, td);
-    console.log(
-      `New Thing Description registered: title ${td.title} id ${td.id}`,
-    );
-  });
-}
-
 async function handleRegistrationMessage(
   client: mqtt.MqttClient,
-  tmTools: ThingModelHelpers,
-  hostedModels: Map<string, ThingModel>,
-  hostedThings: Map<string, Map<string, ThingDescription>>,
   topic: string,
   message: Buffer,
 ): Promise<void> {
@@ -140,13 +93,57 @@ async function handleRegistrationMessage(
     if (manifest instanceof Error) {
       throw manifest;
     }
+    console.log("App manifest retrieved sucessfully");
 
-    const model = await fetchThingModel(tmTools, manifest.wot.tm);
+    const model = await fetchThingModel(manifest.wot.tm);
     if (model instanceof Error) {
       throw model;
     }
+    console.log("Thing model retrieved sucessfully");
 
-    await instantiateTD(generatedUUID, model, tmTools, hostedThings);
+    if (!payload.tmOnly) {
+      const results: FetchResult[] = await fetchAppSrc(manifest.download);
+      const fetchErrors = results.filter(
+        (r): r is FetchError => "error" in r,
+      );
+
+      if (fetchErrors.length > 0) {
+        throw new Error(
+          `Error fetching app source: ${
+            fetchErrors
+              .map((r) => `${r.url}: ${r.error.message}`)
+              .join(", ")
+          }`,
+        );
+      }
+
+      const fetchSuccess = results.filter(
+        (r): r is FetchSuccess => "name" in r && "content" in r,
+      );
+
+      fetchSuccess.forEach((result) => {
+        console.log(
+          `Fetched ${result.name} from ${result.url} with content type ${typeof result
+            .content}`,
+        );
+      });
+    }
+
+    const opts: InstantiationOpts = [{
+      endNodeUUID: generatedUUID,
+      selfComposition: false,
+      protocol: "mqtt",
+    }];
+
+    //TODO: maybe tds should be returned instead of cached directly
+    const errors = await instantiateTDs(model, opts);
+    if (errors) {
+      throw new Error(
+        `Error during TD instantiation: ${
+          errors.map((e) => e.message).join(", ")
+        }`,
+      );
+    }
     client.publish(
       `citylink/${endNodeID}/registration/ack`,
       JSON.stringify({ status: "sucess", id: generatedUUID }),
@@ -166,3 +163,7 @@ async function handleRegistrationMessage(
     );
   }
 }
+
+export default {
+  init,
+};

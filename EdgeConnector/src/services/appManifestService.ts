@@ -1,22 +1,22 @@
 import { AppContentTypes, AppManifest } from "../models/appManifest.ts";
-
+import { createHash } from "../../deps.ts";
 import cache from "./cacheService.ts";
 
 type DownloadMetadata = AppManifest["download"];
 type DownloadMetadataItem = DownloadMetadata[number];
 
-type FetchSuccess = {
+export type FetchSuccess = {
   name: string;
   url: string;
   content: AppContentTypes;
 };
 
-type FetchError = {
+export type FetchError = {
   url: string;
   error: Error;
 };
 
-type FetchResult = FetchSuccess | FetchError;
+export type FetchResult = FetchSuccess | FetchError;
 
 export async function fetchAppManifest(
   url: string,
@@ -68,7 +68,7 @@ async function fetchSingleFile(
   // before fetching, try the file cache
   const cachedFile = cache.getDlContent(mdata.url);
   if (cachedFile) {
-    return { name: mdata.name, url: mdata.url, content: cachedFile };
+    return { name: mdata.filename, url: mdata.url, content: cachedFile };
   }
 
   try {
@@ -81,17 +81,21 @@ async function fetchSingleFile(
     }
 
     let content: AppContentTypes;
+    let hashable: Uint8Array;
     switch (mdata.contentType) {
       case "json": {
         content = await response.json();
+        hashable = new TextEncoder().encode(JSON.stringify(content));
         break;
       }
       case "text": {
         content = await response.text();
+        hashable = new TextEncoder().encode(content);
         break;
       }
       case "binary": {
         content = await response.bytes();
+        hashable = content as Uint8Array;
         break;
       }
 
@@ -102,8 +106,21 @@ async function fetchSingleFile(
         };
       }
     }
+
+    const sha256 = createHash("sha256");
+    sha256.update(hashable);
+    const digested = sha256.digest("hex");
+    if (digested !== mdata.sha256) {
+      return {
+        url: mdata.url,
+        error: new Error(
+          `SHA256 mismatch for ${mdata.filename}: expected ${mdata.sha256}, got ${digested}`,
+        ),
+      };
+    }
+
     cache.setDlContent(mdata.url, content);
-    return { name: mdata.name, url: mdata.url, content };
+    return { name: mdata.filename, url: mdata.url, content };
   } catch (error) {
     return {
       url: mdata.url,

@@ -5,7 +5,7 @@ import { HTTP_HOSTNAME, HTTP_PORT } from "./config/config.ts";
 
 export function startApp(): void {
   // Initialize MQTT handler
-  mqttConnector.launch((error: Error) => {
+  mqttConnector.init((error: Error) => {
     console.error("MQTT error:", error);
   });
 
