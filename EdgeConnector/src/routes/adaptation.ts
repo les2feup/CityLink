@@ -1,6 +1,6 @@
 import { Router } from "../../deps.ts";
 import { AdaptationSchema } from "../models/adaptationSchema.ts";
-import { performEndNodeAdaptation } from "../connectors/mpyCoreUpdateManager.ts";
+import { performEndNodeAdaptation } from "../connectors/mqttCityLinkServient.ts";
 
 export function createApadationProtocolRouter(): Router {
   const router = new Router();

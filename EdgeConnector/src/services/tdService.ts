@@ -6,69 +6,56 @@ import {
 } from "../../deps.ts";
 import { createTemplateMapMQTT } from "./../models/templateMaps/mqttTemplateMap.ts";
 import { MQTT_BROKER_URL } from "./../config/config.ts";
-import cache from "./cacheService.ts";
 
 export type InstantiationOpts = {
   endNodeUUID: string;
-  selfComposition?: boolean;
   protocol: "mqtt" | "http" | "coap";
   extra?: {
     [key: string]: string; // custom fields
   };
-}[];
+};
 
-export async function instantiateTDs(
+export async function produceTD(
   model: ThingModel,
   opts: InstantiationOpts,
-): Promise<Error[] | null> {
-  const errors: Error[] = [];
+): Promise<ThingDescription | Error> {
   const tmTools = new ThingModelHelpers();
-
   if (!model.title) {
-    return [new Error("Model title is missing")];
+    return new Error("Model title is missing");
   }
 
-  const promises = opts.map(async (opt) => {
-    const map = getTemplateMap(opt);
-    if (map instanceof Error) {
-      errors.push(map);
-      return;
+  const map = getTemplateMap(opts);
+  if (map instanceof Error) {
+    return map;
+  }
+
+  const options: CompositionOptions = {
+    map,
+    selfComposition: true,
+  };
+
+  try {
+    const [partialTD] = await tmTools.getPartialTDs(model, options);
+    partialTD.id = map.CITYLINK_ID;
+
+    console.log(
+      `New Thing Description id "${partialTD.id}" registered for model "${model.title}"`,
+    );
+
+    return fillPlatfromForms(partialTD, map);
+  } catch (error) {
+    if (error instanceof Error) {
+      return new Error(
+        `Error during TD instantiation: ${error.message}`,
+      );
+    } else {
+      return new Error("Unknown error during TD instantiation");
     }
-
-    const options: CompositionOptions = {
-      map,
-      selfComposition: opt.selfComposition,
-    };
-
-    try {
-      const tds = await tmTools.getPartialTDs(model, options);
-
-      tds.forEach((td, index) => {
-        td.id = `${map.CITYLINK_ID}${(index > 0) ? `:submodel:${index}` : ""}`;
-        cache.setTD(model.title!, td.id, td as ThingDescription);
-        console.log(
-          `New Thing Description id "${td.id}" registered for model "${model.title}"`,
-        );
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        errors.push(
-          new Error(
-            `Error during TD instantiation: ${error.message}`,
-          ),
-        );
-      } else {
-        errors.push(new Error("Unknown error during TD instantiation"));
-      }
-    }
-  });
-
-  await Promise.all(promises);
-  return errors.length > 0 ? errors : null;
+  }
 }
 
 function getTemplateMap(
-  opts: InstantiationOpts[number],
+  opts: InstantiationOpts,
 ): Record<string, string> | Error {
   switch (opts.protocol) {
     case "mqtt": {
@@ -94,4 +81,51 @@ function getTemplateMap(
         `Unsupported protocol: ${opts.protocol}`,
       );
   }
+}
+
+function fillPlatfromForms(
+  td: WoT.ExposedThingInit,
+  map: Record<string, string>,
+): ThingDescription {
+  const merge = (prop_name: string) => {
+    return {
+      readOnly: true,
+      writeOnly: false,
+      forms: [
+        {
+          href: map.CITYLINK_HREF,
+          "mqv:filter": `${map.CITYLINK_PROPERTY}/${prop_name}`,
+          "mqv:qos": 2,
+          "mqv:retain": true,
+          op: [
+            "readProperty",
+            "subscribeProperty",
+            "unsubscribeProperty",
+          ],
+          contentType: "application/json",
+        },
+      ],
+    };
+  };
+
+  const properties = td.properties!;
+  const prefix = "citylink:platform_";
+  // map over properties that start with the citylink:platfrom prefix
+  // citylink:platform_<prop_name> and apply the merge
+  for (const key of Object.keys(properties)) {
+    if (key.startsWith(prefix) && !properties[key]?.forms) {
+      const actualPropName = key.slice(prefix.length);
+      const merged = merge(actualPropName);
+      const original = properties[key]!;
+
+      // Merge values (non-destructively)
+      properties[key] = {
+        ...original,
+        ...merged,
+        forms: [...(original.forms ?? []), ...merged.forms],
+      };
+    }
+  }
+
+  return td as ThingDescription;
 }

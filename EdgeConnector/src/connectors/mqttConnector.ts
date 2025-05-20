@@ -1,8 +1,9 @@
 import { MQTT_BROKER_URL } from "../config/config.ts";
 import { RegistrationSchema } from "../models/registrationSchema.ts";
 import { fetchThingModel } from "../services/tmService.ts";
-import { instantiateTDs, InstantiationOpts } from "../services/tdService.ts";
+import { InstantiationOpts, produceTD } from "../services/tdService.ts";
 import { Buffer, mqtt, randomUUID } from "../../deps.ts";
+import cache from "../services/cacheService.ts";
 import {
   fetchAppManifest,
   fetchAppSrc,
@@ -101,22 +102,23 @@ async function handleRegistrationMessage(
     }
     console.log("Thing model retrieved sucessfully");
 
-    const opts: InstantiationOpts = [{
+    const opts: InstantiationOpts = {
       endNodeUUID: generatedUUID,
-      selfComposition: true, // Seems to be the most appropriate option given the complexity of the models
       protocol: "mqtt",
-    }];
+    };
 
-    //TODO: maybe tds should be returned instead of cached directly
-    const errors = await instantiateTDs(model, opts);
-    if (errors) {
-      throw new Error(
-        `Error during TD instantiation: ${
-          errors.map((e) => e.message).join(", ")
-        }`,
-      );
+    const td = await produceTD(model, opts);
+    if (td instanceof Error) {
+      throw new Error(`Error during TD instantiation: ${td.message}`);
     }
 
+    cache.setTD(model.title!, td.id!, td);
+    client.publish(
+      `citylink/${endNodeID}/registration/ack`,
+      JSON.stringify({ status: "sucess", id: generatedUUID }),
+    );
+
+    //TODO: extract this to a function
     if (!payload.tmOnly) {
       const results: FetchResult[] = await fetchAppSrc(manifest.download);
       const fetchErrors = results.filter(
@@ -144,11 +146,6 @@ async function handleRegistrationMessage(
         );
       });
     }
-
-    client.publish(
-      `citylink/${endNodeID}/registration/ack`,
-      JSON.stringify({ status: "sucess", id: generatedUUID }),
-    );
   } catch (error: unknown) {
     let message: string = "Unknown error during Thing creation";
     if (error instanceof Error) {
@@ -158,9 +155,10 @@ async function handleRegistrationMessage(
     }
 
     console.error("Error during Thing creation:", message);
+    //TODO: better error reporting
     client.publish(
       `citylink/${endNodeID}/registration/ack`,
-      JSON.stringify({ status: "error", message }),
+      JSON.stringify({ status: "error", message: "registration error" }),
     );
   }
 }

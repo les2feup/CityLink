@@ -55,9 +55,7 @@ export function getTDbyUUID(
       console.debug(`Found TD for UUID "${uuid}" in model "${model}".`);
       return map.get(uuid);
     }
-    console.debug(`TD for UUID "${uuid}" not found in model "${model}".`);
   }
-  console.debug(`TD for UUID "${uuid}" not found in any model.`);
   return undefined;
 }
 
