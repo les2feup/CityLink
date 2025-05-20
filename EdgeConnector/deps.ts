@@ -22,3 +22,6 @@ export { ThingModelHelpers } from "./eclipse-thingweb/thing-model/src/thing-mode
 export type { CompositionOptions } from "./eclipse-thingweb/thing-model/src/thing-model.ts";
 
 export { z } from "npm:zod";
+
+export { encodeBase64 } from "jsr:@std/encoding/base64";
+export { crc32 } from "node:zlib";

@@ -5,18 +5,18 @@ import cache from "./cacheService.ts";
 type DownloadMetadata = AppManifest["download"];
 type DownloadMetadataItem = DownloadMetadata[number];
 
-export type FetchSuccess = {
+export type AppFetchSuccess = {
   name: string;
   url: string;
   content: AppContentTypes;
 };
 
-export type FetchError = {
+export type AppFetchError = {
   url: string;
   error: Error;
 };
 
-export type FetchResult = FetchSuccess | FetchError;
+export type AppFetchResult = AppFetchSuccess | AppFetchError;
 
 export async function fetchAppManifest(
   url: string,
@@ -51,8 +51,8 @@ export async function fetchAppManifest(
 
 export async function fetchAppSrc(
   download: DownloadMetadata,
-): Promise<FetchResult[]> {
-  const results: FetchResult[] = [];
+): Promise<AppFetchResult[]> {
+  const results: AppFetchResult[] = [];
   const fetchPromises = download.map(async (mdata) => {
     const result = await fetchSingleFile(mdata);
     results.push(result);
@@ -64,7 +64,7 @@ export async function fetchAppSrc(
 
 async function fetchSingleFile(
   mdata: DownloadMetadataItem,
-): Promise<FetchSuccess | FetchError> {
+): Promise<AppFetchSuccess | AppFetchError> {
   // before fetching, try the file cache
   const cachedFile = cache.getAppContent(mdata.url);
   if (cachedFile) {

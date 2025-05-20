@@ -223,7 +223,7 @@
                         "unsubscribeevent"
                     ],
                     "mqv:qos": 1,
-                    "mqv:retain": true,
+                    "mqv:retain": false,
                     "contentType": "application/json"
                 }
             ]

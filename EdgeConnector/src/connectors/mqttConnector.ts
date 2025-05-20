@@ -2,14 +2,21 @@ import { MQTT_BROKER_URL } from "../config/config.ts";
 import { RegistrationSchema } from "../models/registrationSchema.ts";
 import { fetchThingModel } from "../services/tmService.ts";
 import { InstantiationOpts, produceTD } from "../services/tdService.ts";
-import { Buffer, mqtt, randomUUID } from "../../deps.ts";
 import cache from "../services/cacheService.ts";
+import mpyCoreController from "./../controllers/mpyCoreController.ts";
 import {
+  Buffer,
+  mqtt,
+  MqttClientFactory,
+  randomUUID,
+  Servient,
+} from "../../deps.ts";
+import {
+  AppFetchError,
+  AppFetchResult,
+  AppFetchSuccess,
   fetchAppManifest,
   fetchAppSrc,
-  FetchError,
-  FetchResult,
-  FetchSuccess,
 } from "../services/appManifestService.ts";
 
 export function init(
@@ -120,9 +127,9 @@ async function handleRegistrationMessage(
 
     //TODO: extract this to a function
     if (!payload.tmOnly) {
-      const results: FetchResult[] = await fetchAppSrc(manifest.download);
+      const results: AppFetchResult[] = await fetchAppSrc(manifest.download);
       const fetchErrors = results.filter(
-        (r): r is FetchError => "error" in r,
+        (r): r is AppFetchError => "error" in r,
       );
 
       if (fetchErrors.length > 0) {
@@ -136,7 +143,7 @@ async function handleRegistrationMessage(
       }
 
       const fetchSuccess = results.filter(
-        (r): r is FetchSuccess => "name" in r && "content" in r,
+        (r): r is AppFetchSuccess => "name" in r && "content" in r,
       );
 
       fetchSuccess.forEach((result) => {
@@ -145,6 +152,25 @@ async function handleRegistrationMessage(
             .content}`,
         );
       });
+      console.log("App source fetched successfully");
+
+      const servient = new Servient();
+      console.log("Creating servient");
+      servient.addClientFactory(new MqttClientFactory());
+      console.log("Adding client factory");
+      const WoT = await servient.start();
+      console.log("Starting servient");
+      const thing = await WoT.consume(td);
+      console.log("Consuming thing");
+
+      const res = mpyCoreController.performAdaptation(
+        thing,
+        [],
+        fetchSuccess,
+      );
+      if (res instanceof Error) {
+        throw res;
+      }
     }
   } catch (error: unknown) {
     let message: string = "Unknown error during Thing creation";

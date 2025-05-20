@@ -2,11 +2,17 @@ import { MqttClientFactory, Router, Servient } from "../../deps.ts";
 import { AdaptationSchema } from "../models/adaptationSchema.ts";
 import cache from "./../services/cacheService.ts";
 import mpyCoreController from "./../controllers/mpyCoreController.ts";
+import {
+  AppFetchError,
+  AppFetchSuccess,
+  fetchAppManifest,
+  fetchAppSrc,
+} from "../services/appManifestService.ts";
 
 async function adaptEndNode(
   endNodeUUID: string,
-  servient: Servient,
-) {
+  appSrc: AppFetchSuccess[],
+): Promise<Error | null> {
   const td = cache.getTDbyUUID(`urn:uuid:${endNodeUUID}`);
   if (!td) {
     return new Error(
@@ -15,19 +21,22 @@ async function adaptEndNode(
   }
 
   try {
+    //TODO: Maybe extract this somewhere else
+    const servient = new Servient();
+    servient.addClientFactory(new MqttClientFactory());
     const WoT = await servient.start();
     const thing = await WoT.consume(td);
+
+    return mpyCoreController.performAdaptation(thing, [], appSrc);
   } catch (err) {
-    console.error(
-      `Error while parsing cleanupList for end node with UUID "${endNodeUUID}": ${err}`,
+    return new Error(
+      `Error while adapting end node with UUID "${endNodeUUID}": ${err}`,
     );
   }
 }
 
 export function createApadationProtocolRouter(): Router {
   const router = new Router();
-  // const servient: Servient = new Servient();
-  // servient.addClientFactory(new MqttClientFactory());
 
   router.post("/adaptation", async (ctx) => {
     if (!ctx.request.hasBody) {
@@ -36,33 +45,51 @@ export function createApadationProtocolRouter(): Router {
       return;
     }
 
-    const body = await ctx.request.body.json();
-    const data = AdaptationSchema.safeParse(body);
-    if (!data.success) {
-      ctx.response.status = 400;
-      ctx.response.body = `Bad Request: ${
-        JSON.stringify(data.error.format(), null, 2)
-      }`;
-      return;
+    try {
+      const body = await ctx.request.body.json();
+      const data = AdaptationSchema.safeParse(body);
+      if (!data.success) {
+        throw new Error(
+          JSON.stringify(data.error.format(), null, 2),
+        );
+      }
+
+      const schema = data.data;
+      const appManifest = await fetchAppManifest(schema.manifest);
+      if (appManifest instanceof Error) {
+        throw appManifest;
+      }
+
+      const fetchResult = await fetchAppSrc(appManifest.download);
+      const fetchErrors = fetchResult.filter(
+        (r): r is AppFetchError => "error" in r,
+      );
+      if (fetchErrors.length > 0) {
+        throw new Error(
+          `${
+            fetchErrors
+              .map((e) => e.error)
+              .join(", ")
+          }`,
+        );
+      }
+
+      const appSource = fetchResult as AppFetchSuccess[];
+      const res = adaptEndNode(schema.endNodeUUID, appSource);
+      if (res instanceof Error) {
+        throw res;
+      }
+
+      ctx.response.status = 201;
+      ctx.response.body = { status: "ok", message: "Adaptation successful" };
+    } catch (err) {
+      ctx.response.status = 500;
+      if (err instanceof Error) {
+        ctx.response.body = `Internal server error: ${err.message}`;
+      } else {
+        ctx.response.body = `Internal server error: ${err}`;
+      }
     }
-
-    const schema = data.data;
-
-    // const err = adaptEndNode();
-    // if (err) {
-    //   ctx.response.status = 500;
-    //   ctx.response.body = `Internal Server Error: ${err.message}`;
-    //   return;
-    // }
-
-    // identify the end node device to be updated
-    // fetch the new app manifest
-    // fetch the new app source
-    // forward everything to the update manager
-    //
-
-    ctx.response.status = 201;
-    ctx.response.body = { status: "ok", message: "Adaptation started" };
   });
 
   return router;
