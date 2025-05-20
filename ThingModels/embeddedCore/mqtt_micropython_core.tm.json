@@ -61,6 +61,21 @@
         }
     },
     "events": {
+        "log": {
+            "forms": [
+                {
+                    "href": "{{CITYLINK_HREF}}",
+                    "mqv:filter": "{{CITYLINK_EVENT}}/log",
+                    "op": [
+                        "subscribeevent",
+                        "unsubscribeevent"
+                    ],
+                    "mqv:qos": 0,
+                    "mqv:retain": true,
+                    "contentType": "application/json"
+                }
+            ]
+        },
         "VFSActionResponse": {
             "title": "Core VFS Action Response",
             "description": "Response for the last Virtual File System action.",
