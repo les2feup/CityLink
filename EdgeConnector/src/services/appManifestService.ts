@@ -6,7 +6,7 @@ type DownloadMetadata = AppManifest["download"];
 type DownloadMetadataItem = DownloadMetadata[number];
 
 export type AppFetchSuccess = {
-  name: string;
+  path: string;
   url: string;
   content: AppContentTypes;
 };
@@ -52,13 +52,8 @@ export async function fetchAppManifest(
 export async function fetchAppSrc(
   download: DownloadMetadata,
 ): Promise<AppFetchResult[]> {
-  const results: AppFetchResult[] = [];
-  const fetchPromises = download.map(async (mdata) => {
-    const result = await fetchSingleFile(mdata);
-    results.push(result);
-  });
-
-  await Promise.all(fetchPromises);
+  const fetchPromises = download.map((mdata) => fetchSingleFile(mdata));
+  const results = await Promise.all(fetchPromises);
   return results;
 }
 
@@ -68,7 +63,7 @@ async function fetchSingleFile(
   // before fetching, try the file cache
   const cachedFile = cache.getAppContent(mdata.url);
   if (cachedFile) {
-    return { name: mdata.filename, url: mdata.url, content: cachedFile };
+    return { path: mdata.filename, url: mdata.url, content: cachedFile };
   }
 
   try {
@@ -120,11 +115,27 @@ async function fetchSingleFile(
     }
 
     cache.setAppContent(mdata.url, content);
-    return { name: mdata.filename, url: mdata.url, content };
+    return { path: mdata.filename, url: mdata.url, content };
   } catch (error) {
     return {
       url: mdata.url,
       error: new Error(`Error fetching file: ${error}`),
     };
   }
+}
+
+export function filterAppFetchErrors(
+  results: AppFetchResult[],
+): AppFetchError[] {
+  return results.filter((result): result is AppFetchError =>
+    "url" in result && "error" in result
+  );
+}
+
+export function filterAppFetchSuccess(
+  results: AppFetchResult[],
+): AppFetchSuccess[] {
+  return results.filter((result): result is AppFetchSuccess =>
+    "path" in result && "url" in result && "content" in result
+  );
 }

@@ -1,7 +1,8 @@
 import { AppContentTypes } from "../models/appManifest.ts";
 import { AppFetchSuccess } from "../services/appManifestService.ts";
 import { VFSActionResponseSchema } from "./../models/vfsResponseSchema.ts";
-import { crc32, encodeBase64 } from "../../deps.ts";
+import { Buffer, crc32, encodeBase64, ThingDescription } from "../../deps.ts";
+import { invokeAction, subscribeEvent } from "../services/tdService.ts";
 
 export type ActionName = "Write" | "Delete";
 
@@ -25,9 +26,167 @@ export type VFSActionOutput = Pick<
   "timestamp" | "message"
 >;
 
+export function VFSAction(
+  td: ThingDescription,
+  action: ActionName,
+  input: VFSDeleteInput | VFSWriteInput,
+): Promise<VFSActionOutput> {
+  return new Promise<VFSActionOutput>((resolve, reject) => {
+    let cancelSubscription: (() => void) | null = null;
+    let isSettled = false;
+
+    const cleanup = () => {
+      if (cancelSubscription) {
+        cancelSubscription();
+        cancelSubscription = null;
+      }
+    };
+
+    const onEvent = (_topic: string, data: Buffer) => {
+      cleanup();
+      try {
+        const output = responseHandler(action, data);
+        if (!isSettled) {
+          isSettled = true;
+          resolve(output);
+        }
+      } catch (err) {
+        if (!isSettled) {
+          isSettled = true;
+          reject(err);
+        }
+      }
+    };
+
+    const onError = (err: Error) => {
+      cleanup();
+      if (!isSettled) {
+        isSettled = true;
+        reject(err);
+      }
+    };
+
+    const onPublish = (topic: string) => {
+      console.log(`Published to topic: ${topic}`);
+    };
+
+    const onSubscribe = (_topic: string) => {
+      console.debug("Invoking VFS action:", action);
+      const ret = invokeAction(
+        td,
+        `citylink:embeddedCore_VFS${action}`,
+        JSON.stringify(input),
+        onPublish,
+        onError,
+      );
+      if (ret instanceof Error) {
+        cleanup();
+        reject(ret);
+      }
+    };
+
+    const result = subscribeEvent(
+      td,
+      "citylink:embeddedCore_VFSActionResponse",
+      onEvent,
+      onSubscribe,
+      onError,
+    );
+
+    if (result instanceof Error) {
+      reject(result);
+    } else {
+      cancelSubscription = result;
+    }
+
+    setTimeout(() => {
+      cleanup();
+      if (!isSettled) {
+        isSettled = true;
+        reject(new Error("Timeout waiting for VFS action response."));
+      }
+    }, 60000); // 1 minute timeout
+  });
+}
+
+export function performAdaptation(
+  td: ThingDescription,
+  cleanupList: string[],
+  inputList: AppFetchSuccess[],
+): Error | null {
+  if (!td) {
+    return new Error("ThingDescription is null or undefined.");
+  }
+
+  if (!Array.isArray(cleanupList)) {
+    console.error("cleanupList is not an array:", cleanupList);
+  }
+
+  if (!Array.isArray(inputList)) {
+    console.error("inputList is not an array:", inputList);
+  }
+
+  try {
+    console.log("Cleaning up files...");
+
+    for (const entry of cleanupList) {
+      const input: VFSDeleteInput = {
+        path: entry,
+      };
+
+      VFSAction(td, "Delete", input).then(() => {
+        console.log(`File ${entry} deleted successfully.`);
+      }).catch((err) => {
+        console.error(`Error deleting file ${entry}:`, err);
+        return err;
+      });
+
+      console.log(`File ${entry} deleted successfully.`);
+    }
+
+    console.log("Writing files...");
+    console.log("inputList has", inputList.length, "items");
+
+    for (const { path, url, content } of inputList) {
+      console.log("Handling file:", path, url);
+      const data = encodeBase64(contentToBin(content));
+      const hash = `0x${(crc32(data) >>> 0).toString(16)}`;
+
+      console.log(`File ${path} has hash: ${hash}`);
+
+      // convert contents to base64 data
+      // compute crc32 of base64 data
+      const writeInput: VFSWriteInput = {
+        path,
+        payload: { data, hash, algo: "crc32" },
+        append: false,
+      };
+
+      console.log(`Writing file ${path} with data:`, data);
+
+      VFSAction(td, "Write", writeInput).then(() => {
+        console.log(`File ${path} written successfully.`);
+      }).catch((err) => {
+        console.error(`VFSWrite action error during upload of ${path}:`, err);
+      });
+    }
+
+    const res = invokeAction(td, "citylink:embeddedCore_reload", "");
+    if (res instanceof Error) {
+      console.error("Failed to issue device reload:", res);
+      return res;
+    }
+  } catch (err) {
+    console.error("Error during adaptation:", err);
+    return new Error(`Error during adaptation: ${err}`);
+  }
+
+  return null;
+}
+
 function responseHandler(
   action: ActionName,
-  rawOutput: WoT.DataSchema,
+  rawOutput: Buffer,
 ): VFSActionOutput {
   const parsedOutput = VFSActionResponseSchema.safeParse(rawOutput);
   if (!parsedOutput.success) {
@@ -72,99 +231,6 @@ function contentToBin(content: AppContentTypes): Uint8Array {
       return new TextEncoder().encode(JSON.stringify(content));
     }
   }
-}
-
-export function VFSAction(
-  thing: WoT.ConsumedThing,
-  action: ActionName,
-  input: VFSDeleteInput | VFSWriteInput,
-): Promise<VFSActionOutput> {
-  return new Promise<VFSActionOutput>((resolve, reject) => {
-    const onResponse = (data: WoT.InteractionOutput) => {
-      try {
-        resolve(responseHandler(action, data.schema!));
-      } catch (err) {
-        reject(err);
-      }
-    };
-
-    const onError = (err: Error) => {
-      console.error(`Error deleting ${input.path}:`, err);
-      reject(err);
-    };
-
-    console.log(
-      `Subscribing to event citylink:embeddedCore_VFSActionResponse for ${action} action...`,
-    );
-    thing.subscribeEvent(
-      "citylink:embeddedCore_VFSActionResponse",
-      onResponse,
-      onError,
-    ).then(() => {
-      console.log(
-        `Subscribed to event citylink:embeddedCore_VFSActionResponse for ${action} action.`,
-      );
-      thing.invokeAction(`citylink:embeddedCore_VFS${action}`, input).then(
-        () => {
-          console.log(
-            `Invoked action citylink:embeddedCore_VFS${action} with input:`,
-            input,
-          );
-        },
-      ).catch((err) => {
-        console.error(
-          `Error invoking action citylink:embeddedCore_VFS${action}:`,
-          err,
-        );
-        reject(err);
-      });
-    }).catch(reject);
-  });
-}
-
-export function performAdaptation(
-  thing: WoT.ConsumedThing,
-  cleanupList: string[],
-  inputList: AppFetchSuccess[],
-): Error | null {
-  try {
-    for (const entry of cleanupList) {
-      const input: VFSDeleteInput = {
-        path: entry,
-      };
-
-      VFSAction(thing, "Delete", input).then(() => {
-        console.log(`File ${entry} deleted successfully.`);
-      }).catch((err) => {
-        console.error(`Error deleting file ${entry}:`, err);
-        return err;
-      });
-    }
-
-    for (const { name: path, content } of inputList) {
-      const data = encodeBase64(contentToBin(content));
-      const hash = `0x${(crc32(data) >>> 0).toString(16)}`;
-
-      // convert contents to base64 data
-      // compute crc32 of base64 data
-      const input: VFSWriteInput = {
-        path,
-        payload: { data, hash, algo: "crc32" },
-        append: false,
-      };
-
-      VFSAction(thing, "Write", input).then(() => {
-        console.log(`File ${path} written successfully.`);
-      }).catch((err) => {
-        console.error(`Error writing file ${path}:`, err);
-      });
-    }
-  } catch (err) {
-    console.error("Error during adaptation:", err);
-    return new Error(`Error during adaptation: ${err}`);
-  }
-
-  return null;
 }
 
 export default {

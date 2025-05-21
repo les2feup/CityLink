@@ -1,4 +1,4 @@
-import { MqttClientFactory, Router, Servient } from "../../deps.ts";
+import { Router } from "../../deps.ts";
 import { AdaptationSchema } from "../models/adaptationSchema.ts";
 import cache from "./../services/cacheService.ts";
 import mpyCoreController from "./../controllers/mpyCoreController.ts";
@@ -7,12 +7,13 @@ import {
   AppFetchSuccess,
   fetchAppManifest,
   fetchAppSrc,
+  filterAppFetchErrors,
 } from "../services/appManifestService.ts";
 
-async function adaptEndNode(
+function adaptEndNode(
   endNodeUUID: string,
   appSrc: AppFetchSuccess[],
-): Promise<Error | null> {
+): Error | null {
   const td = cache.getTDbyUUID(`urn:uuid:${endNodeUUID}`);
   if (!td) {
     return new Error(
@@ -21,13 +22,7 @@ async function adaptEndNode(
   }
 
   try {
-    //TODO: Maybe extract this somewhere else
-    const servient = new Servient();
-    servient.addClientFactory(new MqttClientFactory());
-    const WoT = await servient.start();
-    const thing = await WoT.consume(td);
-
-    return mpyCoreController.performAdaptation(thing, [], appSrc);
+    return mpyCoreController.performAdaptation(td, [], appSrc);
   } catch (err) {
     return new Error(
       `Error while adapting end node with UUID "${endNodeUUID}": ${err}`,
@@ -61,9 +56,7 @@ export function createApadationProtocolRouter(): Router {
       }
 
       const fetchResult = await fetchAppSrc(appManifest.download);
-      const fetchErrors = fetchResult.filter(
-        (r): r is AppFetchError => "error" in r,
-      );
+      const fetchErrors = filterAppFetchErrors(fetchResult);
       if (fetchErrors.length > 0) {
         throw new Error(
           `${
