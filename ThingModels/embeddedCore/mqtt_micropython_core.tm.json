@@ -301,7 +301,7 @@
                 }
             ]
         },
-        "coreReload": {
+        "reload": {
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
