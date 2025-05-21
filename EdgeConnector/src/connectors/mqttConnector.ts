@@ -118,7 +118,7 @@ async function handleRegistrationMessage(
     cache.setTD(model.title!, td.id!, td);
     client.publish(
       `citylink/${endNodeID}/registration/ack`,
-      JSON.stringify({ status: "sucess", id: generatedUUID }),
+      JSON.stringify({ status: "success", id: generatedUUID }),
     );
 
     //TODO: extract this to a function

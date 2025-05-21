@@ -11,7 +11,7 @@ export def main [ basedir: path = .] {
         let outdir = $outbasedir | path join $extra
 
         mkdir $outdir
-        mpy-cross -O3 $file -o ($outdir | path join $outname)
+        mpy-cross $file -o ($outdir | path join $outname)
 
         {dir: $outdir, file: $outname}
     }

@@ -1,4 +1,4 @@
-from citylink import EmbeddedCore
+from citylink_core import EmbeddedCore
 from micropython import const
 from machine import Pin, ADC
 from time import time, gmtime
@@ -14,7 +14,8 @@ OVERHEAT_TEMP = const(40)  # Overheat threshold in degrees Celsius
 
 # HW setup
 temp_sensor = ADC(Pin(TEMP_GPIO))
-alarm = Pin(ALARM_LED_GPIO, Pin.OUT)
+alarm = Pin(ALARM_GPIO, Pin.OUT)
+
 
 @EmbeddedCore.sync_executor
 def toggle_alarm_action(core: EmbeddedCore, state: bool):
@@ -25,10 +26,10 @@ def toggle_alarm_action(core: EmbeddedCore, state: bool):
 @EmbeddedCore.sync_executor
 def sample_temperature(core: EmbeddedCore) -> int:
     """Sample the temperature from the sensor."""
-    raw_value = temp_sensor.read_u16() # raw 0-65535 ADC reading
+    raw_value = temp_sensor.read_u16()  # raw 0-65535 ADC reading
 
     # Convert the raw value to 0-100 degrees Celsius
-    temperature = (raw_value / 65535) * 100 
+    temperature = (raw_value / 65535) * 100
     if temperature < TEMP_MIN or temperature > TEMP_MAX:
         raise ValueError("Temperature out of range")
 
