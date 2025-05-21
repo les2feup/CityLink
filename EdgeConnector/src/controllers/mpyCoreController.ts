@@ -149,7 +149,7 @@ export function performAdaptation(
 
     for (const { path, url, content } of inputList) {
       console.log("Handling file:", path, url);
-      const data = encodeBase64(contentToBin(content));
+      const data = encodeContent(content);
       const hash = `0x${(crc32(data) >>> 0).toString(16)}`;
 
       console.log(`File ${path} has hash: ${hash}`);
@@ -220,15 +220,15 @@ function responseHandler(
   };
 }
 
-function contentToBin(content: AppContentTypes): Uint8Array {
+function encodeContent(content: AppContentTypes): string {
   switch (typeof content) {
     case "string":
-      return new TextEncoder().encode(content);
+      return encodeBase64(content);
     case "object": {
       if (content instanceof Uint8Array) {
-        return content;
+        return encodeBase64(content);
       }
-      return new TextEncoder().encode(JSON.stringify(content));
+      return encodeBase64(JSON.stringify(content));
     }
   }
 }
