@@ -19,7 +19,8 @@ async function handler(
     return;
   }
 
-  const parsed = RegistrationSchema.safeParse(message);
+  const json = JSON.parse(message.toString());
+  const parsed = RegistrationSchema.safeParse(json);
   if (!parsed.success) {
     throw new Error(
       `Invalid registration payload: ${

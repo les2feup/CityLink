@@ -25,6 +25,8 @@ export function init(
   };
 
   client.on("connect", () => {
+    console.log("Connected to the mqtt broker");
+
     client.subscribe("citylink/+/registration", (err) => {
       if (err) {
         onError?.(new Error("Error subscribing to registration topic"));
@@ -32,7 +34,7 @@ export function init(
       }
 
       console.log(
-        "Connected to MQTT broker and subscribed to registration topic",
+        "Subscribed to `registration` topic",
       );
     });
 
@@ -43,7 +45,7 @@ export function init(
       }
 
       console.log(
-        "Subscribed to adaptation ready topic",
+        "Subscribed to `adaptation/ready` topic",
       );
     });
   });
@@ -101,3 +103,7 @@ function parseTopic(
     }
   }
 }
+
+export default {
+  init,
+};
