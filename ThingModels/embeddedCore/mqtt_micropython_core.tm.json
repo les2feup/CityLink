@@ -71,7 +71,7 @@
                         "unsubscribeevent"
                     ],
                     "mqv:qos": 0,
-                    "mqv:retain": true,
+                    "mqv:retain": false,
                     "contentType": "application/json"
                 }
             ]
