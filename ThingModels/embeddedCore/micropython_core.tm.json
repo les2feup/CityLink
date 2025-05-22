@@ -20,16 +20,30 @@
     "properties": {
         "logLevel": {
             "title": "Log Level",
-            "description": "Minimum log level for published log meges.",
+            "description": "Minimum log level for published log messages.",
             "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/generic/common_props.tm.json#/properties/logLevel",
             "readOnly": false,
-            "writeOnly": false
+            "writeOnly": false,
+            "observable": true
+        },
+        "status": {
+            "title": "Status",
+            "description": "Status of the End Node",
+            "readOnly": true,
+            "writeOnly": false,
+            "observable": true,
+            "type": "string",
+            "enum": [
+                "UNDEF",
+                "ADAPT",
+                "OK"
+            ]
         }
     },
     "events": {
         "log": {
             "title": "Embedded Core Log Message",
-            "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/generic/common_events.tm.json#/events/logMege"
+            "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/generic/common_events.tm.json#/events/logMessage"
         }
     },
     "actions": {

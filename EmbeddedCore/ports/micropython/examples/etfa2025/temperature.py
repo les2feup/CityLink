@@ -56,7 +56,7 @@ def main(core: EmbeddedCore):
     The runtime is initialized with the default configuration by the App() decorator
     and passed into the main function as the first argument.
     """
-    core.create_property("temperature", 0)
+    core.create_property("temperature", 0.0)
     core.register_action_executor("toggleAlarm", toggle_alarm_action)
     core.task_create(
         "sample_temperature",

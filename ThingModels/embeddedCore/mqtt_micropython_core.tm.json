@@ -58,6 +58,22 @@
                     "contentType": "application/json"
                 }
             ]
+        },
+        "status": {
+            "forms": [
+                {
+                    "href": "{{CITYLINK_HREF}}",
+                    "mqv:filter": "{{CITYLINK_PROPERTY}}/status",
+                    "op": [
+                        "readproperty",
+                        "observeproperty",
+                        "unobserveproperty"
+                    ],
+                    "mqv:qos": 1,
+                    "mqv:retain": true,
+                    "contentType": "application/json"
+                }
+            ]
         }
     },
     "events": {
