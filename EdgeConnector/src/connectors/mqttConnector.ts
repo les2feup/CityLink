@@ -6,13 +6,11 @@ import cache from "../services/cacheService.ts";
 import mpyCoreController from "./../controllers/mpyCoreController.ts";
 import { Buffer, mqtt, randomUUID } from "../../deps.ts";
 import {
-  AppFetchError,
   AppFetchResult,
   AppFetchSuccess,
   fetchAppManifest,
   fetchAppSrc,
   filterAppFetchErrors,
-  filterAppFetchSuccess,
 } from "../services/appManifestService.ts";
 
 export function init(

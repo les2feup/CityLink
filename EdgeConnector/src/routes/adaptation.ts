@@ -3,7 +3,6 @@ import { AdaptationSchema } from "../models/adaptationSchema.ts";
 import cache from "./../services/cacheService.ts";
 import mpyCoreController from "./../controllers/mpyCoreController.ts";
 import {
-  AppFetchError,
   AppFetchSuccess,
   fetchAppManifest,
   fetchAppSrc,

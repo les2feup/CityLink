@@ -211,6 +211,11 @@ function getTemplateMap(
   }
 }
 
+//TODO: These properties should be published to the broker
+//      with the retain flag set to true and qos set to 2.
+//      Afterwards there is no need to publish them again.
+//      Either that or remove the form from the TD since all
+//      these properties **should** be read-only constants.
 function fillPlatfromForms(
   td: WoT.ExposedThingInit,
   map: Record<string, string>,
