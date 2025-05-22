@@ -1,4 +1,4 @@
-from citylink import EmbeddedCore
+from citylink_core import EmbeddedCore
 
 
 @EmbeddedCore.App()

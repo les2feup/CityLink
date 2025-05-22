@@ -139,7 +139,7 @@
                 ]
             }
         },
-        "coreReload": {
+        "reload": {
             "title": "Embedded Core Reload",
             "description": "Force a reload the Embedded Core runtime.",
             "safe": false,

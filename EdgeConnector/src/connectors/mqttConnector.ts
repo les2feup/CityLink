@@ -1,14 +1,18 @@
 import { MQTT_BROKER_URL } from "../config/config.ts";
 import { RegistrationSchema } from "../models/registrationSchema.ts";
 import { fetchThingModel } from "../services/tmService.ts";
-import { instantiateTDs, InstantiationOpts } from "../services/tdService.ts";
+import { InstantiationOpts, produceTD } from "../services/tdService.ts";
+import cache from "../services/cacheService.ts";
+import mpyCoreController from "./../controllers/mpyCoreController.ts";
 import { Buffer, mqtt, randomUUID } from "../../deps.ts";
 import {
+  AppFetchError,
+  AppFetchResult,
+  AppFetchSuccess,
   fetchAppManifest,
   fetchAppSrc,
-  FetchError,
-  FetchResult,
-  FetchSuccess,
+  filterAppFetchErrors,
+  filterAppFetchSuccess,
 } from "../services/appManifestService.ts";
 
 export function init(
@@ -101,28 +105,26 @@ async function handleRegistrationMessage(
     }
     console.log("Thing model retrieved sucessfully");
 
-    const opts: InstantiationOpts = [{
+    const opts: InstantiationOpts = {
       endNodeUUID: generatedUUID,
-      selfComposition: true, // Seems to be the most appropriate option given the complexity of the models
       protocol: "mqtt",
-    }];
+    };
 
-    //TODO: maybe tds should be returned instead of cached directly
-    const errors = await instantiateTDs(model, opts);
-    if (errors) {
-      throw new Error(
-        `Error during TD instantiation: ${
-          errors.map((e) => e.message).join(", ")
-        }`,
-      );
+    const td = await produceTD(model, opts);
+    if (td instanceof Error) {
+      throw new Error(`Error during TD instantiation: ${td.message}`);
     }
 
-    if (!payload.tmOnly) {
-      const results: FetchResult[] = await fetchAppSrc(manifest.download);
-      const fetchErrors = results.filter(
-        (r): r is FetchError => "error" in r,
-      );
+    cache.setTD(model.title!, td.id!, td);
+    client.publish(
+      `citylink/${endNodeID}/registration/ack`,
+      JSON.stringify({ status: "success", id: generatedUUID }),
+    );
 
+    //TODO: extract this to a function
+    if (!payload.tmOnly) {
+      const results: AppFetchResult[] = await fetchAppSrc(manifest.download);
+      const fetchErrors = filterAppFetchErrors(results);
       if (fetchErrors.length > 0) {
         throw new Error(
           `Error fetching app source: ${
@@ -133,22 +135,23 @@ async function handleRegistrationMessage(
         );
       }
 
-      const fetchSuccess = results.filter(
-        (r): r is FetchSuccess => "name" in r && "content" in r,
-      );
-
+      const fetchSuccess = results as AppFetchSuccess[];
       fetchSuccess.forEach((result) => {
         console.log(
-          `Fetched ${result.name} from ${result.url} with content type ${typeof result
+          `Fetched ${result.path} from ${result.url} with content type ${typeof result
             .content}`,
         );
       });
-    }
+      console.log("App source fetched successfully");
 
-    client.publish(
-      `citylink/${endNodeID}/registration/ack`,
-      JSON.stringify({ status: "sucess", id: generatedUUID }),
-    );
+      const res = mpyCoreController.performAdaptation(td, [], fetchSuccess);
+      if (res instanceof Error) {
+        throw res;
+      }
+
+      console.log("Adaptation performed successfully");
+      console.log("New end node registration complete");
+    }
   } catch (error: unknown) {
     let message: string = "Unknown error during Thing creation";
     if (error instanceof Error) {
@@ -158,9 +161,10 @@ async function handleRegistrationMessage(
     }
 
     console.error("Error during Thing creation:", message);
+    //TODO: better error reporting
     client.publish(
       `citylink/${endNodeID}/registration/ack`,
-      JSON.stringify({ status: "error", message }),
+      JSON.stringify({ status: "error", message: "registration error" }),
     );
   }
 }

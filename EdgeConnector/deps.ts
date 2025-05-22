@@ -15,10 +15,10 @@ export type {
   ThingDescription,
 } from "npm:wot-thing-description-types";
 
-import MqttWoTBinding from "npm:@node-wot/binding-mqtt";
-export const MqttClientFactory = MqttWoTBinding.MqttClientFactory;
-export { Servient } from "npm:@node-wot/core";
 export { ThingModelHelpers } from "./eclipse-thingweb/thing-model/src/thing-model.ts";
 export type { CompositionOptions } from "./eclipse-thingweb/thing-model/src/thing-model.ts";
 
 export { z } from "npm:zod";
+
+export { encodeBase64 } from "jsr:@std/encoding/base64";
+export { crc32 } from "node:zlib";
