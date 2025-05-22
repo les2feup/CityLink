@@ -66,9 +66,7 @@ export function VFSAction(
       }
     };
 
-    const onPublish = (topic: string) => {
-      console.log(`Published to topic: ${topic}`);
-    };
+    const onPublish = (_topic: string) => {};
 
     const onSubscribe = (_topic: string) => {
       console.debug("Invoking VFS action:", action);

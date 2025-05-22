@@ -25,6 +25,7 @@ export function subscribeEvent(
   onEvent: (topic: string, message: Buffer) => void,
   onSubscribe?: Callback<string>,
   onError?: Callback<Error>,
+  subscribeOpts?: { qos?: 0 | 1 | 2 },
 ): Error | CancelSubscription {
   const eventDef = td.events?.[event];
   const eventForm = eventDef?.forms?.[0];
@@ -43,8 +44,9 @@ export function subscribeEvent(
   let isSubscribed = false;
   let isTerminated = false;
 
+  const qos = subscribeOpts?.qos ?? 0;
   client.on("connect", () => {
-    client.subscribe(topic, (err) => {
+    client.subscribe(topic, { qos }, (err) => {
       if (err) {
         onError?.(err);
         client.end();
