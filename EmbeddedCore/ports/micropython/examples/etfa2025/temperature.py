@@ -1,4 +1,4 @@
-from citylink_core import EmbeddedCore
+from citylink.core import EmbeddedCore
 from micropython import const
 from machine import Pin, ADC
 from time import time, gmtime
@@ -48,8 +48,7 @@ def sample_temperature(core: EmbeddedCore) -> int:
     return int(temperature)
 
 
-@EmbeddedCore.App()
-def main(core: EmbeddedCore):
+def setup(core: EmbeddedCore):
     """Main function for the temperature sensor application.
     This function initializes the temperature sensor and starts the main loop.
 
