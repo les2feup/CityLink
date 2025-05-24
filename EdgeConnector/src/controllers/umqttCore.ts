@@ -40,13 +40,15 @@ class Controller {
         "property",
         "observeproperty",
         this.controllerOpts.observePropertyQoS,
+        "citylink:platform_",
       );
       this.subscribeToAll(
         "event",
         "subscribeevent",
         this.controllerOpts.subscribeEventQos,
+        "citylink:platform_",
       );
-      this.publishDefaultProperties();
+      // this.publishDefaultProperties();
     });
 
     this.client.on("message", (topic, message) => {
@@ -133,12 +135,18 @@ class Controller {
     type: "property" | "event",
     op: string,
     qos: 0 | 1 | 2,
+    ignore_prefix?: string,
   ): void {
     const entries = type === "property"
       ? Object.entries(this.td.properties ?? {})
       : Object.entries(this.td.events ?? {});
 
     for (const [name] of entries) {
+      if (ignore_prefix && name.startsWith(ignore_prefix)) {
+        console.debug(`Skipping ${type} "${name}" due to ignore prefix`);
+        continue;
+      }
+
       const opts = this.extractMqttOptions(type, name, op);
       if (opts) {
         this.subscribeToTopic(name, opts.topic, qos);

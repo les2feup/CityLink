@@ -229,13 +229,9 @@ function fillPlatfromForms(
         {
           href: map.CITYLINK_HREF,
           "mqv:filter": `${map.CITYLINK_PROPERTY}/platform/${prop_name}`,
-          "mqv:qos": 2,
+          "mqv:qos": 1,
           "mqv:retain": true,
-          op: [
-            "readProperty",
-            "subscribeProperty",
-            "unsubscribeProperty",
-          ],
+          op: "readproperty",
           contentType: "application/json",
         },
       ],

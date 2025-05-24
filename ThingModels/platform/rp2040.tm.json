@@ -30,6 +30,10 @@
                     "readOnly": true,
                     "writeOnly": false
                 }
+            },
+            "const": {
+                "core": "ARM_Cortex_M0+",
+                "count": 2
             }
         },
         "SRAM": {
@@ -64,6 +68,10 @@
                     "readOnly": true,
                     "writeOnly": false
                 }
+            },
+            "default": {
+                "interface": "QSPI",
+                "size": 0
             }
         },
         "DMA": {
@@ -79,6 +87,9 @@
                     "readOnly": true,
                     "writeOnly": false
                 }
+            },
+            "const": {
+                "channels": 12
             }
         },
         "USB": {
@@ -94,6 +105,9 @@
                     "readOnly": true,
                     "writeOnly": false
                 }
+            },
+            "const": {
+                "version": "2.0"
             }
         },
         "peripherals": {
@@ -205,6 +219,29 @@
                             "writeOnly": false
                         }
                     }
+                }
+            },
+            "const": {
+                "UART": {
+                    "channels": 2
+                },
+                "SPI": {
+                    "channels": 2
+                },
+                "I2C": {
+                    "channels": 2
+                },
+                "PWM": {
+                    "channels": 16
+                },
+                "ADC": {
+                    "channels": 4
+                },
+                "GPIO": {
+                    "pins": 30
+                },
+                "PIO_State_Machine": {
+                    "state_machines": 8
                 }
             }
         }
