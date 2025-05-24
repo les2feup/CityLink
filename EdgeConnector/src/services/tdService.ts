@@ -5,12 +5,13 @@ import {
   ThingDescription,
   ThingModel,
   ThingModelHelpers,
+  UUID,
 } from "../../deps.ts";
 import { createTemplateMapMQTT } from "./../models/templateMaps/mqttTemplateMap.ts";
 import { MQTT_BROKER_URL } from "./../config/config.ts";
 
 export type InstantiationOpts = {
-  endNodeUUID: string;
+  endNodeUUID: UUID;
   protocol: "mqtt" | "http" | "coap";
   extra?: {
     [key: string]: string; // custom fields
@@ -227,7 +228,7 @@ function fillPlatfromForms(
       forms: [
         {
           href: map.CITYLINK_HREF,
-          "mqv:filter": `${map.CITYLINK_PROPERTY}/${prop_name}`,
+          "mqv:filter": `${map.CITYLINK_PROPERTY}/platform/${prop_name}`,
           "mqv:qos": 2,
           "mqv:retain": true,
           op: [
@@ -257,6 +258,8 @@ function fillPlatfromForms(
         ...merged,
         forms: [...(original.forms ?? []), ...merged.forms],
       };
+
+      console.log("Filled platform form for", actualPropName, "in TD", td.id);
     }
   }
 

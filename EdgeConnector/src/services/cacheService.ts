@@ -1,14 +1,16 @@
 import { AppContentTypes, AppManifest } from "../models/appManifest.ts";
-import { ThingDescription, ThingModel } from "../../deps.ts";
+import { ThingDescription, ThingModel, UUID } from "../../deps.ts";
+
+import umqttCore from "../controllers/umqttCore.ts";
+
+// TODO: try to deduplicate storage between different caches
 
 // --- Type Aliases ---
 export type ManifestURL = string;
 export type AppSrcURL = string;
 export type TMURL = string;
 export type TMTitle = string;
-export type EndNodeUUID = string;
-
-export type TDKey = { kind: "TDKey"; value: [TMTitle, EndNodeUUID] };
+export type EndNodeUUID = UUID;
 
 // --- Cache Key Mapping ---
 export type CacheKey =
@@ -17,13 +19,21 @@ export type CacheKey =
   | { cache: "tm"; key: TMTitle }
   | { cache: "tmUrl"; key: TMURL }
   | { cache: "tdMap"; key: TMTitle }
-  | { cache: "td"; key: TDKey }
   | { cache: "endNode"; key: EndNodeUUID };
 
 // --- Cache Entry Types ---
-export interface EndNodeCacheEntry {
-  manifestKey: ManifestURL;
-  tdKey: TDKey;
+export interface EndNode {
+  manifest: AppManifest;
+  tm: ThingModel;
+  td: ThingDescription;
+  controller?: umqttCore;
+}
+
+interface EndNodeEntry {
+  manifestUrl: ManifestURL;
+  tmTitle: TMTitle;
+  controller?: umqttCore;
+  td: ThingDescription;
 }
 
 // --- Cache Maps ---
@@ -32,9 +42,8 @@ const appCache = new Map<AppSrcURL, AppContentTypes>();
 
 const tmCache = new Map<TMTitle, ThingModel>();
 const tmUrlCache = new Map<TMURL, TMTitle>();
-const tdMapCache = new Map<TMTitle, Map<EndNodeUUID, ThingDescription>>();
 
-const endNodeCache = new Map<EndNodeUUID, EndNodeCacheEntry>();
+const endNodeCache = new Map<EndNodeUUID, EndNodeEntry>();
 
 // --- Manifest Cache ---
 export function getManifest(url: ManifestURL): AppManifest | undefined {
@@ -56,41 +65,6 @@ export function setTM(tm: ThingModel, title: TMTitle, tmUrl: TMURL): void {
   tmCache.set(title, tm);
 }
 
-// --- Thing Description Cache ---
-export function getTD(
-  modelTitle: TMTitle,
-  uuid: EndNodeUUID,
-): ThingDescription | undefined {
-  return tdMapCache.get(modelTitle)?.get(uuid);
-}
-
-export function getTDbyUUID(uuid: EndNodeUUID): ThingDescription | undefined {
-  for (const [model, tdMap] of tdMapCache) {
-    if (tdMap.has(uuid)) {
-      console.debug(`Found TD for UUID "${uuid}" in model "${model}".`);
-      return tdMap.get(uuid);
-    }
-  }
-  return undefined;
-}
-
-export function setTD(
-  modelTitle: TMTitle,
-  uuid: EndNodeUUID,
-  td: ThingDescription,
-): void {
-  const tdMap = tdMapCache.get(modelTitle) ??
-    new Map<EndNodeUUID, ThingDescription>();
-  tdMap.set(uuid, td);
-  tdMapCache.set(modelTitle, tdMap);
-}
-
-export function getTDMap(
-  modelTitle: TMTitle,
-): Map<EndNodeUUID, ThingDescription> | undefined {
-  return tdMapCache.get(modelTitle);
-}
-
 // --- App Content Cache ---
 export function getAppContent(fileUrl: AppSrcURL): AppContentTypes | undefined {
   return appCache.get(fileUrl);
@@ -104,26 +78,106 @@ export function setAppContent(
 }
 
 // --- End Node Cache ---
-export function getEndNode(uuid: EndNodeUUID): EndNodeCacheEntry | undefined {
-  return endNodeCache.get(uuid);
+
+// Overload signatures
+export function getEndNode(uuid: EndNodeUUID): EndNode | undefined;
+export function getEndNode(
+  filter: (node: EndNode) => boolean,
+): EndNode[];
+
+// Single implementation
+export function getEndNode(
+  arg: EndNodeUUID | ((node: EndNode) => boolean),
+): EndNode | EndNode[] | undefined {
+  const reconstruct = (entry: EndNodeEntry): EndNode | undefined => {
+    const manifest = manifestCache.get(entry.manifestUrl);
+    const tm = tmCache.get(entry.tmTitle);
+    if (!manifest || !tm) return undefined;
+
+    return {
+      manifest,
+      tm,
+      td: entry.td,
+      controller: entry.controller,
+    };
+  };
+
+  if (typeof arg === "function") {
+    return Array.from(endNodeCache.values())
+      .map(reconstruct)
+      .filter((node): node is EndNode => !!node)
+      .filter(arg);
+  } else {
+    const raw = endNodeCache.get(arg);
+    return raw ? reconstruct(raw) : undefined;
+  }
 }
 
-export function setEndNode(
+export function insertEndNode(
   uuid: EndNodeUUID,
-  manifestKey: ManifestURL,
-  tdKey: TDKey,
+  manifest: AppManifest,
+  tm: ThingModel,
+  td: ThingDescription,
+  controller?: umqttCore,
 ): void {
-  endNodeCache.set(uuid, { manifestKey, tdKey });
+  if (endNodeCache.has(uuid)) {
+    console.warn(`End node with UUID "${uuid}" already exists.`);
+    return;
+  }
+
+  const manifestUrl = [...manifestCache.entries()]
+    .find(([_, m]) => m === manifest)?.[0];
+
+  const tmTitle = [...tmCache.entries()]
+    .find(([_, t]) => t === tm)?.[0];
+
+  if (!manifestUrl || !tmTitle) {
+    console.warn(`Manifest or ThingModel not found in caches`);
+    return;
+  }
+
+  endNodeCache.set(uuid, {
+    manifestUrl,
+    tmTitle,
+    td,
+    controller,
+  });
+}
+
+export function updateEndNode(
+  uuid: EndNodeUUID,
+  n: {
+    manifest?: AppManifest;
+    td?: ThingDescription;
+    tm?: ThingModel;
+    controller?: umqttCore;
+  },
+): void {
+  const entry = endNodeCache.get(uuid);
+  if (!entry) {
+    console.warn(`End node with UUID "${uuid}" does not exist.`);
+    return;
+  }
+
+  if (n.td) entry.td = n.td;
+  if (n.controller) entry.controller = n.controller;
+
+  if (n.manifest) {
+    const manifestUrl = [...manifestCache.entries()]
+      .find(([_, m]) => m === n.manifest)?.[0];
+    if (manifestUrl) entry.manifestUrl = manifestUrl;
+  }
+
+  if (n.tm) {
+    const tmTitle = [...tmCache.entries()]
+      .find(([_, t]) => t === n.tm)?.[0];
+    if (tmTitle) entry.tmTitle = tmTitle;
+  }
+
+  endNodeCache.set(uuid, entry);
 }
 
 // --- Raw Cache Accessors (debug/dev purposes) ---
-export function rawTDCache(): ReadonlyMap<
-  TMTitle,
-  Map<EndNodeUUID, ThingDescription>
-> {
-  return tdMapCache;
-}
-
 export function rawTMCache(): ReadonlyMap<TMTitle, ThingModel> {
   return tmCache;
 }
@@ -134,7 +188,6 @@ export function clear(): void {
   appCache.clear();
   tmCache.clear();
   tmUrlCache.clear();
-  tdMapCache.clear();
   endNodeCache.clear();
 }
 
@@ -144,15 +197,11 @@ export default {
   setManifest,
   getTM,
   setTM,
-  getTD,
-  getTDbyUUID,
-  setTD,
-  getTDMap,
   getAppContent,
   setAppContent,
   getEndNode,
-  setEndNode,
-  rawTDCache,
+  insertEndNode,
+  updateEndNode,
   rawTMCache,
   clear,
 };

@@ -1,22 +1,29 @@
-import { Buffer, mqtt } from "../../../deps.ts";
+import { Buffer, mqtt, UUID } from "../../../deps.ts";
 import { RegistrationSchema } from "../../models/registrationSchema.ts";
 import { fetchAppManifest } from "../../services/appManifestService.ts";
 import { fetchThingModel } from "../../services/tmService.ts";
 import { InstantiationOpts, produceTD } from "../../services/tdService.ts";
 import cache from "../../services/cacheService.ts";
 
+import umqttCore from "../../controllers/umqttCore.ts";
+
+type RegistrationAck = {
+  status: "success" | "error" | "ack";
+  id?: UUID; // Optional ID for success responses
+  message?: string; // Optional error message for error responses
+};
+
 async function handler(
-  client: mqtt.MqttClient,
-  endNodeID: string,
+  endNodeID: string | UUID,
   message: Buffer,
-): Promise<void> {
+): Promise<RegistrationAck> {
   // Check if endNodeID is already registered
-  const isRegistered = cache.getTDbyUUID(endNodeID);
-  if (isRegistered) {
+  if (cache.getEndNode(endNodeID as UUID)) {
     console.log(
-      `End node ${endNodeID} is already registered. Ignoring registration message.`,
+      `End node ${endNodeID} is already registered.`,
     );
-    return;
+
+    return { status: "ack" };
   }
 
   const json = JSON.parse(message.toString());
@@ -35,9 +42,9 @@ async function handler(
     throw manifest;
   }
 
-  const model = await fetchThingModel(manifest.wot.tm);
-  if (model instanceof Error) {
-    throw model;
+  const tm = await fetchThingModel(manifest.wot.tm);
+  if (tm instanceof Error) {
+    throw tm;
   }
 
   const opts: InstantiationOpts = {
@@ -45,38 +52,36 @@ async function handler(
     protocol: "mqtt",
   };
 
-  const td = await produceTD(model, opts);
+  const td = await produceTD(tm, opts);
   if (td instanceof Error) {
     throw new Error(`Error during TD instantiation: ${td.message}`);
   }
 
-  //NOTE: maybe create a different cache for TDs that are waiting for adaptation
-  cache.setTD(model.title!, td.id!, td);
-  client.publish(
-    `citylink/${endNodeID}/registration/ack`,
-    JSON.stringify({ status: "success", id: opts.endNodeUUID }),
-  );
+  cache.insertEndNode(opts.endNodeUUID, manifest, tm, td);
 
-  if (regData.tmOnly) {
-    return;
-  }
-
-  // TODO: trigger the adaptation job
+  return { status: "success", id: opts.endNodeUUID };
 }
 
 export async function registrationHandler(
   client: mqtt.MqttClient,
-  endNodeID: string,
+  endNodeID: string | UUID,
   message: Buffer,
-): Promise<void> {
-  try {
-    await handler(client, endNodeID, message);
-  } catch (e) {
-    const message = e instanceof Error ? e.message : "Unknown error";
+): Promise<UUID | Error> {
+  const ack = (a: RegistrationAck) => {
     client.publish(
       `citylink/${endNodeID}/registration/ack`,
-      JSON.stringify({ status: "error", message }),
+      JSON.stringify(a),
     );
-    throw e;
+  };
+
+  try {
+    const res = await handler(endNodeID, message);
+    ack(res);
+    return res.id || endNodeID as UUID;
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Unknown error";
+    const err = e instanceof Error ? e : new Error(message);
+    ack({ status: "error", message });
+    return err;
   }
 }

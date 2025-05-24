@@ -6,11 +6,13 @@ export { default as assert } from "node:assert";
 
 export { default as mqtt } from "npm:mqtt";
 
+export type { UUID } from "node:crypto";
 export type { Buffer } from "node:buffer";
 export type { ThingModel } from "npm:wot-thing-model-types";
 export type {
   AnyUri,
   BaseLinkElement,
+  FormElementBase,
   LinkElement,
   ThingDescription,
 } from "npm:wot-thing-description-types";

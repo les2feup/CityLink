@@ -1,5 +1,7 @@
-import { Buffer, mqtt } from "./../../../deps.ts";
+import { Buffer, mqtt, UUID } from "./../../../deps.ts";
 import { registrationHandler } from "./registration.ts";
+import cache from "../../services/cacheService.ts";
+import umqttCore from "../../controllers/umqttCore.ts";
 
 export type MqttConnectorOpts = {
   url: string;
@@ -38,21 +40,21 @@ export function init(
       );
     });
 
-    client.subscribe("citylink/+/adaptation/ready", (err) => {
+    client.subscribe("citylink/+/adaptation", (err) => {
       if (err) {
         onError?.(new Error("Error subscribing to adaptation ready topic"));
         cleanup();
       }
 
       console.log(
-        "Subscribed to `adaptation/ready` topic",
+        "Subscribed to `adaptation` topic",
       );
     });
   });
 
   client.on("message", async (topic: string, message: Buffer) => {
     try {
-      const handler = parseTopic(topic);
+      const handler = getMessageHandler(topic, opts);
       await handler(client, message);
     } catch (error) {
       if (error instanceof Error) {
@@ -70,8 +72,9 @@ export function init(
   });
 }
 
-function parseTopic(
+function getMessageHandler(
   topic: string,
+  opts: MqttConnectorOpts,
 ): MessageHandler {
   const parts = topic.split("/");
 
@@ -86,11 +89,19 @@ function parseTopic(
   switch (actionName) {
     case "registration": {
       return async (client, message) => {
-        await registrationHandler(client, endNodeID, message);
+        const res = await registrationHandler(client, endNodeID, message);
+        if (res instanceof Error) {
+          console.error(
+            `Registration failed for end node ${endNodeID}: ${res.message}`,
+          );
+          return;
+        }
+
+        launchNodeController(res, opts);
       };
     }
 
-    case "adaptation/ready": {
+    case "adaptation": {
       return async (client, message) => {
         console.log(
           `Received adaptation ready message for end node ${endNodeID}: ${message.toString()}`,
@@ -102,6 +113,26 @@ function parseTopic(
       throw new Error("Unknown action");
     }
   }
+}
+
+function launchNodeController(
+  nodeId: UUID,
+  opts: MqttConnectorOpts,
+) {
+  const node = cache.getEndNode(nodeId);
+  if (!node) {
+    console.error(`Node with ID ${nodeId} not found in cache.`);
+    return;
+  }
+  if (node.controller) {
+    console.warn(`Node with ID ${nodeId} already has a controller.`);
+    return;
+  }
+
+  const controller = new umqttCore(nodeId, node.td, opts.url);
+  controller.launch();
+  cache.updateEndNode(nodeId, { controller });
+  console.log(`Node controller launched for node ID ${nodeId}`);
 }
 
 export default {
