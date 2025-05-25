@@ -9,8 +9,6 @@ import { createTemplateMapMQTT } from "./../models/templateMaps/mqttTemplateMap.
 import { MQTT_BROKER_URL } from "./../config/config.ts";
 import { getLogger } from "../utils/log/log.ts";
 
-const logger = getLogger();
-
 export type InstantiationOpts = {
   endNodeUUID: UUID;
   protocol: "mqtt" | "http" | "coap";
@@ -23,6 +21,7 @@ export async function produceTD(
   model: ThingModel,
   opts: InstantiationOpts,
 ): Promise<ThingDescription | Error> {
+  const logger = getLogger(import.meta.url);
   const tmTools = new ThingModelHelpers();
   if (!model.title) {
     return new Error("Model title is missing");
@@ -97,6 +96,7 @@ function fillPlatfromForms(
   td: WoT.ExposedThingInit,
   map: Record<string, string>,
 ): ThingDescription {
+  const logger = getLogger(import.meta.url);
   const merge = (prop_name: string) => {
     return {
       readOnly: true,
@@ -142,6 +142,7 @@ function createTopLevelForms(
   td: ThingDescription,
   map: Record<string, string>,
 ): ThingDescription {
+  const logger = getLogger(import.meta.url);
   const topLevel = [
     {
       href: map.CITYLINK_HREF,

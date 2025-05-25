@@ -1,7 +1,6 @@
-import { Router } from "../../deps.ts";
+import { Router, UUID } from "../../deps.ts";
 import { AdaptationSchema } from "../models/adaptationSchema.ts";
 import cache from "./../services/cache.ts";
-import mpyCoreController from "./../controllers/mpyCoreController.ts";
 import {
   AppFetchSuccess,
   fetchAppManifest,
@@ -10,23 +9,23 @@ import {
 } from "../services/appManifestService.ts";
 
 function adaptEndNode(
-  endNodeUUID: string,
+  endNodeUUID: UUID,
   appSrc: AppFetchSuccess[],
 ): Error | null {
-  const td = cache.getTDbyUUID(`urn:uuid:${endNodeUUID}`);
+  const td = cache.getEndNode(endNodeUUID)?.td;
   if (!td) {
     return new Error(
       `td for end node with UUID "${endNodeUUID}" not found.`,
     );
   }
 
-  try {
-    return mpyCoreController.performAdaptation(td, [], appSrc);
-  } catch (err) {
-    return new Error(
-      `Error while adapting end node with UUID "${endNodeUUID}": ${err}`,
-    );
-  }
+  // try {
+  //   return mpyCoreController.performAdaptation(td, [], appSrc);
+  // } catch (err) {
+  //   return new Error(
+  //     `Error while adapting end node with UUID "${endNodeUUID}": ${err}`,
+  //   );
+  // }
 }
 
 export function createApadationProtocolRouter(): Router {
@@ -67,7 +66,7 @@ export function createApadationProtocolRouter(): Router {
       }
 
       const appSource = fetchResult as AppFetchSuccess[];
-      const res = adaptEndNode(schema.endNodeUUID, appSource);
+      const res = adaptEndNode(schema.endNodeUUID as UUID, appSource);
       if (res instanceof Error) {
         throw res;
       }

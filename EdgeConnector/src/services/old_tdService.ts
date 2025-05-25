@@ -1,6 +1,6 @@
 import { Buffer, mqtt, ThingDescription, UUID } from "../../deps.ts";
 import { getLogger } from "../utils/log/log.ts";
-const logger = getLogger();
+const logger = getLogger(import.meta.url);
 
 export type InstantiationOpts = {
   endNodeUUID: UUID;

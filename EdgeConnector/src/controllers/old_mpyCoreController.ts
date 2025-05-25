@@ -4,7 +4,7 @@ import { VFSActionResponseSchema } from "./../models/vfsResponseSchema.ts";
 import { Buffer, crc32, encodeBase64, ThingDescription } from "../../deps.ts";
 import { invokeAction, subscribeEvent } from "../services/tdService.ts";
 import { getLogger } from "../utils/log/log.ts";
-const logger = getLogger();
+const logger = getLogger(import.meta.url);
 
 export type ActionName = "Write" | "Delete";
 

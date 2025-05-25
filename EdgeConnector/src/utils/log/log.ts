@@ -66,7 +66,7 @@ export function initLogger(
 // from the loggers defined in the logConfig.
 // If there are not matches, return the default logger.
 export function getLogger(
-  metaUrl: string = import.meta.url,
+  metaUrl: string,
   baseDir: string = Deno.cwd(),
 ): log.Logger {
   const loggerName = getLoggerName(metaUrl, logConfig, baseDir);

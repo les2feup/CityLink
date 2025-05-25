@@ -4,8 +4,6 @@ import { ThingDescription, ThingModel, UUID } from "../../deps.ts";
 import umqttCore from "../controllers/umqttCore.ts";
 import { getLogger } from "../utils/log/log.ts";
 
-// TODO: try to deduplicate storage between different caches
-
 // --- Type Aliases ---
 export type ManifestURL = string;
 export type AppSrcURL = string;
@@ -79,8 +77,6 @@ export function setAppContent(
 }
 
 // --- End Node Cache ---
-const logger = getLogger();
-
 // Overload signatures
 export function getEndNode(uuid: EndNodeUUID): EndNode | undefined;
 export function getEndNode(
@@ -91,6 +87,7 @@ export function getEndNode(
 export function getEndNode(
   arg: EndNodeUUID | ((node: EndNode) => boolean),
 ): EndNode | EndNode[] | undefined {
+  const logger = getLogger(import.meta.url);
   const reconstruct = (entry: EndNodeEntry): EndNode | undefined => {
     const manifest = manifestCache.get(entry.manifestUrl);
     const tm = tmCache.get(entry.tmTitle);
@@ -111,6 +108,10 @@ export function getEndNode(
       .filter(arg);
   } else {
     const raw = endNodeCache.get(arg);
+    if (!raw) {
+      logger.warn(`End node with UUID "${arg}" not found.`);
+      return undefined;
+    }
     return raw ? reconstruct(raw) : undefined;
   }
 }
@@ -122,6 +123,7 @@ export function insertEndNode(
   td: ThingDescription,
   controller?: umqttCore,
 ): void {
+  const logger = getLogger(import.meta.url);
   if (endNodeCache.has(uuid)) {
     logger.warn(`End node with UUID "${uuid}" already exists.`);
     return;
@@ -156,6 +158,7 @@ export function updateEndNode(
   },
 ): void {
   const entry = endNodeCache.get(uuid);
+  const logger = getLogger(import.meta.url);
   if (!entry) {
     logger.warn(`End node with UUID "${uuid}" does not exist.`);
     return;

@@ -1,10 +1,6 @@
-import { Buffer, mqtt, UUID } from "./../../../deps.ts";
+import { Buffer, mqtt } from "./../../../deps.ts";
 import { registrationHandler } from "./registration.ts";
-import cache from "./../../services/cache.ts";
-import umqttCore from "../../controllers/umqttCore.ts";
 import { getLogger } from "../../utils/log/log.ts";
-
-const logger = getLogger();
 
 export type MqttConnectorOpts = {
   url: string;
@@ -21,6 +17,7 @@ export function init(
   opts: MqttConnectorOpts,
   onError?: (error: Error) => void,
 ): void {
+  const logger = getLogger(import.meta.url);
   const client = mqtt.connect(opts.url);
 
   const cleanup = () => {
@@ -79,6 +76,7 @@ function getMessageHandler(
   topic: string,
   opts: MqttConnectorOpts,
 ): MessageHandler {
+  const logger = getLogger(import.meta.url);
   const parts = topic.split("/");
 
   if (parts.length < 3 || parts[0] !== "citylink") {
@@ -92,15 +90,16 @@ function getMessageHandler(
   switch (actionName) {
     case "registration": {
       return async (client, message) => {
-        const res = await registrationHandler(client, endNodeID, message);
+        const res = await registrationHandler(client, endNodeID, message, opts);
         if (res instanceof Error) {
           logger.error(
             `Registration failed for end node ${endNodeID}: ${res.message}`,
           );
           return;
         }
-
-        launchNodeController(res, opts);
+        logger.info(
+          `Registration successful for end node ${endNodeID}: ${res}`,
+        );
       };
     }
 
@@ -116,26 +115,6 @@ function getMessageHandler(
       throw new Error("Unknown action");
     }
   }
-}
-
-function launchNodeController(
-  nodeId: UUID,
-  opts: MqttConnectorOpts,
-) {
-  const node = cache.getEndNode(nodeId);
-  if (!node) {
-    logger.error(`Node with ID ${nodeId} not found in cache.`);
-    return;
-  }
-  if (node.controller) {
-    logger.warn(`Node with ID ${nodeId} already has a controller.`);
-    return;
-  }
-
-  const controller = new umqttCore(nodeId, node.td, opts.url);
-  controller.launch();
-  cache.updateEndNode(nodeId, { controller });
-  logger.info(`Node controller launched for node ID ${nodeId}`);
 }
 
 export default {

@@ -6,7 +6,7 @@ import mqttConnector from "./connectors/mqtt/connector.ts";
 
 export function startApp(): void {
   initLogger();
-  const logger = getLogger();
+  const logger = getLogger(import.meta.url);
 
   // Initialize MQTT handler
   mqttConnector.init({ url: MQTT_BROKER_URL }, (error: Error) => {
