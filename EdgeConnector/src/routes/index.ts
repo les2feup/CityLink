@@ -2,18 +2,27 @@
 import { Router } from "../../deps.ts";
 import { createTMRouter } from "./tmRoutes.ts";
 import { createEndNodeRouter } from "./endNodeRoutes.ts";
+import { createManifestRouter } from "./appManifestRoutes.ts";
+import { createTDRouter } from "./tdRoutes.ts";
 // import { createApadationProtocolRouter } from "./adaptation.ts";
 
 export function createRouter(): Router {
   const router = new Router();
 
-  // Merge the things routes
+  // Merge the endnode routes
   router.use(createEndNodeRouter().routes());
 
-  // Merge the models routes
+  // Merge the thing model routes
   router.use(createTMRouter().routes());
 
-  // router.use(createApadationProtocolRouter().routes());
+  // Merge the thing description routes
+  router.use(createTDRouter().routes());
+
+  // Merge the app manifest routes
+  router.use(createManifestRouter().routes());
+
+  // Merge the adaptation protocol routes
+  // TODO
 
   router.get("/", (ctx) => {
     ctx.response.type = "text/html";
@@ -26,8 +35,8 @@ export function createRouter(): Router {
           <h1>Welcome to the CityLink Edge Connector home page</h1>
           <p>Navigate to:</p>
           <ul>
-            <li><a href="/things">Thing Descriptions</a></li>
-            <li><a href="/models">Thing Models</a></li>
+          <li><a href="/models">Known Thing Models</a></li>
+            <li><a href="/endnodes">Registered End Nodes</a></li>
           </ul>
         </body>
       </html>

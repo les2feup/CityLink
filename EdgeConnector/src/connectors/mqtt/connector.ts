@@ -98,7 +98,7 @@ function getMessageHandler(
           return;
         }
         logger.info(
-          `Registration successful for end node ${endNodeID}: ${res}`,
+          `✅End node ${endNodeID} registered with (new) id ${res}`,
         );
       };
     }

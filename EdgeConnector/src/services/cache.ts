@@ -146,6 +146,8 @@ export function insertEndNode(
     td,
     controller,
   });
+
+  logger.info(`End node with UUID "${uuid}" inserted into cache.`);
 }
 
 export function updateEndNode(
@@ -182,9 +184,13 @@ export function updateEndNode(
   endNodeCache.set(uuid, entry);
 }
 
-// --- Raw Cache Accessors (debug/dev purposes) ---
+// --- Raw Cache Accessors (route access purposes) ---
 export function rawTMCache(): ReadonlyMap<TMTitle, ThingModel> {
   return tmCache;
+}
+
+export function rawEndNodeCache(): ReadonlyMap<EndNodeUUID, EndNodeEntry> {
+  return endNodeCache;
 }
 
 // --- Cache Clear ---
@@ -208,5 +214,6 @@ export default {
   insertEndNode,
   updateEndNode,
   rawTMCache,
+  rawEndNodeCache,
   clear,
 };

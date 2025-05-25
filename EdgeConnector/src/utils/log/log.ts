@@ -1,5 +1,6 @@
 import { bold, dim, log, white } from "../../../deps.ts";
 import { getLoggerName } from "./internal/internal.ts";
+import { loggers } from "../../config/config.ts";
 
 function coloredFormatter(record: log.LogRecord): string {
   const levelTag = bold(record.levelName);
@@ -21,7 +22,7 @@ function coloredFormatter(record: log.LogRecord): string {
   return lines.join(" ");
 }
 
-export const logConfig: log.LogConfig = {
+const logConfig: log.LogConfig = {
   handlers: {
     console: new log.ConsoleHandler("DEBUG", {
       formatter: coloredFormatter,
@@ -32,26 +33,7 @@ export const logConfig: log.LogConfig = {
       level: "INFO",
       handlers: ["console"],
     },
-    "citylink": {
-      level: "INFO",
-      handlers: ["console"],
-    },
-    "citylink.connectors": {
-      level: "INFO",
-      handlers: ["console"],
-    },
-    "citylink.connectors.mqtt": {
-      level: "INFO",
-      handlers: ["console"],
-    },
-    "citylink.controllers": {
-      level: "INFO",
-      handlers: ["console"],
-    },
-    "citylink.controllers.umqttCore": {
-      level: "INFO",
-      handlers: ["console"],
-    },
+    ...loggers,
   },
 };
 
