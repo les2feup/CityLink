@@ -1,9 +1,9 @@
 import { Buffer, mqtt, UUID } from "../../../deps.ts";
 import { RegistrationSchema } from "../../models/registrationSchema.ts";
 import { fetchAppManifest } from "../../services/appManifestService.ts";
-import { fetchThingModel } from "../../services/tmService.ts";
-import { InstantiationOpts, produceTD } from "../../services/tdService.ts";
-import cache from "../../services/cacheService.ts";
+import { fetchThingModel } from "../../utils/tm.ts";
+import { InstantiationOpts, produceTD } from "../../utils/td.ts";
+import cache from "../../services/cache.ts";
 import { getLogger } from "../../utils/log/log.ts";
 
 const logger = getLogger();

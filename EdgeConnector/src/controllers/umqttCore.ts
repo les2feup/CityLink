@@ -41,13 +41,11 @@ class Controller {
       logger.info(`🔌 Connected to MQTT broker at ${this.brokerURL}`);
       this.subscribeToAll(
         "property",
-        "observeproperty",
         this.controllerOpts.observePropertyQoS,
         "citylink:platform_",
       );
       this.subscribeToAll(
         "event",
-        "subscribeevent",
         this.controllerOpts.subscribeEventQos,
         "citylink:platform_",
       );
@@ -78,28 +76,21 @@ class Controller {
   }
 
   private extractMqttOptions(
-    affordanceType: "property" | "action" | "event",
-    affordanceName: string,
+    forms: ThingDescription["forms"],
+    affordanceType: "property" | "event" | "action",
     expectedOp: string,
   ): MqttFormOptions | null {
-    const [forms, topicKey] = (() => {
+    const topicKey = (() => {
       switch (affordanceType) {
         case "property":
-          return [
-            this.td.properties?.[affordanceName]?.forms ?? [],
-            "mqv:filter",
-          ];
         case "event":
-          return [
-            this.td.events?.[affordanceName]?.forms ?? [],
-            "mqv:filter",
-          ];
+          return "mqv:filter";
         case "action":
-          return [this.td.actions?.[affordanceName]?.forms ?? [], "mqv:topic"];
+          return "mqv:topic";
       }
     })();
 
-    if (!forms.length) return null;
+    if (!forms || !forms.length) return null;
 
     for (const form of forms) {
       const ops = Array.isArray(form.op) ? form.op : [form.op];
@@ -125,7 +116,11 @@ class Controller {
       const val = prop.const ?? prop.default ?? null;
       if (val === null) continue;
 
-      const opts = this.extractMqttOptions("property", name, "readproperty");
+      const opts = this.extractMqttOptions(
+        prop.forms,
+        "property",
+        "readproperty",
+      );
       if (opts) {
         this.publish(val, opts);
       } else {
@@ -136,21 +131,40 @@ class Controller {
 
   private subscribeToAll(
     type: "property" | "event",
-    op: string,
     qos: 0 | 1 | 2,
     ignore_prefix?: string,
   ): void {
+    // Check first top level forms for subscribeallevents or observeallproperties
+    const topLevelOP = type === "property"
+      ? "observeallproperties"
+      : "subscribeallevents";
+
+    const opts = this.extractMqttOptions(
+      this.td.forms,
+      type,
+      topLevelOP,
+    );
+
+    if (opts) {
+      this.subscribeToTopic(topLevelOP, opts.topic, qos);
+    } else {
+      logger.warn(
+        `⚠️ No MQTT config for top-level ${type} subscription. trying individual affordances.`,
+      );
+    }
+
+    const op = type === "property" ? "observeproperty" : "subscribeevent";
     const entries = type === "property"
       ? Object.entries(this.td.properties ?? {})
       : Object.entries(this.td.events ?? {});
 
-    for (const [name] of entries) {
+    for (const [name, obj] of entries) {
       if (ignore_prefix && name.startsWith(ignore_prefix)) {
         logger.debug(`Skipping ${type} "${name}" due to ignore prefix`);
         continue;
       }
 
-      const opts = this.extractMqttOptions(type, name, op);
+      const opts = this.extractMqttOptions(obj.forms, type, op);
       if (opts) {
         this.subscribeToTopic(name, opts.topic, qos);
       } else {

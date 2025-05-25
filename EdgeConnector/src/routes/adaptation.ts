@@ -1,6 +1,6 @@
 import { Router } from "../../deps.ts";
 import { AdaptationSchema } from "../models/adaptationSchema.ts";
-import cache from "./../services/cacheService.ts";
+import cache from "./../services/cache.ts";
 import mpyCoreController from "./../controllers/mpyCoreController.ts";
 import {
   AppFetchSuccess,

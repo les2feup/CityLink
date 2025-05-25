@@ -1,5 +1,5 @@
 import { Router } from "../../deps.ts";
-import cache from "./../services/cacheService.ts";
+import cache from "../services/cache.ts";
 
 export function createTDRouter(): Router {
   const router = new Router();

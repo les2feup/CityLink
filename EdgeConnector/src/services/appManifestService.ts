@@ -1,6 +1,6 @@
 import { AppContentTypes, AppManifest } from "../models/appManifest.ts";
 import { createHash } from "../../deps.ts";
-import cache from "./cacheService.ts";
+import cache from "./cache.ts";
 
 type DownloadMetadata = AppManifest["download"];
 type DownloadMetadataItem = DownloadMetadata[number];

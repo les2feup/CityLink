@@ -1,6 +1,6 @@
 import { Buffer, mqtt, UUID } from "./../../../deps.ts";
 import { registrationHandler } from "./registration.ts";
-import cache from "../../services/cacheService.ts";
+import cache from "./../../services/cache.ts";
 import umqttCore from "../../controllers/umqttCore.ts";
 import { getLogger } from "../../utils/log/log.ts";
 

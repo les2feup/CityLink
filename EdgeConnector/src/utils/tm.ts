@@ -1,7 +1,7 @@
 // src/services/thingModelService.ts
 import { ThingModel, ThingModelHelpers } from "../../deps.ts";
 import { AppManifest } from "../models/appManifest.ts";
-import cache from "./cacheService.ts";
+import cache from "./../services/cache.ts";
 
 type TmMetadata = AppManifest["wot"]["tm"];
 
