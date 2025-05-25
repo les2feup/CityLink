@@ -2,6 +2,7 @@ import { AppContentTypes, AppManifest } from "../models/appManifest.ts";
 import { ThingDescription, ThingModel, UUID } from "../../deps.ts";
 
 import umqttCore from "../controllers/umqttCore.ts";
+import { getLogger } from "../utils/log/log.ts";
 
 // TODO: try to deduplicate storage between different caches
 
@@ -78,6 +79,7 @@ export function setAppContent(
 }
 
 // --- End Node Cache ---
+const logger = getLogger();
 
 // Overload signatures
 export function getEndNode(uuid: EndNodeUUID): EndNode | undefined;
@@ -121,7 +123,7 @@ export function insertEndNode(
   controller?: umqttCore,
 ): void {
   if (endNodeCache.has(uuid)) {
-    console.warn(`End node with UUID "${uuid}" already exists.`);
+    logger.warn(`End node with UUID "${uuid}" already exists.`);
     return;
   }
 
@@ -132,7 +134,7 @@ export function insertEndNode(
     .find(([_, t]) => t === tm)?.[0];
 
   if (!manifestUrl || !tmTitle) {
-    console.warn(`Manifest or ThingModel not found in caches`);
+    logger.warn(`Manifest or ThingModel not found in caches`);
     return;
   }
 
@@ -155,7 +157,7 @@ export function updateEndNode(
 ): void {
   const entry = endNodeCache.get(uuid);
   if (!entry) {
-    console.warn(`End node with UUID "${uuid}" does not exist.`);
+    logger.warn(`End node with UUID "${uuid}" does not exist.`);
     return;
   }
 

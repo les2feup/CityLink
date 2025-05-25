@@ -9,6 +9,9 @@ import {
 } from "../../deps.ts";
 import { createTemplateMapMQTT } from "./../models/templateMaps/mqttTemplateMap.ts";
 import { MQTT_BROKER_URL } from "./../config/config.ts";
+import { getLogger } from "../utils/log/log.ts";
+
+const logger = getLogger();
 
 export type InstantiationOpts = {
   endNodeUUID: UUID;
@@ -56,7 +59,7 @@ export function subscribeEvent(
       }
 
       isSubscribed = true;
-      console.debug(
+      logger.debug(
         `Subscribed to "${topic}" for event "${event}" in TD "${td.id}"`,
       );
       onSubscribe?.(topic);
@@ -68,13 +71,13 @@ export function subscribeEvent(
   });
 
   client.on("error", (err) => {
-    console.error("MQTT error:", err);
+    logger.error("MQTT error:", err);
     onError?.(err);
   });
 
   const cancelSubscription: CancelSubscription = () => {
     if (isTerminated || !isSubscribed) {
-      console.warn(
+      logger.warn(
         `Cannot cancel subscription: either already ended or not active for event "${event}"`,
       );
       client.end();
@@ -83,9 +86,9 @@ export function subscribeEvent(
 
     client.unsubscribe(topic, (err) => {
       if (err) {
-        console.error(`Failed to unsubscribe from topic "${topic}":`, err);
+        logger.error(`Failed to unsubscribe from topic "${topic}":`, err);
       } else {
-        console.log(`Unsubscribed from topic "${topic}"`);
+        logger.info(`Unsubscribed from topic "${topic}"`);
       }
       client.end();
       isTerminated = true;
@@ -115,12 +118,12 @@ export function invokeAction(
     return new Error(`Missing topic ("mqv:topic") for action "${action}"`);
   }
 
-  console.debug("Initiating MQTT client for action:", action);
+  logger.debug("Initiating MQTT client for action:", action);
 
   const brokerUrl = actionForm.href;
   const client = mqtt.connect(brokerUrl);
   client.on("connect", () => {
-    console.debug(
+    logger.debug(
       `Connected to MQTT broker on ${actionForm.href} for action:`,
       action,
     );
@@ -129,14 +132,14 @@ export function invokeAction(
         onError?.(err);
       } else {
         onPublish?.(topic);
-        console.log(`Published to topic "${topic}" for action "${action}"`);
+        logger.info(`Published to topic "${topic}" for action "${action}"`);
       }
       client.end();
     });
   });
 
   client.on("error", (err) => {
-    console.error("MQTT error:", err);
+    logger.error("MQTT error:", err);
     onError?.(err);
     client.end();
   });
@@ -167,7 +170,7 @@ export async function produceTD(
     const [partialTD] = await tmTools.getPartialTDs(model, options);
     partialTD.id = map.CITYLINK_ID;
 
-    console.log(
+    logger.info(
       `New Thing Description id "${partialTD.id}" registered for model "${model.title}"`,
     );
 
@@ -255,7 +258,7 @@ function fillPlatfromForms(
         forms: [...(original.forms ?? []), ...merged.forms],
       };
 
-      console.log("Filled platform form for", actualPropName, "in TD", td.id);
+      logger.info("Filled platform form for", actualPropName, "in TD", td.id);
     }
   }
 

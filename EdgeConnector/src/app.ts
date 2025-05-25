@@ -1,12 +1,16 @@
 import { Application } from "../deps.ts";
+import { getLogger, initLogger } from "./utils/log/log.ts";
 import { createRouter } from "./routes/index.ts";
 import { HTTP_HOSTNAME, HTTP_PORT, MQTT_BROKER_URL } from "./config/config.ts";
 import mqttConnector from "./connectors/mqtt/connector.ts";
 
 export function startApp(): void {
+  initLogger();
+  const logger = getLogger();
+
   // Initialize MQTT handler
   mqttConnector.init({ url: MQTT_BROKER_URL }, (error: Error) => {
-    console.error("MQTT error:", error);
+    logger.error("MQTT connection failed", error);
   });
 
   // Initialize HTTP server
@@ -15,6 +19,6 @@ export function startApp(): void {
   app.use(router.routes());
   app.use(router.allowedMethods());
 
-  console.log(`HTTP server listening on port ${HTTP_PORT}`);
+  logger.info(`HTTP server listening on ${HTTP_HOSTNAME}:${HTTP_PORT}`);
   app.listen({ hostname: HTTP_HOSTNAME, port: HTTP_PORT });
 }

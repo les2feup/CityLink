@@ -2,6 +2,9 @@ import { Buffer, mqtt, UUID } from "./../../../deps.ts";
 import { registrationHandler } from "./registration.ts";
 import cache from "../../services/cacheService.ts";
 import umqttCore from "../../controllers/umqttCore.ts";
+import { getLogger } from "../../utils/log/log.ts";
+
+const logger = getLogger();
 
 export type MqttConnectorOpts = {
   url: string;
@@ -22,12 +25,12 @@ export function init(
 
   const cleanup = () => {
     client.end(true, () => {
-      console.log("MQTT client disconnected");
+      logger.info("MQTT client disconnected");
     });
   };
 
   client.on("connect", () => {
-    console.log("Connected to the mqtt broker");
+    logger.info("Connected to the mqtt broker");
 
     client.subscribe("citylink/+/registration", (err) => {
       if (err) {
@@ -35,7 +38,7 @@ export function init(
         cleanup();
       }
 
-      console.log(
+      logger.info(
         "Subscribed to `registration` topic",
       );
     });
@@ -46,7 +49,7 @@ export function init(
         cleanup();
       }
 
-      console.log(
+      logger.info(
         "Subscribed to `adaptation` topic",
       );
     });
@@ -58,10 +61,10 @@ export function init(
       await handler(client, message);
     } catch (error) {
       if (error instanceof Error) {
-        console.error(`Error processing message: ${error.message}`);
+        logger.error(`Error processing message: ${error.message}`);
         onError?.(error);
       } else {
-        console.error("Unknown error:", error);
+        logger.error("Unknown error:", error);
         onError?.(new Error("Unknown error"));
       }
     }
@@ -91,7 +94,7 @@ function getMessageHandler(
       return async (client, message) => {
         const res = await registrationHandler(client, endNodeID, message);
         if (res instanceof Error) {
-          console.error(
+          logger.error(
             `Registration failed for end node ${endNodeID}: ${res.message}`,
           );
           return;
@@ -103,7 +106,7 @@ function getMessageHandler(
 
     case "adaptation": {
       return async (client, message) => {
-        console.log(
+        logger.info(
           `Received adaptation ready message for end node ${endNodeID}: ${message.toString()}`,
         );
       };
@@ -121,18 +124,18 @@ function launchNodeController(
 ) {
   const node = cache.getEndNode(nodeId);
   if (!node) {
-    console.error(`Node with ID ${nodeId} not found in cache.`);
+    logger.error(`Node with ID ${nodeId} not found in cache.`);
     return;
   }
   if (node.controller) {
-    console.warn(`Node with ID ${nodeId} already has a controller.`);
+    logger.warn(`Node with ID ${nodeId} already has a controller.`);
     return;
   }
 
   const controller = new umqttCore(nodeId, node.td, opts.url);
   controller.launch();
   cache.updateEndNode(nodeId, { controller });
-  console.log(`Node controller launched for node ID ${nodeId}`);
+  logger.info(`Node controller launched for node ID ${nodeId}`);
 }
 
 export default {

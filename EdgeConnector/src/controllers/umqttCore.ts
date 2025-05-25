@@ -1,4 +1,7 @@
 import { mqtt, ThingDescription, UUID } from "../../deps.ts";
+import { getLogger } from "../utils/log/log.ts";
+
+const logger = getLogger();
 
 type MqttFormOptions = {
   href: string;
@@ -35,7 +38,7 @@ class Controller {
     this.client = mqtt.connect(this.brokerURL, this.brokerOpts);
 
     this.client.on("connect", () => {
-      console.log(`🔌 Connected to MQTT broker at ${this.brokerURL}`);
+      logger.info(`🔌 Connected to MQTT broker at ${this.brokerURL}`);
       this.subscribeToAll(
         "property",
         "observeproperty",
@@ -52,13 +55,13 @@ class Controller {
     });
 
     this.client.on("message", (topic, message) => {
-      console.log(`📩 [${topic}] ${message.toString()}`);
+      logger.info(`📩 [${topic}] ${message.toString()}`);
     });
   }
 
   private publish(value: unknown, opts: MqttFormOptions): void {
     if (opts.href !== this.brokerURL) {
-      console.error(`❌ Mismatched href: ${opts.href} != ${this.brokerURL}`);
+      logger.error(`❌ Mismatched href: ${opts.href} != ${this.brokerURL}`);
       return;
     }
 
@@ -67,9 +70,9 @@ class Controller {
       qos: opts.qos,
     }, (err) => {
       if (err) {
-        console.error(`❌ Failed to publish to ${opts.topic}:`, err);
+        logger.error(`❌ Failed to publish to ${opts.topic}:`, err);
       } else {
-        console.log(`✅ Published to ${opts.topic}:`, value);
+        logger.info(`✅ Published to ${opts.topic}:`, value);
       }
     });
   }
@@ -126,7 +129,7 @@ class Controller {
       if (opts) {
         this.publish(val, opts);
       } else {
-        console.warn(`⚠️ No MQTT config for property "${name}"`);
+        logger.warn(`⚠️ No MQTT config for property "${name}"`);
       }
     }
   }
@@ -143,7 +146,7 @@ class Controller {
 
     for (const [name] of entries) {
       if (ignore_prefix && name.startsWith(ignore_prefix)) {
-        console.debug(`Skipping ${type} "${name}" due to ignore prefix`);
+        logger.debug(`Skipping ${type} "${name}" due to ignore prefix`);
         continue;
       }
 
@@ -151,7 +154,7 @@ class Controller {
       if (opts) {
         this.subscribeToTopic(name, opts.topic, qos);
       } else {
-        console.warn(`⚠️ No MQTT config for ${type} "${name}"`);
+        logger.warn(`⚠️ No MQTT config for ${type} "${name}"`);
       }
     }
   }
@@ -159,9 +162,9 @@ class Controller {
   private subscribeToTopic(name: string, topic: string, qos: 0 | 1 | 2): void {
     this.client?.subscribe(topic, { qos }, (err) => {
       if (err) {
-        console.error(`❌ Subscription failed for "${name}":`, err);
+        logger.error(`❌ Subscription failed for "${name}":`, err);
       } else {
-        console.log(`📡 Subscribed to "${name}" on topic "${topic}"`);
+        logger.info(`📡 Subscribed to "${name}" on topic "${topic}"`);
       }
     });
   }

@@ -69,7 +69,7 @@ export function VFSAction(
     const onPublish = (_topic: string) => {};
 
     const onSubscribe = (_topic: string) => {
-      console.debug("Invoking VFS action:", action);
+      logger.debug("Invoking VFS action:", action);
       const ret = invokeAction(
         td,
         `citylink:embeddedCore_VFS${action}`,
@@ -117,15 +117,15 @@ export function performAdaptation(
   }
 
   if (!Array.isArray(cleanupList)) {
-    console.error("cleanupList is not an array:", cleanupList);
+    logger.error("cleanupList is not an array:", cleanupList);
   }
 
   if (!Array.isArray(inputList)) {
-    console.error("inputList is not an array:", inputList);
+    logger.error("inputList is not an array:", inputList);
   }
 
   try {
-    console.log("Cleaning up files...");
+    logger.info("Cleaning up files...");
 
     for (const entry of cleanupList) {
       const input: VFSDeleteInput = {
@@ -133,24 +133,24 @@ export function performAdaptation(
       };
 
       VFSAction(td, "Delete", input).then(() => {
-        console.log(`File ${entry} deleted successfully.`);
+        logger.info(`File ${entry} deleted successfully.`);
       }).catch((err) => {
-        console.error(`Error deleting file ${entry}:`, err);
+        logger.error(`Error deleting file ${entry}:`, err);
         return err;
       });
 
-      console.log(`File ${entry} deleted successfully.`);
+      logger.info(`File ${entry} deleted successfully.`);
     }
 
-    console.log("Writing files...");
-    console.log("inputList has", inputList.length, "items");
+    logger.info("Writing files...");
+    logger.info("inputList has", inputList.length, "items");
 
     for (const { path, url, content } of inputList) {
-      console.log("Handling file:", path, url);
+      logger.info("Handling file:", path, url);
       const data = encodeContent(content);
       const hash = `0x${(crc32(data) >>> 0).toString(16)}`;
 
-      console.log(`File ${path} has hash: ${hash}`);
+      logger.info(`File ${path} has hash: ${hash}`);
 
       // convert contents to base64 data
       // compute crc32 of base64 data
@@ -160,22 +160,22 @@ export function performAdaptation(
         append: false,
       };
 
-      console.log(`Writing file ${path} with data:`, data);
+      logger.info(`Writing file ${path} with data:`, data);
 
       VFSAction(td, "Write", writeInput).then(() => {
-        console.log(`File ${path} written successfully.`);
+        logger.info(`File ${path} written successfully.`);
       }).catch((err) => {
-        console.error(`VFSWrite action error during upload of ${path}:`, err);
+        logger.error(`VFSWrite action error during upload of ${path}:`, err);
       });
     }
 
     const res = invokeAction(td, "citylink:embeddedCore_reload", "");
     if (res instanceof Error) {
-      console.error("Failed to issue device reload:", res);
+      logger.error("Failed to issue device reload:", res);
       return res;
     }
   } catch (err) {
-    console.error("Error during adaptation:", err);
+    logger.error("Error during adaptation:", err);
     return new Error(`Error during adaptation: ${err}`);
   }
 

@@ -4,8 +4,9 @@ import { fetchAppManifest } from "../../services/appManifestService.ts";
 import { fetchThingModel } from "../../services/tmService.ts";
 import { InstantiationOpts, produceTD } from "../../services/tdService.ts";
 import cache from "../../services/cacheService.ts";
+import { getLogger } from "../../utils/log/log.ts";
 
-import umqttCore from "../../controllers/umqttCore.ts";
+const logger = getLogger();
 
 type RegistrationAck = {
   status: "success" | "error" | "ack";
@@ -19,7 +20,7 @@ async function handler(
 ): Promise<RegistrationAck> {
   // Check if endNodeID is already registered
   if (cache.getEndNode(endNodeID as UUID)) {
-    console.log(
+    logger.info(
       `End node ${endNodeID} is already registered.`,
     );
 
