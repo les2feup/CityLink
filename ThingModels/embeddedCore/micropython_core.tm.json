@@ -8,9 +8,6 @@
     "version": {
         "model": "0.1.0"
     },
-    "tm:optional": [
-        "/actions/setProperty"
-    ],
     "securityDefinitions": {
         "nosec_sc": {
             "scheme": "nosec"
@@ -35,8 +32,8 @@
             "type": "string",
             "enum": [
                 "UNDEF",
-                "ADAPT",
-                "OK"
+                "OTAU",
+                "APP"
             ]
         }
     },
@@ -47,44 +44,21 @@
         }
     },
     "actions": {
-        "VFSList": {
-            "title": "VFS List Action",
-            "description": "List the contents of a directory in the Virtual File System.",
-            "safe": true,
-            "idempotent": false,
-            "input": {
-                "type": "object",
-                "properties": {
-                    "dir": {
-                        "title": "Directory",
-                        "description": "Directory to list.",
-                        "type": "string"
-                    },
-                    "recursive": {
-                        "title": "Recursive",
-                        "description": "List contents recursively.",
-                        "type": "boolean"
-                    }
-                },
-                "required": [
-                    "dir"
-                ]
-            }
+        "OTAUinit": {
+            "title": "Over The Air Update Init",
+            "description": "Reboot the end node into Over The Air Update mode.",
+            "safe": false,
+            "idempotent": true
         },
-        "VFSRead": {
-            "title": "VFS Read Action",
-            "description": "Read the contents of a file in the Virtual File System.",
-            "safe": true,
-            "idempotent": false,
-            "input": {
-                "type": "string",
-                "title": "File",
-                "description": "File to read."
-            }
+        "OTAUFinish": {
+            "title": "Over The Air Update Finish",
+            "description": "Reboot the end node into normal mode after an Over The Air Update.",
+            "safe": false,
+            "idempotent": true
         },
-        "VFSWrite": {
-            "title": "VFS Write Action",
-            "description": "Write to a file in the Virtual File System.",
+        "OTAUWrite": {
+            "title": "Over The Air Update (VFS) Write",
+            "description": "Write to a file in the Virtual File System while in Over The Air Update mode.",
             "safe": false,
             "idempotent": false,
             "input": {
@@ -128,9 +102,9 @@
                 ]
             }
         },
-        "VFSDelete": {
-            "title": "VFS Delete Action",
-            "description": "Delete a file or directory in the Virtual File System.",
+        "OTAUDelete": {
+            "title": "Over The Air Update (VFS) Delete",
+            "description": "Delete a file or directory in the Virtual File System while in Over The Air Update mode.",
             "safe": false,
             "idempotent": false,
             "input": {
@@ -150,32 +124,6 @@
                 },
                 "required": [
                     "path"
-                ]
-            }
-        },
-        "reload": {
-            "title": "Embedded Core Reload",
-            "description": "Force a reload the Embedded Core runtime.",
-            "safe": false,
-            "idempotent": false
-        },
-        "setProperty": {
-            "input": {
-                "type": "object",
-                "properties": {
-                    "pname": {
-                        "type": "string",
-                        "title": "Property Name",
-                        "description": "Name of the property to set."
-                    },
-                    "pval": {
-                        "title": "Property value",
-                        "description": "Value to set the property to."
-                    }
-                },
-                "required": [
-                    "pname",
-                    "pvalue"
                 ]
             }
         }

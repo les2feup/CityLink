@@ -21,33 +21,12 @@
             "type": "application/tm+json"
         }
     ],
-    "forms": [
-        {
-            "href": "{{CITYLINK_HREF}}",
-            "mqv:filter": "{{CITYLINK_PROPERTY}}/#",
-            "op": [
-                "readallproperties",
-                "observeallproperties",
-                "unobserveallproperties"
-            ],
-            "contentType": "application/json"
-        },
-        {
-            "href": "{{CITYLINK_HREF}}",
-            "mqv:filter": "{{CITYLINK_EVENT}}/#",
-            "op": [
-                "subscribeallevents",
-                "unsubscribeallevents"
-            ],
-            "contentType": "application/json"
-        }
-    ],
     "properties": {
         "logLevel": {
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:filter": "{{CITYLINK_PROPERTY}}/core/logLevel",
+                    "mqv:filter": "{{CITYLINK_CORE_PROPERTY}}/logLevel",
                     "op": [
                         "readproperty",
                         "observeproperty",
@@ -63,7 +42,7 @@
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:filter": "{{CITYLINK_PROPERTY}}/core/status",
+                    "mqv:filter": "{{CITYLINK_CORE_PROPERTY}}/core/status",
                     "op": [
                         "readproperty",
                         "observeproperty",
@@ -81,7 +60,7 @@
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:filter": "{{CITYLINK_EVENT}}/core/log",
+                    "mqv:filter": "{{CITYLINK_CORE_EVENT}}/core/log",
                     "op": [
                         "subscribeevent",
                         "unsubscribeevent"
@@ -92,27 +71,12 @@
                 }
             ]
         },
-        "VFSActionResponse": {
+        "OTAUReport": {
             "title": "Core VFS Action Response",
             "description": "Response for the last Virtual File System action.",
             "data": {
                 "type": "object",
                 "properties": {
-                    "action": {
-                        "type": "string",
-                        "title": "Last Action Performed",
-                        "description": "The last action performed on the Virtual File System.",
-                        "enum": [
-                            "list",
-                            "read",
-                            "write",
-                            "delete"
-                        ]
-                    },
-                    "error": {
-                        "type": "boolean",
-                        "description": "Whether an error occurred during the last action performed on the Virtual File System."
-                    },
                     "timestamp": {
                         "type": "object",
                         "title": "Epoch Timestamp",
@@ -128,112 +92,79 @@
                                 "title": "Seconds",
                                 "description": "Seconds since the Unix epoch."
                             }
-                        }
+                        },
+                        "required": [
+                            "seconds"
+                        ]
                     },
-                    "message": {
-                        "title": "Message",
-                        "description": "Message associated with the last action performed on the Virtual File System.",
-                        "oneof": [
+                    "result": {
+                        "oneOf": [
                             {
                                 "type": "object",
+                                "title": "Write Success",
                                 "properties": {
-                                    "dir": {
-                                        "type": "string",
-                                        "title": "Directory",
-                                        "description": "Directory that was listed."
+                                    "error": {
+                                        "const": false
                                     },
-                                    "entries": {
+                                    "written": {
+                                        "type": "string",
+                                        "title": "Written File Path"
+                                    }
+                                },
+                                "required": [
+                                    "written"
+                                ]
+                            },
+                            {
+                                "type": "object",
+                                "title": "Delete Success",
+                                "properties": {
+                                    "error": {
+                                        "const": false
+                                    },
+                                    "deleted": {
                                         "type": "array",
-                                        "title": "listed entries",
-                                        "description": "List of files and directories in the directory.",
+                                        "title": "Deleted File Path(s)",
+                                        "description": "List of files or directories that were successfully deleted.",
                                         "items": {
-                                            "type": "object",
-                                            "title": "Entry",
-                                            "description": "File or directory in the directory.",
-                                            "properties": {
-                                                "path": {
-                                                    "type": "string",
-                                                    "title": "Absolute path.",
-                                                    "description": "Absolute path of the file or directory."
-                                                },
-                                                "type": {
-                                                    "type": "string",
-                                                    "title": "Type",
-                                                    "description": "Type of the file or directory.",
-                                                    "enum": [
-                                                        "file",
-                                                        "dir"
-                                                    ]
-                                                },
-                                                "size": {
-                                                    "type": "integer",
-                                                    "title": "Size",
-                                                    "description": "Size of the file in bytes."
-                                                }
-                                            },
-                                            "required": [
-                                                "path",
-                                                "type"
-                                            ]
+                                            "type": "string"
                                         }
                                     }
-                                }
+                                },
+                                "required": [
+                                    "deleted"
+                                ]
                             },
                             {
                                 "type": "object",
-                                "title": "Read Response",
-                                "description": "Contents of the file that was read.",
+                                "title": "Error",
                                 "properties": {
-                                    "file": {
-                                        "type": "string",
-                                        "title": "File",
-                                        "description": "File that was read."
+                                    "error": {
+                                        "const": true
                                     },
-                                    "contents": {
+                                    "message": {
                                         "type": "string",
-                                        "title": "Contents",
-                                        "description": "Contents of the file."
-                                    },
-                                    "crc32": {
-                                        "type": "string",
-                                        "title": "CRC32",
-                                        "description": "crc32 checksum of the file contents."
+                                        "title": "Error Message",
+                                        "description": "Description of the error that occurred."
                                     }
-                                }
-                            },
-                            {
-                                "type": "string",
-                                "title": "Write Response",
-                                "description": "Path of the file that was written."
-                            },
-                            {
-                                "type": "array",
-                                "title": "Delete Response",
-                                "description": "Paths of the files that were deleted.",
-                                "items": {
-                                    "type": "string",
-                                    "title": "Path",
-                                    "description": "Path of the file that was deleted."
-                                }
-                            },
-                            {
-                                "type": "string",
-                                "title": "Error Message",
-                                "description": "Error message associated with the last action performed on the Virtual File System."
+                                },
+                                "required": [
+                                    "error",
+                                    "message"
+                                ]
                             }
                         ]
                     }
                 },
                 "required": [
-                    "action",
-                    "error",
-                    "message"
+                    "timestamp",
+                    "result"
                 ]
             },
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:filter": "{{CITYLINK_EVENT}}/vfs/report",
+                    "mqv:filter": "{{CITYLINK_CORE_EVENT}}/otau/report",
                     "op": [
                         "subscribeevent",
                         "unsubscribeevent"
@@ -246,35 +177,33 @@
         }
     },
     "actions": {
-        "VFSList": {
+        "OTAUinit": {
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:topic": "{{CITYLINK_ACTION}}/vfs/list",
+                    "mqv:topic": "{{CITYLINK_CORE_ACTION}}/otau/init",
                     "op": [
                         "invokeaction"
                     ],
-                    "mqv:qos": 2,
-                    "mqv:retain": false,
-                    "contentType": "application/json"
+                    "mqv:qos": 1,
+                    "mqv:retain": false
                 }
             ]
         },
-        "VFSRead": {
+        "OTAUFinish": {
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:topic": "{{CITYLINK_ACTION}}/vfs/read",
+                    "mqv:topic": "{{CITYLINK_CORE_ACTION}}/otau/finish",
                     "op": [
                         "invokeaction"
                     ],
-                    "mqv:qos": 2,
-                    "mqv:retain": false,
-                    "contentType": "application/json"
+                    "mqv:qos": 1,
+                    "mqv:retain": false
                 }
             ]
         },
-        "VFSWrite": {
+        "OTAUWrite": {
             "input": {
                 "properties": {
                     "payload": {
@@ -293,7 +222,7 @@
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:topic": "{{CITYLINK_ACTION}}/vfs/write",
+                    "mqv:topic": "{{CITYLINK_CORE_ACTION}}/otau/write",
                     "op": [
                         "invokeaction"
                     ],
@@ -303,38 +232,11 @@
                 }
             ]
         },
-        "VFSDelete": {
+        "OTAUDelete": {
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:topic": "{{CITYLINK_ACTION}}/vfs/delete",
-                    "op": [
-                        "invokeaction"
-                    ],
-                    "mqv:qos": 2,
-                    "mqv:retain": false,
-                    "contentType": "application/json"
-                }
-            ]
-        },
-        "reload": {
-            "forms": [
-                {
-                    "href": "{{CITYLINK_HREF}}",
-                    "mqv:topic": "{{CITYLINK_ACTION}}/core/otau/reload",
-                    "op": [
-                        "invokeaction"
-                    ],
-                    "mqv:qos": 2,
-                    "mqv:retain": false
-                }
-            ]
-        },
-        "setProperty": {
-            "forms": [
-                {
-                    "href": "{{CITYLINK_HREF}}",
-                    "mqv:topic": "{{CITYLINK_ACTION}}/setProperty",
+                    "mqv:topic": "{{CITYLINK_CORE_ACTION}}/otau/delete",
                     "op": [
                         "invokeaction"
                     ],
