@@ -140,7 +140,7 @@ function launchNodeController(
   }
 
   logger.info(`🚀 Launching controller for node ID ${nodeId}.`);
-  const controller = new umqttCore(nodeId, node , opts.url);
+  const controller = new umqttCore(nodeId, node, opts.url);
   controller.launch();
 
   cache.updateEndNode(nodeId, { controller });

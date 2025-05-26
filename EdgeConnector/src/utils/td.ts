@@ -5,7 +5,10 @@ import {
   ThingModelHelpers,
   UUID,
 } from "../../deps.ts";
-import { createTemplateMapMQTT } from "./../models/templateMaps/mqttTemplateMap.ts";
+import {
+  createTemplateMapMQTT,
+  TemplateMapMQTT,
+} from "./../models/templateMaps/mqttTemplateMap.ts";
 import { MQTT_BROKER_URL } from "./../config/config.ts";
 import { getLogger } from "../utils/log/log.ts";
 
@@ -60,21 +63,14 @@ export async function produceTD(
 
 function getTemplateMap(
   opts: InstantiationOpts,
-): Record<string, string> | Error {
+): TemplateMapMQTT | Error {
   switch (opts.protocol) {
     case "mqtt": {
-      const baseMap = createTemplateMapMQTT(
+      return createTemplateMapMQTT(
         MQTT_BROKER_URL,
         opts.endNodeUUID,
+        opts.extra,
       );
-      if (baseMap instanceof Error) {
-        return baseMap;
-      }
-
-      return {
-        ...baseMap,
-        ...opts.extra,
-      };
     }
     case "http":
       return new Error("HTTP protocol is not supported yet");

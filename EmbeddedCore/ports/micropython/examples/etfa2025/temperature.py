@@ -18,8 +18,10 @@ alarm = Pin(ALARM_GPIO, Pin.OUT)
 
 
 @EmbeddedCore.sync_executor
-def toggle_alarm_action(core: EmbeddedCore, state: bool):
+def toggle_alarm_action(core: EmbeddedCore, input: dict):
     """Toggle the alarm LED on and off."""
+    state = input.get("state", None)
+    print(f"Alarm toggled to {'ON' if state else 'OFF'}")
     alarm.value(1 if state else 0)
 
 

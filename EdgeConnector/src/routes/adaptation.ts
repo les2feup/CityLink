@@ -2,7 +2,7 @@ import { Router, UUID } from "../../deps.ts";
 import { AdaptationSchema } from "../models/adaptationSchema.ts";
 import cache from "./../services/cache.ts";
 import {
-  AppFetchSuccess,
+  AppSrcFile,
   fetchAppManifest,
   fetchAppSrc,
   filterAppFetchErrors,
@@ -10,7 +10,7 @@ import {
 
 function adaptEndNode(
   endNodeUUID: UUID,
-  appSrc: AppFetchSuccess[],
+  appSrc: AppSrcFile[],
 ): Error | null {
   const td = cache.getEndNode(endNodeUUID)?.td;
   if (!td) {
@@ -65,7 +65,7 @@ export function createApadationProtocolRouter(): Router {
         );
       }
 
-      const appSource = fetchResult as AppFetchSuccess[];
+      const appSource = fetchResult as AppSrcFile[];
       const res = adaptEndNode(schema.endNodeUUID as UUID, appSource);
       if (res instanceof Error) {
         throw res;

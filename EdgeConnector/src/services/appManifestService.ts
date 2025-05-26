@@ -1,11 +1,11 @@
 import { AppContentTypes, AppManifest } from "../models/appManifest.ts";
-import { createHash } from "../../deps.ts";
+import { createHash, encodeBase64 } from "../../deps.ts";
 import cache from "./cache.ts";
 
 type DownloadMetadata = AppManifest["download"];
 type DownloadMetadataItem = DownloadMetadata[number];
 
-export type AppFetchSuccess = {
+export type AppSrcFile = {
   path: string;
   url: string;
   content: AppContentTypes;
@@ -16,7 +16,7 @@ export type AppFetchError = {
   error: Error;
 };
 
-export type AppFetchResult = AppFetchSuccess | AppFetchError;
+export type AppFetchResult = AppSrcFile | AppFetchError;
 
 export async function fetchAppManifest(
   url: string,
@@ -59,7 +59,7 @@ export async function fetchAppSrc(
 
 async function fetchSingleFile(
   mdata: DownloadMetadataItem,
-): Promise<AppFetchSuccess | AppFetchError> {
+): Promise<AppSrcFile | AppFetchError> {
   // before fetching, try the file cache
   const cachedFile = cache.getAppContent(mdata.url);
   if (cachedFile) {
@@ -134,8 +134,21 @@ export function filterAppFetchErrors(
 
 export function filterAppFetchSuccess(
   results: AppFetchResult[],
-): AppFetchSuccess[] {
-  return results.filter((result): result is AppFetchSuccess =>
+): AppSrcFile[] {
+  return results.filter((result): result is AppSrcFile =>
     "path" in result && "url" in result && "content" in result
   );
+}
+
+export function encodeContentBase64(content: AppContentTypes): string {
+  switch (typeof content) {
+    case "string":
+      return encodeBase64(content);
+    case "object": {
+      if (content instanceof Uint8Array) {
+        return encodeBase64(content);
+      }
+      return encodeBase64(JSON.stringify(content));
+    }
+  }
 }

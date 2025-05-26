@@ -1,5 +1,5 @@
 import { AppContentTypes } from "../models/appManifest.ts";
-import { AppFetchSuccess } from "../services/appManifestService.ts";
+import { AppSrcFile } from "../services/appManifestService.ts";
 import { VFSActionResponseSchema } from "./../models/vfsResponseSchema.ts";
 import { Buffer, crc32, encodeBase64, ThingDescription } from "../../deps.ts";
 import { invokeAction, subscribeEvent } from "../services/tdService.ts";
@@ -112,7 +112,7 @@ export function VFSAction(
 export function performAdaptation(
   td: ThingDescription,
   cleanupList: string[],
-  inputList: AppFetchSuccess[],
+  inputList: AppSrcFile[],
 ): Error | null {
   if (!td) {
     return new Error("ThingDescription is null or undefined.");
@@ -149,7 +149,7 @@ export function performAdaptation(
 
     for (const { path, url, content } of inputList) {
       logger.info("Handling file:", path, url);
-      const data = encodeContent(content);
+      const data = encodeContentBase64(content);
       const hash = `0x${(crc32(data) >>> 0).toString(16)}`;
 
       logger.info(`File ${path} has hash: ${hash}`);
@@ -220,18 +220,6 @@ function responseHandler(
   };
 }
 
-function encodeContent(content: AppContentTypes): string {
-  switch (typeof content) {
-    case "string":
-      return encodeBase64(content);
-    case "object": {
-      if (content instanceof Uint8Array) {
-        return encodeBase64(content);
-      }
-      return encodeBase64(JSON.stringify(content));
-    }
-  }
-}
 
 export default {
   VFSAction,
