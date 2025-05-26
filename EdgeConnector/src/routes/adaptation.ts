@@ -1,32 +1,7 @@
 import { Router, UUID } from "../../deps.ts";
 import { AdaptationSchema } from "../models/adaptationSchema.ts";
 import cache from "./../services/cache.ts";
-import {
-  AppSrcFile,
-  fetchAppManifest,
-  fetchAppSrc,
-  filterAppFetchErrors,
-} from "../services/appManifestService.ts";
-
-function adaptEndNode(
-  endNodeUUID: UUID,
-  appSrc: AppSrcFile[],
-): Error | null {
-  const td = cache.getEndNode(endNodeUUID)?.td;
-  if (!td) {
-    return new Error(
-      `td for end node with UUID "${endNodeUUID}" not found.`,
-    );
-  }
-
-  // try {
-  //   return mpyCoreController.performAdaptation(td, [], appSrc);
-  // } catch (err) {
-  //   return new Error(
-  //     `Error while adapting end node with UUID "${endNodeUUID}": ${err}`,
-  //   );
-  // }
-}
+import { fetchAppManifest } from "../services/appManifestService.ts";
 
 export function createApadationProtocolRouter(): Router {
   const router = new Router();
@@ -48,31 +23,32 @@ export function createApadationProtocolRouter(): Router {
       }
 
       const schema = data.data;
+
+      const node = cache.getEndNode(schema.endNodeUUID as UUID);
+      if (!node) {
+        ctx.response.status = 404;
+        ctx.response.body =
+          `End node with UUID "${schema.endNodeUUID}" not found`;
+        return;
+      }
+
+      if (!node.controller) {
+        ctx.response.status = 503;
+        ctx.response.body =
+          `End node with UUID "${schema.endNodeUUID}" is not connected`;
+
+        //TODO: maybe try to find out what happened
+        return;
+      }
+
       const appManifest = await fetchAppManifest(schema.manifest);
       if (appManifest instanceof Error) {
         throw appManifest;
       }
 
-      const fetchResult = await fetchAppSrc(appManifest.download);
-      const fetchErrors = filterAppFetchErrors(fetchResult);
-      if (fetchErrors.length > 0) {
-        throw new Error(
-          `${
-            fetchErrors
-              .map((e) => e.error)
-              .join(", ")
-          }`,
-        );
-      }
-
-      const appSource = fetchResult as AppSrcFile[];
-      const res = adaptEndNode(schema.endNodeUUID as UUID, appSource);
-      if (res instanceof Error) {
-        throw res;
-      }
-
+      await node.controller.otauInit(appManifest);
       ctx.response.status = 201;
-      ctx.response.body = { status: "ok", message: "Adaptation successful" };
+      ctx.response.body = { status: "ok", message: "Adaptation initiated" };
     } catch (err) {
       ctx.response.status = 500;
       if (err instanceof Error) {

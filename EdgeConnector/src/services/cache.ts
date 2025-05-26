@@ -82,8 +82,6 @@ export function getEndNode(uuid: EndNodeUUID): EndNode | undefined;
 export function getEndNode(
   filter: (node: EndNode) => boolean,
 ): EndNode[];
-
-// Single implementation
 export function getEndNode(
   arg: EndNodeUUID | ((node: EndNode) => boolean),
 ): EndNode | EndNode[] | undefined {

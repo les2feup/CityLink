@@ -5,6 +5,7 @@ export { Router } from "jsr:@oak/oak/router";
 export { Application } from "jsr:@oak/oak/application";
 export { encodeBase64 } from "jsr:@std/encoding/base64";
 export { fromFileUrl, relative, SEPARATOR } from "jsr:@std/path";
+export { Eta } from "jsr:@eta-dev/eta";
 
 export { crc32 } from "node:zlib";
 export { default as assert } from "node:assert";

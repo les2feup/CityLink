@@ -1,18 +1,19 @@
-import { Router, ThingModel } from "../../deps.ts";
+import { Eta, Router, ThingModel } from "../../deps.ts";
 import cache, { EndNode } from "../services/cache.ts";
 
 export function createEndNodeRouter(): Router {
   const router = new Router();
+  const viewpath = Deno.cwd() + "/views/";
+  const eta = new Eta({ views: viewpath, cache: true });
 
-  router.get("/endnodes", (ctx) => {
+  router.get("/endnodes", async (ctx) => {
     const url = new URL(ctx.request.url);
     const selectedTM = url.searchParams.get("model");
 
-    // --- Utilities ---
-    const getTMTitleByInstance = (tm: ThingModel): string | undefined =>
+    const getTMTitleByInstance = (tm: unknown): string | undefined =>
       [...cache.rawTMCache().entries()].find(([_, model]) => model === tm)?.[0];
 
-    const allNodeEntries: [string, EndNode][] = Array.from(
+    const allNodeEntries: [string, any][] = Array.from(
       cache.rawEndNodeCache().entries(),
     ).flatMap(([uuid]) => {
       const node = cache.getEndNode(uuid);
@@ -33,50 +34,25 @@ export function createEndNodeRouter(): Router {
       ),
     );
 
-    const optionsHTML = uniqueTMTitles.map((tm) =>
-      `<option value="${tm}" ${
-        tm === selectedTM ? "selected" : ""
-      }>${tm}</option>`
-    ).join("");
+    const formattedNodes = filteredNodes.map(([uuid, node]) => ({
+      uuid,
+      name: node.manifest?.wot?.tm?.title ?? "Unnamed",
+      tmLink: `/models/${
+        encodeURIComponent(
+          getTMTitleByInstance(node.tm) ?? "#",
+        )
+      }`,
+      tdLink: `/tds/${uuid}`,
+      manifestLink: `/manifests/${uuid}`,
+    }));
 
-    const listItemsHTML = filteredNodes.map(([uuid, node], index) => {
-      const tmTitle = getTMTitleByInstance(node.tm);
-      const name = node.manifest.wot.tm.title ?? "Unnamed";
-      const tmLink = tmTitle ? `/models/${encodeURIComponent(tmTitle)}` : "#";
-      const tdLink = `/tds/${uuid}`;
-      const manifestLink = `/manifests/${uuid}`;
+    const html = await eta.renderAsync("endnodes", {
+      selectedTM,
+      models: uniqueTMTitles,
+      nodes: formattedNodes,
+    });
 
-      return `
-        <li>
-          Node ${index + 1} — ${name}
-          <ul>
-            <li><a href="${tmLink}">Thing Model</a></li>
-            <li><a href="${tdLink}">Thing Description</a></li>
-            <li><a href="${manifestLink}">Application Manifest</a></li>
-          </ul>
-        </li>`;
-    }).join("");
-
-    // --- HTML Template ---
-    const html = `
-      <html>
-        <head><title>Registered End Nodes</title></head>
-        <body>
-          <h1>Registered End Nodes</h1>
-          <form method="GET" action="/endnodes">
-            <label for="model">Filter by Thing Model:</label>
-            <select name="model" id="model" onchange="this.form.submit()">
-              <option value="">-- All --</option>
-              ${optionsHTML}
-            </select>
-          </form>
-          <ul>
-            ${listItemsHTML || "<li>No end nodes found for this model.</li>"}
-          </ul>
-        </body>
-      </html>`;
-
-    ctx.response.type = "text/html";
+    ctx.response.headers.set("Content-Type", "text/html");
     ctx.response.body = html;
   });
 

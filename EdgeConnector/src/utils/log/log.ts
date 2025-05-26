@@ -2,12 +2,37 @@ import { bold, dim, log, white } from "../../../deps.ts";
 import { getLoggerName } from "./internal/internal.ts";
 import { loggers } from "../../config/config.ts";
 
-function coloredFormatter(record: log.LogRecord): string {
+function hasContext(arg: unknown): arg is { $context: Record<string, string> } {
+  return typeof arg === "object" && arg !== null && "$context" in arg;
+}
+
+function customFormatter(record: log.LogRecord): string {
+  const timestamp = dim(white(new Date(record.datetime).toISOString())); // or customize format
   const levelTag = bold(record.levelName);
   const loggerTag = bold(`[${record.loggerName}]`);
 
-  const lines: string[] = [`${levelTag} ${loggerTag} ${record.msg}`];
+  let contextStr = "";
+
   for (const arg of record.args) {
+    if (hasContext(arg)) {
+      const context = arg.$context;
+      contextStr = Object.entries(context)
+        .map(([k, v]) => `${k}=${v}`)
+        .join(" ");
+      break; // Only use the first `$context` found
+    }
+  }
+
+  const contextfmt = contextStr ? ` ${dim(contextStr)} ` : " ";
+
+  const lines: string[] = [
+    `${timestamp} | ${levelTag} ${loggerTag}${contextfmt}${record.msg}`
+      .trim(),
+  ];
+
+  for (const arg of record.args) {
+    if (hasContext(arg)) continue;
+
     let nextLine = "";
     if (typeof arg === "object") {
       nextLine = Deno.inspect(arg, { colors: true });
@@ -16,6 +41,7 @@ function coloredFormatter(record: log.LogRecord): string {
     } else {
       nextLine = String(arg);
     }
+
     lines.push(dim(white(nextLine)));
   }
 
@@ -25,7 +51,7 @@ function coloredFormatter(record: log.LogRecord): string {
 const logConfig: log.LogConfig = {
   handlers: {
     console: new log.ConsoleHandler("DEBUG", {
-      formatter: coloredFormatter,
+      formatter: customFormatter,
     }),
   },
   loggers: {

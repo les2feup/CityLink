@@ -1,4 +1,5 @@
 import { Buffer, crc32, mqtt, ThingDescription, UUID } from "../../deps.ts";
+import { AppManifest } from "../models/appManifest.ts";
 import {
   AppSrcFile,
   encodeContentBase64,
@@ -6,7 +7,8 @@ import {
   fetchAppSrc,
   filterAppFetchErrors,
 } from "../services/appManifestService.ts";
-import { EndNode } from "../services/cache.ts";
+import cache, { EndNode } from "../services/cache.ts";
+import { ContextualLogger } from "../utils/log/contextLogger.ts";
 import { getLogger } from "../utils/log/log.ts";
 
 type MqttFormOptions = {
@@ -65,7 +67,7 @@ class Controller {
 
   private topicPrefix: string;
   private client?: mqtt.MqttClient;
-  private logger = getLogger(import.meta.url);
+  private logger: ContextualLogger;
   private coreStatus: CoreStatus = "UNDEF";
 
   private srcCleanList: string[] = [];
@@ -92,15 +94,18 @@ class Controller {
 
   constructor(
     public id: UUID,
-    public node: EndNode,
-    public brokerURL: string = "mqtt://localhost:1883",
-    public brokerOpts: mqtt.IClientOptions = {},
-    public controllerOpts: ControllerOpts = {
+    private node: EndNode,
+    private brokerURL: string = "mqtt://localhost:1883",
+    private brokerOpts: mqtt.IClientOptions = {},
+    private controllerOpts: ControllerOpts = {
       subscribeEventQos: 0,
       observePropertyQoS: 0,
     },
   ) {
     this.topicPrefix = `citylink/${this.id}/`;
+    this.logger = new ContextualLogger(getLogger(import.meta.url), {
+      node: this.id,
+    });
   }
 
   launch(_httpProxy?: boolean, _httpBaseURL?: URL): void {
@@ -152,6 +157,58 @@ class Controller {
       if (affordanceNamespace === "core") {
         this.handleCoreMessage(affordanceType, affordanceName, message);
       }
+    });
+  }
+
+  async otauInit(appManifestUrl: URL): Promise<void>;
+  async otauInit(appManifest: AppManifest): Promise<void>;
+  async otauInit(arg: URL | AppManifest): Promise<void> {
+    if (this.otauInitPromise || this.otauFinishPromise) {
+      this.logger.warn(
+        "⚠️ OTAU procedure already in progress or finished. Cannot start a new one.",
+      );
+      return Promise.reject(new Error("In progress"));
+    }
+
+    if (this.coreStatus !== "APP") {
+      this.logger.error(
+        `❌ Cannot start OTAU procedure in current status: ${this.coreStatus}`,
+      );
+      return Promise.reject(new Error("Invalid core status"));
+    }
+
+    let appManifest: AppManifest;
+    if (arg instanceof URL) {
+      this.logger.info(`📥 Fetching app manifest from ${arg.toString()}`);
+      const manifest = await fetchAppManifest(arg.toString());
+      if (manifest instanceof Error) {
+        this.logger.error(
+          `❌ Failed to fetch app manifest: ${manifest.message}`,
+        );
+        return Promise.reject(manifest);
+      }
+      appManifest = manifest;
+      this.logger.info(
+        `📥 App manifest fetched successfully from ${arg.toString()}`,
+      );
+    } else {
+      appManifest = arg as AppManifest;
+      this.logger.info(`📥 Using provided app manifest`);
+    }
+
+    this.node.manifest = appManifest;
+    cache.updateEndNode(this.id, { manifest: appManifest });
+
+    return new Promise((resolve, reject) => {
+      this.logger.info("🔄 Starting OTAU procedure...");
+      this.otauInitPromise = { resolve, reject };
+      this.invokeAction("citylink:embeddedCore_OTAUInit").catch((err) => {
+        this.logger.error(
+          `❌ Failed to invoke OTAU init action: ${err.message}`,
+        );
+        this.otauInitPromise?.reject(err);
+        this.otauInitPromise = undefined;
+      });
     });
   }
 
@@ -210,19 +267,25 @@ class Controller {
         if (this.otauInitPromise) {
           this.otauInitPromise?.resolve();
           this.otauInitPromise = undefined;
-        } else if (this.otauFinishPromise && this.coreStatus === "UNDEF") {
+          return;
+        }
+
+        if (this.otauFinishPromise) {
           this.logger.error("❌ Node rebooted into OTAU mode unexpectedly.");
           this.logger.warn("Aborting current OTAU process.");
+
           this.otauFinishPromise.reject(
             new Error("Node rebooted into OTAU mode unexpectedly."),
           );
-        } else {
-          this.adaptationFetchAndUpload();
         }
+
+        this.logger.info("🔄 Over The Air Update procedure initialized.");
+        this.adaptationFetchAndUpload();
+
         break;
 
       case "APP":
-        this.logger.info(`🟢 Node returned to APP mode.`);
+        this.logger.info(`🟢 Node entered to APP mode.`);
         this.otauFinishPromise?.resolve();
         this.otauFinishPromise = undefined;
         break;
@@ -317,10 +380,10 @@ class Controller {
     });
   }
 
-  async adaptEndNode(appSource: AppSrcFile[]) {
+  private async adaptEndNode(appSource: AppSrcFile[]) {
     if (this.coreStatus !== "OTAU") {
-      this.logger.error(
-        `❌ Cannot adapt end node in current status: ${this.coreStatus}`,
+      this.logger.warn(
+        `❌ Cannot start adaptation procedure in current status: ${this.coreStatus}`,
       );
       return;
     }
@@ -364,7 +427,7 @@ class Controller {
       await this.otauFinish();
       this.logger.info("✅ Adaptation procedure completed successfully.");
     } catch (err) {
-      this.logger.error(`❌ Failed to finish OTAU procedure: ${err.message}`);
+      this.logger.error(`❌ Failed to finish OTAU procedure: ${err}`);
       this.logger.critical("❗️End node may be in an inconsistent state.");
     }
   }
@@ -395,27 +458,6 @@ class Controller {
 
   private otauDelete() {
     //TODO
-  }
-
-  private otauInit(): Promise<void> {
-    if (this.coreStatus !== "APP") {
-      this.logger.error(
-        `❌ Cannot start OTAU procedure in current status: ${this.coreStatus}`,
-      );
-      return Promise.reject(new Error("invalid core status"));
-    }
-
-    return new Promise((resolve, reject) => {
-      this.logger.info("🔄 Starting OTAU procedure...");
-      this.otauInitPromise = { resolve, reject };
-      this.invokeAction("citylink:embeddedCore_OTAUInit").catch((err) => {
-        this.logger.error(
-          `❌ Failed to invoke OTAU init action: ${err.message}`,
-        );
-        this.otauInitPromise?.reject(err);
-        this.otauInitPromise = undefined;
-      });
-    });
   }
 
   private otauFinish(): Promise<void> {
