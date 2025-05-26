@@ -26,10 +26,6 @@
           sudo iptables -D INPUT -p tcp --dport 1883 -j ACCEPT
           sudo systemctl reload firewall
         '';
-
-        flash = pkgs.writeShellScriptBin "flash" ''
-          ${builtins.readFile ./EmbeddedCore/ports/micropython/scripts/flash.sh}
-        '';
       in
       {
         devShells.default = pkgs.mkShell {
@@ -44,10 +40,6 @@
             openfw
             closefw
 
-            # micropython development
-            flash
-
-            jq # json cli parser
             rsbkb # for crc32 package
 
             nodePackages_latest.prettier # code formatter
