@@ -1,22 +1,13 @@
 // src/routes/index.ts
-import { Eta, path, Router } from "../../deps.ts";
+import { Router } from "../../deps.ts";
 import { createTMRouter } from "./tmRoutes.ts";
 import { createEndNodeRouter } from "./endNodeRoutes.ts";
 import { createManifestRouter } from "./appManifestRoutes.ts";
 import { createTDRouter } from "./tdRoutes.ts";
 import { createApadationProtocolRouter } from "./adaptation.ts";
-import { createUIHomepageRouter } from "./ui/homepage.ts";
 
 export function createRouter(): Router {
   const router = new Router();
-
-  const uipath = path.join(Deno.cwd(), "src", "ui");
-  const viewpath = path.join(uipath, "views");
-  const fragmentsDir = path.join(uipath, "fragments");
-
-  const eta = new Eta({ views: viewpath, cache: true });
-
-  router.use(createUIHomepageRouter(eta, fragmentsDir).routes());
 
   // Merge the endnode routes
   router.use(createEndNodeRouter().routes());
@@ -33,23 +24,24 @@ export function createRouter(): Router {
   // Merge the adaptation protocol routes
   router.use(createApadationProtocolRouter().routes());
 
-  // router.get("/", (ctx) => {
-  //   ctx.response.type = "text/html";
-  //   ctx.response.body = `
-  //     <html>
-  //       <head>
-  //         <title>Welcome to the CityLink Edge Node Demo</title>
-  //       </head>
-  //       <body>
-  //         <h1>Welcome to the CityLink Edge Connector home page</h1>
-  //         <p>Navigate to:</p>
-  //         <ul>
-  //         <li><a href="/models">Known Thing Models</a></li>
-  //           <li><a href="/endnodes">Registered End Nodes</a></li>
-  //         </ul>
-  //       </body>
-  //     </html>
-  //   `;
-  // });
+  router.get("/", (ctx) => {
+    ctx.response.type = "text/html";
+    ctx.response.body = `
+      <html>
+        <head>
+          <title>Welcome to the CityLink Edge Node Demo</title>
+        </head>
+        <body>
+          <h1>Welcome to the CityLink Edge Connector home page</h1>
+          <p>Navigate to:</p>
+          <ul>
+          <li><a href="/models">Known Thing Models</a></li>
+            <li><a href="/endnodes">Registered End Nodes</a></li>
+          </ul>
+        </body>
+      </html>
+    `;
+  });
+
   return router;
 }
