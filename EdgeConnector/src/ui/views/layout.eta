@@ -32,6 +32,7 @@
       <h1>CityLink Edge Connector</h1>
       <p>Interact with connected nodes and Thing Models</p>
     </hgroup>
+    <% if (it.showNav) { %>
     <nav>
       <ul>
         <li><a href="/">Home</a></li>
@@ -39,10 +40,11 @@
         <li><a href="/endnodes">End Nodes</a></li>
       </ul>
     </nav>
+    <% } %>
   </header>
 
   <main class="container">
-    <%- it.body %>
+    <%~ it.body %>
   </main>
 
   <footer class="container">

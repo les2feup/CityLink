@@ -1,15 +1,17 @@
 // src/routes/ui/homepage.ts
 
-import { Eta, Router } from "../../../deps.ts";
+import { Eta, path, Router } from "../../../deps.ts";
 
-export function createUIHomepageRouter(): Router {
+export function createUIHomepageRouter(
+  eta: Eta,
+  fragmentsDir: string,
+): Router {
   const router = new Router();
 
-  const viewpath = Deno.cwd() + "/views/";
-  const eta = new Eta({ views: viewpath, cache: true });
-
   router.get("/", async (ctx) => {
-    const homepageContent = await eta.renderAsync("homepage", {});
+    const homepageContent = await Deno.readTextFile(
+      path.join(fragmentsDir, "home.html"),
+    );
     const html = await eta.renderAsync("layout", {
       title: "Home",
       body: homepageContent,

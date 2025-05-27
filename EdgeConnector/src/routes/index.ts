@@ -1,5 +1,5 @@
 // src/routes/index.ts
-import { Router } from "../../deps.ts";
+import { Eta, path, Router } from "../../deps.ts";
 import { createTMRouter } from "./tmRoutes.ts";
 import { createEndNodeRouter } from "./endNodeRoutes.ts";
 import { createManifestRouter } from "./appManifestRoutes.ts";
@@ -10,7 +10,13 @@ import { createUIHomepageRouter } from "./ui/homepage.ts";
 export function createRouter(): Router {
   const router = new Router();
 
-  router.use(createUIHomepageRouter().routes());
+  const uipath = path.join(Deno.cwd(), "src", "ui");
+  const viewpath = path.join(uipath, "views");
+  const fragmentsDir = path.join(uipath, "fragments");
+
+  const eta = new Eta({ views: viewpath, cache: true });
+
+  router.use(createUIHomepageRouter(eta, fragmentsDir).routes());
 
   // Merge the endnode routes
   router.use(createEndNodeRouter().routes());

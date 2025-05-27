@@ -1,12 +1,12 @@
-import { fromFileUrl, log, relative, SEPARATOR } from "../../../../deps.ts";
+import { log, path } from "../../../../deps.ts";
 
 export function getLoggerName(
   moduleUrl: string,
   conf: log.LogConfig,
   baseDir: string = Deno.cwd(),
 ): string {
-  const filePath = fromFileUrl(moduleUrl);
-  const relativePath = relative(baseDir, filePath);
+  const filePath = path.fromFileUrl(moduleUrl);
+  const relativePath = path.relative(baseDir, filePath);
 
   // If the relative path goes up to the root, return "default"
   if (relativePath.startsWith("..")) {
@@ -15,7 +15,7 @@ export function getLoggerName(
 
   const clean = relativePath
     .replace(/\.(ts|js|tsx|jsx)$/, "") // remove file extension
-    .replace(new RegExp(`\\${SEPARATOR}`, "g"), "."); // path -> dotted
+    .replace(new RegExp(`\\${path.SEPARATOR}`, "g"), "."); // path -> dotted
 
   const candidate = (() => {
     if (clean.startsWith("src")) {
