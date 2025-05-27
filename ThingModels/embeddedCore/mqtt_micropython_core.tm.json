@@ -177,7 +177,7 @@
         }
     },
     "actions": {
-        "OTAUinit": {
+        "OTAUInit": {
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",

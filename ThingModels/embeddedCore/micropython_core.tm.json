@@ -44,7 +44,7 @@
         }
     },
     "actions": {
-        "OTAUinit": {
+        "OTAUInit": {
             "title": "Over The Air Update Init",
             "description": "Reboot the end node into Over The Air Update mode.",
             "safe": false,
