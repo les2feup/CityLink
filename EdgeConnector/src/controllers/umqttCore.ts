@@ -124,6 +124,12 @@ class Controller {
         "citylink:platform_",
       );
       this.publishDefaultProperties();
+
+      if (this.coreStatus === "UNDEF") {
+        this.logger.info(
+          `🟡 Node is in UNDEF state. Waiting for core status update...`,
+        );
+      }
     });
 
     this.client.on("message", (topic, message) => {
@@ -172,9 +178,11 @@ class Controller {
 
     if (this.coreStatus !== "APP") {
       this.logger.error(
-        `❌ Cannot start OTAU procedure in current status: ${this.coreStatus}`,
+        `❌ Cannot start adaptation procedure in current status: ${this.coreStatus}`,
       );
-      return Promise.reject(new Error("Invalid core status"));
+      return Promise.reject(
+        new Error(`Invalid core status: ${this.coreStatus}`),
+      );
     }
 
     let appManifest: AppManifest;
@@ -200,7 +208,7 @@ class Controller {
     cache.updateEndNode(this.id, { manifest: appManifest });
 
     return new Promise((resolve, reject) => {
-      this.logger.info("🔄 Starting OTAU procedure...");
+      this.logger.info("🔄 Starting adaptation procedure...");
       this.otauInitPromise = { resolve, reject };
       this.invokeAction("citylink:embeddedCore_OTAUInit").catch((err) => {
         this.logger.error(
@@ -271,11 +279,9 @@ class Controller {
         }
 
         if (this.otauFinishPromise) {
-          this.logger.error("❌ Node rebooted into OTAU mode unexpectedly.");
-          this.logger.warn("Aborting current OTAU process.");
-
+          this.logger.warn("Aborting current adaptation process.");
           this.otauFinishPromise.reject(
-            new Error("Node rebooted into OTAU mode unexpectedly."),
+            new Error("❌Node rebooted into OTAU mode unexpectedly."),
           );
         }
 
