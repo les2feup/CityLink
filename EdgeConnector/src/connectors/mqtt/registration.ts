@@ -3,10 +3,10 @@ import { RegistrationSchema } from "../../models/registrationSchema.ts";
 import { fetchAppManifest } from "../../services/appManifestService.ts";
 import { fetchThingModel } from "../../utils/tm.ts";
 import { InstantiationOpts, produceTD } from "../../utils/td.ts";
-import cache from "../../services/cache.ts";
 import { getLogger } from "../../utils/log/log.ts";
 import { MqttConnectorOpts } from "./connector.ts";
 import umqttCore from "../../controllers/umqttCore.ts";
+import cache from "../../services/cache.ts";
 
 const idsInProgress = new Set<UUID | string>();
 

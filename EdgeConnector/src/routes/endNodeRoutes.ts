@@ -1,4 +1,4 @@
-import { Eta, Router, ThingModel } from "../../deps.ts";
+import { Eta, Router } from "../../deps.ts";
 import cache, { EndNode } from "../services/cache.ts";
 
 export function createEndNodeRouter(): Router {
@@ -13,7 +13,7 @@ export function createEndNodeRouter(): Router {
     const getTMTitleByInstance = (tm: unknown): string | undefined =>
       [...cache.rawTMCache().entries()].find(([_, model]) => model === tm)?.[0];
 
-    const allNodeEntries: [string, any][] = Array.from(
+    const allNodeEntries: [string, EndNode][] = Array.from(
       cache.rawEndNodeCache().entries(),
     ).flatMap(([uuid]) => {
       const node = cache.getEndNode(uuid);

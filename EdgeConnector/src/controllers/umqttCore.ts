@@ -10,6 +10,8 @@ import {
 import cache, { EndNode } from "../services/cache.ts";
 import { ContextualLogger } from "../utils/log/contextLogger.ts";
 import { getLogger } from "../utils/log/log.ts";
+import { InstantiationOpts, produceTD } from "../utils/td.ts";
+import { fetchThingModel } from "../utils/tm.ts";
 
 type MqttFormOptions = {
   href: string;
@@ -69,6 +71,7 @@ class Controller {
   private client?: mqtt.MqttClient;
   private logger: ContextualLogger;
   private coreStatus: CoreStatus = "UNDEF";
+  private adaptationInProgress = false;
 
   private srcCleanList: string[] = [];
 
@@ -166,6 +169,8 @@ class Controller {
     });
   }
 
+  // TODO: deduplicate this with EndNode.ts ...
+  // Resource fetching is duplicated with the registration procedure
   async otauInit(appManifestUrl: URL): Promise<void>;
   async otauInit(appManifest: AppManifest): Promise<void>;
   async otauInit(arg: URL | AppManifest): Promise<void> {
@@ -185,27 +190,46 @@ class Controller {
       );
     }
 
-    let appManifest: AppManifest;
+    let manifest: AppManifest;
     if (arg instanceof URL) {
       this.logger.info(`📥 Fetching app manifest from ${arg.toString()}`);
-      const manifest = await fetchAppManifest(arg.toString());
-      if (manifest instanceof Error) {
+      const fetched = await fetchAppManifest(arg.toString());
+      if (fetched instanceof Error) {
         this.logger.error(
-          `❌ Failed to fetch app manifest: ${manifest.message}`,
+          `❌ Failed to fetch app manifest: ${fetched.message}`,
         );
-        return Promise.reject(manifest);
+        return Promise.reject(fetched);
       }
-      appManifest = manifest;
+      manifest = fetched;
       this.logger.info(
         `📥 App manifest fetched successfully from ${arg.toString()}`,
       );
     } else {
-      appManifest = arg as AppManifest;
+      manifest = arg as AppManifest;
       this.logger.info(`📥 Using provided app manifest`);
     }
 
-    this.node.manifest = appManifest;
-    cache.updateEndNode(this.id, { manifest: appManifest });
+    this.logger.info(`📥 Fetching Thing Model for new application.`);
+    const tm = await fetchThingModel(manifest.wot.tm);
+    if (tm instanceof Error) {
+      return Promise.reject(`❌ Failed to fetch Thing Model: ${tm.message}`);
+    }
+
+    const opts: InstantiationOpts = {
+      endNodeUUID: this.id,
+      protocol: "mqtt",
+    };
+
+    this.logger.info(
+      `⚙️ Instantiating Thing Description from new Thing Model.`,
+    );
+
+    const td = await produceTD(tm, opts);
+    if (td instanceof Error) {
+      return Promise.reject(`❌ Error during TD instantiation: ${td.message}`);
+    }
+
+    cache.updateEndNode(this.id, { tm, td, manifest });
 
     return new Promise((resolve, reject) => {
       this.logger.info("🔄 Starting adaptation procedure...");
@@ -275,19 +299,22 @@ class Controller {
         if (this.otauInitPromise) {
           this.otauInitPromise?.resolve();
           this.otauInitPromise = undefined;
-          return;
-        }
-
-        if (this.otauFinishPromise) {
+        } else if (this.otauFinishPromise) {
           this.logger.warn("Aborting current adaptation process.");
           this.otauFinishPromise.reject(
             new Error("❌Node rebooted into OTAU mode unexpectedly."),
           );
         }
 
+        if (this.adaptationInProgress) {
+          this.logger.warn(
+            "⚠️ Adaptation already in progress. Skipping re-initialization.",
+          );
+          return;
+        }
+
         this.logger.info("🔄 Over The Air Update procedure initialized.");
         this.adaptationFetchAndUpload();
-
         break;
 
       case "APP":
@@ -357,6 +384,7 @@ class Controller {
   }
 
   private adaptationFetchAndUpload(): void {
+    this.adaptationInProgress = true;
     this.logger.info("📦 Downloading application source...");
 
     fetchAppSrc(this.node.manifest.download).then((fetchResult) => {
@@ -377,7 +405,10 @@ class Controller {
         `📦 Downloaded ${appSource.length} files for adaptation.`,
       );
 
-      this.adaptEndNode(appSource).finally(() => {});
+      this.adaptEndNode(appSource).finally(() => {
+        this.adaptationInProgress = false;
+        this.logger.info("🔄 Adaptation procedure completed.");
+      });
     }).catch((error) => {
       this.logger.error(
         `❌ Error during application source fetch: ${error.message}`,
@@ -431,7 +462,6 @@ class Controller {
 
     try {
       await this.otauFinish();
-      this.logger.info("✅ Adaptation procedure completed successfully.");
     } catch (err) {
       this.logger.error(`❌ Failed to finish OTAU procedure: ${err}`);
       this.logger.critical("❗️End node may be in an inconsistent state.");

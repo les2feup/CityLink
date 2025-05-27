@@ -1,13 +1,11 @@
-try:
-    from citylink.core import EmbeddedCore, main
+from citylink.core import EmbeddedCore, main
 
+try:
     main()
-except ImportError:
-    print("No main module found. Proceding with initialization.")
 except Exception as e:
-    raise e
+    print(f"[BOOT] CityLink EmbeddedCore failed with error: {e}")
 
 from machine import soft_reset
 
-print("CityLink EmbeddedCore failed. Resetting the device...")
+print("[BOOT] Resetting the device...")
 soft_reset()
