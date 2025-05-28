@@ -30,6 +30,11 @@ type WriteActionInput = {
   append?: boolean;
 };
 
+type DeleteActionInput = {
+  path: string;
+  recursive?: boolean; // If path is a directory, delete all contents recursively
+};
+
 type OTAUErrorResult = {
   error: true;
   message: string;
@@ -73,7 +78,19 @@ class Controller {
   private coreStatus: CoreStatus = "UNDEF";
   private adaptationInProgress = false;
 
-  private srcCleanList: string[] = [];
+  private adaptationReplaceSet: Set<string> = new Set();
+  //TODO: integrate this checks into the adaptation process
+  //
+  // necessaryFiles must always be present after adaptation
+  private static readonly adaptationReplaceIgnore = [
+    "main.py",
+    "main.mpy",
+    "citylink/core.py",
+    "citylink/core.mpy",
+    "config/config.json",
+  ];
+  // coreDirs are not elegible for recursive deletion
+  private static readonly coreDirs = ["citylink", "citylink/ext", "config"];
 
   private otauInitPromise?: {
     resolve: () => void;
@@ -425,9 +442,37 @@ class Controller {
       return;
     }
 
-    this.logger.info("🔄 Starting adaptation procedure...");
+    //TODO: allow for customization of the type of adaptation
+    const hasMain = appSource.some((file) =>
+      file.path === "main.py" || file.path === "main.mpy"
+    );
+    if (!hasMain) {
+      this.logger.error(
+        `❌ Application source must contain "main.py" or "main.mpy" file for adaptation.`,
+      );
+      return;
+    }
 
-    // TODO: Issue delete for each file in srcCleanList
+    this.logger.info("🔄 Starting adaptation procedure...");
+    // Step 1: Delete files from previous adaptation (if any)
+    const toDelete = this.resolveMinimumDeletions(appSource);
+    if (toDelete.size > 0) {
+      this.logger.info(
+        `📤 Deleting ${toDelete.size} file(s) from previous adaptation...`,
+      );
+    }
+
+    for (const path of toDelete) {
+      try {
+        this.logger.debug(`📤 Deleting file ${path} from end node...`);
+        const deletedPaths = await this.otauDelete(path, true);
+        this.logger.debug(`✅ File(s) deleted: ${deletedPaths.join(", ")}`);
+      } catch (err) {
+        this.logger.error(`❌ Failed to delete file ${path}:`, err);
+        // Stop on first failure
+        return;
+      }
+    }
 
     this.logger.info("📥 Writing files to end node...");
     for (const file of appSource) {
@@ -440,25 +485,31 @@ class Controller {
           this.logger.warn(
             `⚠️ Written path "${writtenPath}" does not match expected "${file.path}".`,
           );
+          //TODO: handle retry or rollback logic here
           break; // Stop processing if mismatch
         }
 
         this.logger.debug(`✅ File ${writtenPath} written successfully.`);
-        this.srcCleanList.push(file.path);
+
+        // Add to adaptationReplaceSet for future deletions
+        if (!Controller.adaptationReplaceIgnore.includes(file.path)) {
+          this.adaptationReplaceSet.add(file.path);
+        }
       } catch (err) {
         this.logger.error(`❌ Failed to write file ${file.path}:`, err);
         break; // Stop on failure
       }
     }
 
-    if (this.srcCleanList.length !== appSource.length) {
-      const remaining = appSource.length - this.srcCleanList.length;
-      this.logger.warn(
-        `⚠️ ${remaining} file(s) were not processed due to previous errors.`,
-      );
-
-      // Optional: try to rollback or cleanup
-    }
+    // if (this.prevAdaptationReplaceList.length !== appSource.length) {
+    //   const remaining = appSource.length -
+    //     this.prevAdaptationReplaceList.length;
+    //   this.logger.warn(
+    //     `⚠️ ${remaining} file(s) were not processed due to previous errors.`,
+    //   );
+    //
+    //   // Optional: try to rollback or cleanup
+    // }
 
     try {
       await this.otauFinish();
@@ -466,6 +517,17 @@ class Controller {
       this.logger.error(`❌ Failed to finish OTAU procedure: ${err}`);
       this.logger.critical("❗️End node may be in an inconsistent state.");
     }
+  }
+
+  private resolveMinimumDeletions(src: AppSrcFile[]): Set<string> {
+    // Create a set of paths from the new src files
+    const newFiles = new Set(
+      src.map((file) => file.path),
+    );
+
+    // Files that need to be removed are those from the adaptationReplaceSet
+    // that will not be overwritten by the new src files.
+    return new Set<string>([...this.adaptationReplaceSet]).difference(newFiles);
   }
 
   private otauWrite(file: AppSrcFile) {
@@ -492,8 +554,36 @@ class Controller {
     });
   }
 
-  private otauDelete() {
-    //TODO
+  private otauDelete(
+    path: string,
+    recursive: boolean = false,
+  ): Promise<string[]> {
+    const deleteInput: DeleteActionInput = { path, recursive };
+
+    // Reject deletion if recursive and path is a core directory
+    if (recursive && Controller.coreDirs.some((dir) => path.startsWith(dir))) {
+      this.logger.error(
+        `❌ Cannot delete core directory "${path}" recursively.`,
+      );
+      return Promise.reject(
+        new Error(`Cannot delete core directory "${path}" recursively.`),
+      );
+    }
+
+    return new Promise<string[]>((resolve, reject) => {
+      const delType = recursive ? "directory" : "file";
+
+      this.logger.info(`📤 Deleting ${delType} "${path}" from end node...`);
+      this.otauDeletePromise = { resolve, reject };
+
+      this.invokeAction("citylink:embeddedCore_OTAUDelete", deleteInput).catch(
+        (err) => {
+          this.logger.error(`❌ Failed to delete ${delType} "${path}":`, err);
+          this.otauDeletePromise?.reject(err);
+          this.otauDeletePromise = undefined;
+        },
+      );
+    });
   }
 
   private otauFinish(): Promise<void> {
