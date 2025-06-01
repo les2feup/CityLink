@@ -1,28 +1,26 @@
 @startuml
-actor "SSA IoT Device" as Device
-participant "SSA Edge Node" as Edge
-database "Thing Registry" as ThingRegistry
-database "App Registry" as AppRegistry
+!pragma teoz true
+skinparam style strictuml
 
-Device -> Device: Boot & load configuration parameters
+participant "End Node" as endNode
+participant "Edge Node" as edgeNode
+database "CityLink Repository" as cloud
 
-Device -> Edge: Connect to IoT Network & SSA Edge Node
-activate Edge
-Device -> Edge: Send registration message
+endNode -> edgeNode : AppManifest URI
 
-Edge -> ThingRegistry: Fetch Thing Model (TM)
-ThingRegistry --> Edge: Return TM
+activate edgeNode
+edgeNode -> edgeNode : start End Node\nregistration
 
-Edge -> AppRegistry: Fetch user application code (app)
-AppRegistry --> Edge: Return app code
+activate edgeNode
+edgeNode --> endNode : registration ack 
+& edgeNode -> cloud : fetch AppManifest
+cloud --> edgeNode: AppManifest
 
-Edge -> Edge: Process registration and instantiate new Thing Description (TD)
-Edge --> Device: Send app code
+edgeNode -> cloud: fetch Thing Model
+cloud --> edgeNode: Thing Model
 
-Edge -> ThingRegistry: Register new Thing Description (TD)
-ThingRegistry --> Edge: Confirmation
+edgeNode -> edgeNode : generate Thing Description
+deactivate edgeNode
 
-Edge -> Edge: Expose new TD via WoT API
-deactivate Edge
+edgeNode -> endNode: registration success
 @enduml
-
