@@ -3,7 +3,7 @@ import cache, { EndNode } from "../services/cache.ts";
 
 export function createEndNodeRouter(): Router {
   const router = new Router();
-  const viewpath = Deno.cwd() + "/views/";
+  const viewpath = Deno.cwd() + "/src/ui/views/";
   const eta = new Eta({ views: viewpath, cache: true });
 
   router.get("/endnodes", async (ctx) => {
