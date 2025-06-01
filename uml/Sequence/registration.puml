@@ -6,7 +6,7 @@ participant "End Node" as endNode
 participant "Edge Node" as edgeNode
 database "CityLink Repository" as cloud
 
-endNode -> edgeNode : AppManifest URI
+endNode -> edgeNode : Self-Id Metadata
 
 activate edgeNode
 edgeNode -> edgeNode : start End Node\nregistration

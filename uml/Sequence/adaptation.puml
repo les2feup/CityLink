@@ -2,28 +2,46 @@
 !pragma teoz true
 skinparam style strictuml
 
-actor consumer
+actor "Consumer" as consumer
+participant "End Node" as endNode
+participant "Edge Node" as edgeNode
+database "CityLink Repository" as cloud
 
-participant "End Node" as iotdev
-participant "Edge Node" as node
-database "Thing DB" as db
-database "App Storage" as store
+== End Node Adaptation Mode Activation ==
 
-activate consumer
-consumer -> node : end node adaptation\nrequest
+alt Consumer signals for adaptation
+    activate consumer
+        consumer -> edgeNode: Adapt end node (new AppManifest)
+        activate edgeNode
+            edgeNode -> endNode: Start adaptation
+            activate endNode
+            return Adaptation mode
+            edgeNode --> consumer: Adaptation started
+        deactivate edgeNode
+    deactivate consumer
+else End Node initiates adaptation
+    endNode -> endNode: Start Adaptation
+    activate endNode
+    endNode --> edgeNode: Adaptation mode
+    deactivate endNode
+end
 
-activate node
-    
-    node -> db : get new TM
-    node -> store : get new application
+== Adaptation Procedure ==
 
-    node -> node : update end\nnode TD
+activate edgeNode
+group Thing Model Changed
+    edgeNode -> cloud: Fetch Thing Model
+    cloud --> edgeNode: Thing Model
+    edgeNode -> edgeNode: Generate Thing Description
+end
 
-    node -> iotdev : upload app
-    activate iotdev
-        iotdev --> node : ack
-        iotdev -> iotdev : run new app
-    deactivate iotdev
+edgeNode -> cloud: Fetch Application Source
+cloud --> edgeNode: Source files
 
-return provide updated TD
-@enduml 
+activate endNode
+loop all files
+    edgeNode -> endNode: Write/delete source file
+    endNode --> edgeNode: Write/delete Ack
+end
+
+@enduml
