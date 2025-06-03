@@ -1,0 +1,26 @@
+@startuml
+!pragma teoz true
+skinparam style strictuml
+
+participant "End Node" as endNode
+participant "Edge Node" as edgeNode
+database "CityLink Repository" as cloud
+
+endNode -> edgeNode : Self-Id Metadata
+
+activate edgeNode
+edgeNode -> edgeNode : start End Node\nregistration
+
+activate edgeNode
+edgeNode --> endNode : registration ack 
+& edgeNode -> cloud : fetch AppManifest
+cloud --> edgeNode: AppManifest
+
+edgeNode -> cloud: fetch Thing Model
+cloud --> edgeNode: Thing Model
+
+edgeNode -> edgeNode : generate Thing Description
+deactivate edgeNode
+
+edgeNode -> endNode: registration success
+@enduml

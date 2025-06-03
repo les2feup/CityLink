@@ -1,0 +1,47 @@
+@startuml
+!pragma teoz true
+skinparam style strictuml
+
+actor "Consumer" as consumer
+participant "End Node" as endNode
+participant "Edge Node" as edgeNode
+database "CityLink Repository" as cloud
+
+== End Node Adaptation Mode Activation ==
+
+alt Consumer signals for adaptation
+    activate consumer
+        consumer -> edgeNode: Adapt end node (new AppManifest)
+        activate edgeNode
+            edgeNode -> endNode: Start adaptation
+            activate endNode
+            return Adaptation mode
+            edgeNode --> consumer: Adaptation started
+        deactivate edgeNode
+    deactivate consumer
+else End Node initiates adaptation
+    endNode -> endNode: Start Adaptation
+    activate endNode
+    endNode --> edgeNode: Adaptation mode
+    deactivate endNode
+end
+
+== Adaptation Procedure ==
+
+activate edgeNode
+group Thing Model Changed
+    edgeNode -> cloud: Fetch Thing Model
+    cloud --> edgeNode: Thing Model
+    edgeNode -> edgeNode: Generate Thing Description
+end
+
+edgeNode -> cloud: Fetch Application Source
+cloud --> edgeNode: Source files
+
+activate endNode
+loop all files
+    edgeNode -> endNode: Write/delete source file
+    endNode --> edgeNode: Write/delete Ack
+end
+
+@enduml

@@ -1,0 +1,30 @@
+@startuml
+hide empty description
+
+state "Initial configuration" as IC
+IC: Flash Embedded Core image
+IC: Flash Embedded Core configuration
+IC: (Optional) Flash user application 
+
+state "Normal Operation" as NOP
+NOP: update properties
+NOP: emit events
+NOP: perform actions
+
+state "Registration" as REG
+REG: connect to end node
+REG: upload registration metadata
+
+state "Adaptation" as ADP
+ADP: firmware updates
+ADP: user app updates
+
+[*] --> IC
+IC --> REG: field deployment
+REG --> ADP: Reg. Success &\nNo user app
+REG --> NOP: Reg. Success &\nUser app exists
+NOP -r--> ADP: adaptation req.
+ADP -l--> NOP: adaptation end
+
+@enduml
+
