@@ -17,7 +17,7 @@
         },
         {
             "rel": "controlledBy",
-            "href": "https://example.org/mqtt-edge-controller.tm.json",
+            "href": "https://raw.githubusercontent.com/les2feup/citylink-edgenode/refs/heads/main/ThingModels/controllers/mqtt-mpy-core-controller.tm.json",
             "type": "application/tm+json"
         }
     ],
