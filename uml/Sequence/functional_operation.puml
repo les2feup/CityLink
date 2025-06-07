@@ -20,7 +20,7 @@ group pre-configuration
 end 
 
 group registration
-    endNode -> edgeNode : AppManifest URI
+    endNode -> edgeNode : Thing Model URL
        
     activate edgeNode
     edgeNode -> edgeNode : init end-edgeNode\nregistration
