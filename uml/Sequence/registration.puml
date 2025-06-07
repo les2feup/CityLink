@@ -13,10 +13,7 @@ edgeNode -> edgeNode : start End Node\nregistration
 
 activate edgeNode
 edgeNode --> endNode : registration ack 
-& edgeNode -> cloud : fetch AppManifest
-cloud --> edgeNode: AppManifest
-
-edgeNode -> cloud: fetch Thing Model
+& edgeNode -> cloud: fetch Thing Model
 cloud --> edgeNode: Thing Model
 
 edgeNode -> edgeNode : generate Thing Description

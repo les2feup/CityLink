@@ -1,5 +1,10 @@
-import { Buffer, crc32, mqtt, ThingDescription, UUID } from "../../deps.ts";
+import { getLogger } from "../utils/log/log.ts";
+import { fetchThingModel } from "../utils/tm.ts";
+import cache, { EndNode } from "../services/cache.ts";
 import { AppManifest } from "../models/appManifest.ts";
+import { InstantiationOpts, produceTD } from "../utils/td.ts";
+import { ContextualLogger } from "../utils/log/contextLogger.ts";
+import { Buffer, crc32, mqtt, ThingDescription, UUID } from "../../deps.ts";
 import {
   AppSrcFile,
   encodeContentBase64,
@@ -7,11 +12,6 @@ import {
   fetchAppSrc,
   filterAppFetchErrors,
 } from "../services/appManifestService.ts";
-import cache, { EndNode } from "../services/cache.ts";
-import { ContextualLogger } from "../utils/log/contextLogger.ts";
-import { getLogger } from "../utils/log/log.ts";
-import { InstantiationOpts, produceTD } from "../utils/td.ts";
-import { fetchThingModel } from "../utils/tm.ts";
 
 type MqttFormOptions = {
   href: string;
@@ -79,9 +79,6 @@ class Controller {
   private adaptationInProgress = false;
 
   private adaptationReplaceSet: Set<string> = new Set();
-  //TODO: integrate this checks into the adaptation process
-  //
-  // necessaryFiles must always be present after adaptation
   private static readonly adaptationReplaceIgnore = [
     "main.py",
     "main.mpy",

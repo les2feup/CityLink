@@ -11,7 +11,7 @@ database "CityLink Repository" as cloud
 
 alt Consumer signals for adaptation
     activate consumer
-        consumer -> edgeNode: Adapt end node (new AppManifest)
+        consumer -> edgeNode: Adapt end node (new Thing Model)
         activate edgeNode
             edgeNode -> endNode: Start adaptation
             activate endNode
@@ -29,9 +29,7 @@ end
 == Adaptation Procedure ==
 
 activate edgeNode
-group App Manifest Changed
-    edgeNode -> cloud: Fetch Thing Model
-    cloud --> edgeNode: Thing Model
+group Thing Model Changed
     edgeNode -> edgeNode: Generate Thing Description
 end
 
