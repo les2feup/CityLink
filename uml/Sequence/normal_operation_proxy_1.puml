@@ -1,0 +1,23 @@
+@startuml
+skinparam style strictuml
+
+participant "End Node Proxy" as proxy <<Edge Node>>
+participant "End Node" as endNode
+
+loop normal operation
+activate endNode
+activate proxy
+
+    alt on property change
+        endNode -> proxy: update property
+    else on event
+        endNode -> proxy: emit event
+    else on action
+        endNode -> proxy: action result
+    end
+
+deactivate proxy
+deactivate endNode
+end
+
+@enduml

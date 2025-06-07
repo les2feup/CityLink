@@ -29,7 +29,7 @@ end
 == Adaptation Procedure ==
 
 activate edgeNode
-group Thing Model Changed
+group App Manifest Changed
     edgeNode -> cloud: Fetch Thing Model
     cloud --> edgeNode: Thing Model
     edgeNode -> edgeNode: Generate Thing Description

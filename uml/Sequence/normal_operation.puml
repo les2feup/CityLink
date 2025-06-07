@@ -1,0 +1,38 @@
+@startuml
+skinparam style strictuml
+
+actor "Consumer" as consumer
+participant "End Node" as endNode
+
+alt read/write property
+    consumer -> endNode: 
+    return property value
+else observe property
+    consumer -> endNode: observe property
+    loop on property change
+        endNode --> consumer: property value
+    end
+end
+
+newpage 
+
+alt synchronous action
+    consumer -> endNode: invoke action
+    return action result
+else asynchronous action
+    consumer -> endNode: invoke action
+    loop while action executes
+        consumer -> endNode: query action
+        return action update
+    end
+end
+
+newpage 
+
+consumer -> endNode: subscribe event
+loop on event
+    endNode --> consumer: event value
+end
+
+
+@enduml

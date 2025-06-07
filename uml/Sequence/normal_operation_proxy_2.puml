@@ -1,0 +1,28 @@
+@startuml
+skinparam style strictuml
+
+actor "Consumer" as consumer
+participant "End Node Proxy" as proxy <<Edge Node>>
+participant "End Node" as endNode
+
+alt property read
+    consumer -> proxy: read property
+    activate proxy
+    return value
+else action invocation\nproperty write
+    consumer -> proxy: invoke action /\nwrite property
+    activate proxy
+    proxy -> endNode: forward request
+    ... after completion ...
+    proxy -> consumer: request response
+    deactivate proxy
+else property observation\nevent subscription
+    consumer -> proxy: subscribe
+    activate proxy
+    loop on change
+        proxy -> consumer: event/property value
+    end
+    deactivate proxy
+end
+
+@enduml

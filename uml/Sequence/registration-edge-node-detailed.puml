@@ -1,0 +1,30 @@
+@startuml
+skinparam style strictuml
+
+participant "Registration Listener" as listener <<Edge Connector>>
+database "Controller Registry" as registry <<Edge Connector>>
+participant "End Node Controller" as controller <<Edge Connector>>
+
+[o-> listener: registration request
+activate listener
+
+== After App Manifest and Thing Model resolution ==
+
+listener -> listener: generate Thing Description
+activate listener
+
+listener -> registry: get compatible controller instance
+activate registry
+return instance
+
+create controller
+listener -> controller: launch controller instance for new end node
+
+deactivate listener
+[o<- listener: registration success
+deactivate listener
+activate controller
+
+== End node proceeds to Normal Operation / Adapation ==
+
+@enduml
