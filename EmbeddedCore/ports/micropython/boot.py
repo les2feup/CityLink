@@ -1,4 +1,4 @@
-from citylink.core import EmbeddedCore, main
+from citylink.core import main
 
 try:
     main()
