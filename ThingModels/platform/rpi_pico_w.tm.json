@@ -2,7 +2,10 @@
     "@context": [
         "https://www.w3.org/2022/wot/td/v1.1"
     ],
-    "@type": "tm:ThingModel",
+    "@type": [
+        "tm:ThingModel",
+        "citylink:PlatTM"
+    ],
     "title": "Raspberry Pi Pico W",
     "description": "Thing Model for the Raspberry Pi Pico W.",
     "version": {
@@ -23,7 +26,7 @@
         }
     ],
     "flash": {
-        "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModel/platform/rp2040.tm.json#/properties/flash",
+        "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModel/platform/rp2040.tm.json/properties/flash",
         "properties": {
             "size": {
                 "const": 2

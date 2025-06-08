@@ -3,7 +3,10 @@
         "https://www.w3.org/2022/wot/td/v1.1",
         "https://raw.githubusercontent.com/w3c/wot-binding-templates/refs/heads/main/bindings/protocols/mqtt/context.jsonld"
     ],
-    "@type": "tm:ThingModel",
+    "@type": [
+        "tm:ThingModel",
+        "citylink:EmbCTM"
+    ],
     "title": "MQTT Micropython Embedded Core",
     "description": "Models the core functionality of the CityLink uMQTT Embedded Core runtime, an implementation of the generic micropython EmbC TM that uses MQTT as the underlying communications protocol.",
     "version": {
@@ -16,7 +19,7 @@
             "type": "application/tm+json"
         },
         {
-            "rel": "controlledBy",
+            "rel": "citylink:controlledBy",
             "href": "https://raw.githubusercontent.com/les2feup/citylink-edgenode/refs/heads/main/ThingModels/controllers/mqtt-mpy-core-controller.tm.json",
             "type": "application/tm+json"
         }
