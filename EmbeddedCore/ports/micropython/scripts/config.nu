@@ -1,8 +1,7 @@
 export-env {
     $env.citylink_config = {
         reg: {
-            manifest: "http://example.org/manifest.json",
-            tmOnly: true,
+            tm: "http://example.org/manifest.json",
         }
         network: {
             ssid: "myWiFi"
@@ -26,7 +25,7 @@ export def main --env [] {
     $env.citylink_config
 }
 
-export def update --env [] {
+export def set --env [] {
     let input = $in
     match ($input | describe -d | get type) {
         record => { $env.citylink_config = $input}
