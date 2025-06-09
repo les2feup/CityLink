@@ -1,0 +1,33 @@
+@startuml
+hide empty members
+skinparam linetype ortho
+
+cloud "CityLink Repository" as git << Web >>
+
+node "x86_64 Linux machine" as pc {
+    package "Edge Connector" as con {
+        component "Registration Listener" as regl <<MQTT>>
+        component "Node Controller" as nctrl <<Micropython + MQTT>>
+    }
+
+    package "Thing Directory" as thingD {
+        component "Things API" as WoTApi << HTTP >>
+        component "CityLink API" as clApi << HTTP >>
+    }
+
+    component "Web Interface" as web << HTTP >>
+    component "Mosquitto Broker" as broker << MQTT >>
+
+    con <-r-> broker
+    con <-u-> thingD
+    web <-r-> thingD
+}
+
+node "Raspberry Pi Pico W" as pico {
+    component "Embedded Core Runtime" as rt << Micropython+MQTT>>
+}
+
+pc <-r-- git
+broker <-r--> pico
+
+@enduml
