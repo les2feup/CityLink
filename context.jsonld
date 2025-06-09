@@ -1,0 +1,29 @@
+{
+    "@context": {
+        "citylink": "https://example.org/CityLink#",
+        "manifest": {
+            "@id": "citylink:hasManifest",
+            "@type": "@id",
+            "@context": {
+                "citylink": "https://example.org/CityLink#",
+                "placeholder": {
+                    "@id": "citylink:hasPlaceholder",
+                    "@container": "@index"
+                },
+                "source": {
+                    "@id": "citylink:hasSource",
+                    "@container": "@set",
+                    "@context": {
+                        "filepath": "citylink:hasFilePath",
+                        "href": {
+                            "@id": "citylink:hasHref",
+                            "@type": "@id"
+                        },
+                        "contentType": "citylink:hasContentType",
+                        "sha256": "citylink:hasSha256"
+                    }
+                }
+            }
+        }
+    }
+}
