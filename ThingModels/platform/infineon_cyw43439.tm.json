@@ -1,8 +1,12 @@
 {
     "@context": [
-        "https://www.w3.org/2022/wot/td/v1.1"
+        "https://www.w3.org/2022/wot/td/v1.1",
+        "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/context.jsonld"
     ],
-    "@type": "tm:ThingModel",
+    "@type": [
+        "tm:ThingModel",
+        "citylink:PlatTM"
+    ],
     "title": "Infineon CYW43439",
     "description": "Thing Model for the Infineon CYW43439 Wi-Fi and Bluetooth module.",
     "version": {

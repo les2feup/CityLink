@@ -1,6 +1,7 @@
 {
     "@context": [
-        "https://www.w3.org/2022/wot/td/v1.1"
+        "https://www.w3.org/2022/wot/td/v1.1",
+        "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/context.jsonld"
     ],
     "@type": [
         "tm:ThingModel",
@@ -26,7 +27,7 @@
         }
     ],
     "flash": {
-        "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModel/platform/rp2040.tm.json/properties/flash",
+        "tm:ref": "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/ThingModels/platform/rp2040.tm.json#/properties/flash",
         "properties": {
             "size": {
                 "const": 2
