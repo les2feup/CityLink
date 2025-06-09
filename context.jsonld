@@ -1,26 +1,27 @@
 {
-    "@context": {
-        "citylink": "https://example.org/CityLink#",
-        "manifest": {
-            "@id": "citylink:hasManifest",
-            "@type": "@id",
-            "@context": {
-                "citylink": "https://example.org/CityLink#",
-                "placeholder": {
-                    "@id": "citylink:hasPlaceholder",
-                    "@container": "@index"
-                },
-                "source": {
-                    "@id": "citylink:hasSource",
-                    "@container": "@set",
-                    "@context": {
-                        "filepath": "citylink:hasFilePath",
-                        "href": {
-                            "@id": "citylink:hasHref",
-                            "@type": "@id"
-                        },
-                        "contentType": "citylink:hasContentType",
-                        "sha256": "citylink:hasSha256"
+    "citylink": "https://example.org/CityLink#",
+    "manifest": {
+        "@id": "citylink:manifest",
+        "@type": "@id",
+        "@context": {
+            "cl": "citylink",
+            "placeholder": {
+                "@id": "cl:hasPlaceholder",
+                "@container": "@index"
+            },
+            "source": {
+                "@id": "cl:hasSource",
+                "@container": "@set",
+                "@context": {
+                    "filepath": "cl:hasFilePath",
+                    "href": {
+                        "@id": "cl:hasHref",
+                        "@type": "@id"
+                    },
+                    "contentType": "cl:hasContentType",
+                    "sha256": {
+                        "@id": "cl:hasHash",
+                        "@type": "cl:sha256"
                     }
                 }
             }
