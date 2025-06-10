@@ -1,7 +1,8 @@
 {
     "@context": [
         "https://www.w3.org/2022/wot/td/v1.1",
-        "https://raw.githubusercontent.com/w3c/wot-binding-templates/refs/heads/main/bindings/protocols/mqtt/context.jsonld"
+        "https://raw.githubusercontent.com/w3c/wot-binding-templates/refs/heads/main/bindings/protocols/mqtt/context.jsonld",
+        "https://raw.githubusercontent.com/les2feup/CityLink/refs/heads/main/context.jsonld"
     ],
     "@type": [
         "tm:ThingModel",
