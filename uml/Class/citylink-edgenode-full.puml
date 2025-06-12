@@ -1,0 +1,81 @@
+@startuml
+skinparam linetype ortho
+skinparam nodesep 120
+hide empty members
+
+package "@citylink-edgenode/core" {
+
+abstract EdgeConnector {
+    # controllerFactories: EndNodeControllerFactory[]
+    # controllers: Map<string, EndNodeController>
+
+    + abstract startRegistrationListener(): Promise<void>
+    + abstract stopRegistrationListener(): Promise<void>
+
+    + registerControllerFactory(factory: EndNodeControllerFactory)
+    + getRegisteredNodes(): EndNode[]
+}
+
+interface EndNodeControllerFactory {
+    + compatible: ControllerCompatibleTM
+    + produce(node: EndNode) : Promise<EndNodeController>
+}
+
+interface EndNodeController{
+    - endNode: EndNode
+    - compatible: ControllerCompatibleTM
+
+    + start(): void | Promise<void>
+    + stop(): void | Promise<void>
+    + startAdaptation(tm: ThingModel | URL): Promise<void>
+}
+
+class EndNode{
+    + uuid: string
+    + manifest: Manifest
+    + td: ThingDescription
+    + compatible: ControllerCompatibleTM
+
+    + static from(tm: ThingModel | URL): Promise<EndNode>
+}
+
+EndNodeController --* EndNode : contains
+EndNodeControllerFactory --> EndNodeController : produces
+EdgeConnector "1" --* "0..*" EndNodeController : contains\n
+EdgeConnector "1" --* "1..*\t" EndNodeControllerFactory : contains
+
+}
+
+package "@citylink-edgenode/connector-mqtt"{
+    class MQTTEdgeConnector{
+        + override startRegistrationListener(): Promise<void>
+        + override stopRegistrationListener(): Promise<void>
+    }
+}
+
+package "@citylink-edgenode/controller-umqtt-core"{
+  
+    class UMQTTCoreControllerFactory {
+        + compatible: ControllerCompatibleTM
+
+        + produce(node: EndNode) : Promise<EndNodeController>
+    }
+
+    class UMQTTCoreController {
+        - endNode: EndNode
+        - compatible: ControllerCompatibleTM
+
+        + start(): void | Promise<void>
+        + stop(): void | Promise<void>
+        + startAdaptation(tm: ThingModel | URL): Promise<void>
+    }
+
+
+    UMQTTCoreControllerFactory --> UMQTTCoreController: produces
+}
+
+EdgeConnector -r--|> MQTTEdgeConnector: extends
+EndNodeControllerFactory -r..|> UMQTTCoreControllerFactory: implements
+EndNodeController -r..|> UMQTTCoreController: implements\t
+UMQTTCoreController --* EndNode : contains
+@enduml
