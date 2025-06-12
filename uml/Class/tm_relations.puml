@@ -1,0 +1,40 @@
+@startuml
+skinparam nodesep 100
+hide empty members
+
+package "Application Models" as app {
+
+    class "Concrete App" as concrete << (M, cyan) Thing Model, MQTT >>
+    class "Generic App" as general << (M, cyan) Thing Model >>
+
+    concrete <|-u- general
+}
+
+package "Embedded Core Models" as core {
+    class "uMQTT Core" as umqtt << (M, cyan) Thing Model, MQTT >>
+    class "Micropython Core" as mpy << (M, cyan) Thing Model >>
+
+    umqtt <|-u- mpy
+}
+
+package "Platform Models" {
+    class "RPI Pico W" as picow <<(M, cyan) Thing Model>>
+    class "RP2040" as rp2040 <<(M, cyan) Thing Model>>
+    class "CYW43439" as cyw <<(M, cyan) Thing Model>>
+
+    picow --* rp2040
+    picow --* cyw
+}
+
+package "Edge Connector Models" as edge {
+    class "MQTT Edge Connector" as edgecon <<(M, cyan) Thing Model, MQTT>>
+    class "uMQTT Node Controller" as ctrler <<(M, cyan) Thing Model, MQTT>>
+
+    edgecon -u.> ctrler
+}
+
+concrete -d-* picow
+concrete -r-* umqtt
+umqtt -r.> ctrler
+
+@enduml
