@@ -1,0 +1,32 @@
+@startuml
+!pragma teoz true
+skinparam style strictuml
+
+participant "uMQTT Node Controller" as controller <<Edge Node>>
+participant "uMQTT Core" as pico <<RPI Pico W>>
+
+activate pico
+activate controller
+
+... __same as before__ ...
+
+group Write/Delete Loop
+
+    controller -> pico: actions/core/otau/{write/delete}
+    activate pico
+        pico -X pico: write to [filepath].temp /\ncheck & buffer deletion
+    return events/core/otau/report\n{"error": true, ...}
+
+end
+
+controller -> pico: actions/core/otau/finish\n{"commit": false}
+pico -> pico: discard changes & soft-reset
+& pico -> controller: properties/core/status "UNDEF"
+deactivate pico
+
+pico -> pico: boot into Application mode
+activate pico
+
+pico -> controller: properties/core/status "APP"
+
+@enduml
