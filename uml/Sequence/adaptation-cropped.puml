@@ -1,0 +1,24 @@
+@startuml
+skinparam style strictuml
+
+participant "End Node" as endNode
+participant "Edge Node" as edgeNode
+database "CityLink Repository" as cloud
+
+== Adaptation Procedure ==
+
+activate edgeNode
+group Thing Model Changed
+    edgeNode -> edgeNode: Generate Thing Description
+end
+
+edgeNode -> cloud: Fetch Application Source
+cloud --> edgeNode: Source files
+
+activate endNode
+loop all files
+    edgeNode -> endNode: Write/delete source file
+    endNode --> edgeNode: Write/delete Ack
+end
+
+@enduml

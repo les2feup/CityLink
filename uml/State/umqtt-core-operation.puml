@@ -1,0 +1,74 @@
+@startuml
+
+state anyFail <<start>>
+state initFail <<end>>
+state opFail <<end>>
+
+state "Initialization" as init {
+    state "Hardware Initialization" as hwInit
+    hwInit: - end node HW Initialization
+    hwInit: - load Micropython firmware
+
+    state "Micropython Start" as mpyStart
+    mpyStart: - Reset device memory
+    mpyStart: - Reset interpreter state
+    mpyStart: - Micropython environment ready
+    
+    state "Load 'boot.py'" as boot
+    
+    state "Load 'citylink.core'" as initCore
+    initCore: - Load configuration
+    initCore: - Load dependencies
+    
+    hwInit -> mpyStart
+    mpyStart -d-> boot
+    boot -l-> initCore
+}
+
+anyFail -d-> mpyStart : [From any exit condition]
+
+[*] -d-> hwInit : [cold start]
+init -r-> initFail : [Any SW failure]
+initCore -d-> con
+
+state "Embedded Core Operation" as coreOp {
+
+    state "Connection" as con
+    con: - connect to WiFi network
+    con: - connect to MQTT broker
+
+    state "Registration" as reg 
+    reg: - register with Edge Connector
+
+    state "Post Registration" as postReg
+    postReg: - check for user application
+
+    state "Operation Setup" as setup
+    setup: - load extension modules
+    setup: - load application
+    
+    state "Application" as app
+    app: - run app code
+    
+    state "Adaptation" as adapt
+    adapt: -handle OTA updates
+
+    state appOk <<choice>>
+
+    con -> reg
+    reg -> postReg
+
+    postReg -d-> appOk
+
+    appOk -l-> setup: [application present]
+    appOk -d-> adapt : [application missing]
+
+    setup -d-> app
+    app -r--> adapt : [adaptation request]
+}
+
+coreOp -r-> opFail : [Any SW failure]
+state reset <<end>>
+adapt -r-> reset : [Adaptation finished]
+
+@enduml

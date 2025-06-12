@@ -46,7 +46,7 @@
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:filter": "{{CITYLINK_CORE_PROPERTY}}/core/status",
+                    "mqv:filter": "{{CITYLINK_CORE_PROPERTY}}/status",
                     "op": [
                         "readproperty",
                         "observeproperty",
@@ -64,7 +64,7 @@
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:filter": "{{CITYLINK_CORE_EVENT}}/core/log",
+                    "mqv:filter": "{{CITYLINK_CORE_EVENT}}/log",
                     "op": [
                         "subscribeevent",
                         "unsubscribeevent"
@@ -230,7 +230,7 @@
                     "op": [
                         "invokeaction"
                     ],
-                    "mqv:qos": 2,
+                    "mqv:qos": 1,
                     "mqv:retain": false,
                     "contentType": "application/json"
                 }
@@ -244,7 +244,7 @@
                     "op": [
                         "invokeaction"
                     ],
-                    "mqv:qos": 2,
+                    "mqv:qos": 1,
                     "mqv:retain": false,
                     "contentType": "application/json"
                 }
