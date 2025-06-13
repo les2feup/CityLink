@@ -1,7 +1,7 @@
 export-env {
     $env.citylink_config = {
         reg: {
-            tm: "http://example.org/manifest.json",
+            tm: "http://example.org/thing-model.tm.json",
         }
         network: {
             ssid: "myWiFi"
