@@ -4,3 +4,6 @@
 [submodule "EmbeddedCore/ports/micropython/umqtt_core"]
 	path = EmbeddedCore/ports/micropython/umqtt_core
 	url = git@github.com:les2feup/CityLink_uMQTT_Embedded_Core.git
+[submodule "EdgeNode"]
+	path = EdgeNode
+	url = git@github.com:les2feup/citylink-edgenode.git

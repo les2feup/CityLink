@@ -1,9 +1,0 @@
-{
-  "tasks": {
-    "dev": "deno run -E -N -S -R --watch=./src/ src/main.ts"
-  },
-  "nodeModulesDir": "auto",
-  "imports": {
-    "@std/assert": "jsr:@std/assert@1"
-  }
-}
