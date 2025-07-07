@@ -52,13 +52,22 @@
             "title": "Over The Air Update Init",
             "description": "Reboot the end node into Over The Air Update mode.",
             "safe": false,
-            "idempotent": true
+            "idempotent": true,
+            "input": {
+                "type": "string",
+                "description": "URL for the new Application Thing Model."
+            }
         },
         "OTAUFinish": {
             "title": "Over The Air Update Finish",
             "description": "Reboot the end node into normal mode after an Over The Air Update.",
             "safe": false,
-            "idempotent": true
+            "idempotent": true,
+            "input": {
+                "type": "boolean",
+                "title": "Commit",
+                "description": "Commit the update. If false, the update is discarded and the end node reboots into normal mode without applying the changes."
+            }
         },
         "OTAUWrite": {
             "title": "Over The Air Update (VFS) Write",
