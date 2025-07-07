@@ -75,7 +75,7 @@
                 }
             ]
         },
-        "OTAUReport": {
+        "adaptReport": {
             "title": "Core VFS Action Response",
             "description": "Response for the last Virtual File System action.",
             "data": {
@@ -168,7 +168,7 @@
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:filter": "{{CITYLINK_CORE_EVENT}}/otau/report",
+                    "mqv:filter": "{{CITYLINK_CORE_EVENT}}/adapt/report",
                     "op": [
                         "subscribeevent",
                         "unsubscribeevent"
@@ -181,11 +181,11 @@
         }
     },
     "actions": {
-        "OTAUInit": {
+        "adaptInit": {
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:topic": "{{CITYLINK_CORE_ACTION}}/otau/init",
+                    "mqv:topic": "{{CITYLINK_CORE_ACTION}}/adapt/init",
                     "op": [
                         "invokeaction"
                     ],
@@ -194,11 +194,11 @@
                 }
             ]
         },
-        "OTAUFinish": {
+        "adaptFinish": {
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:topic": "{{CITYLINK_CORE_ACTION}}/otau/finish",
+                    "mqv:topic": "{{CITYLINK_CORE_ACTION}}/adapt/finish",
                     "op": [
                         "invokeaction"
                     ],
@@ -207,7 +207,7 @@
                 }
             ]
         },
-        "OTAUWrite": {
+        "adaptWrite": {
             "input": {
                 "properties": {
                     "payload": {
@@ -226,7 +226,7 @@
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:topic": "{{CITYLINK_CORE_ACTION}}/otau/write",
+                    "mqv:topic": "{{CITYLINK_CORE_ACTION}}/adapt/write",
                     "op": [
                         "invokeaction"
                     ],
@@ -236,11 +236,11 @@
                 }
             ]
         },
-        "OTAUDelete": {
+        "adaptDelete": {
             "forms": [
                 {
                     "href": "{{CITYLINK_HREF}}",
-                    "mqv:topic": "{{CITYLINK_CORE_ACTION}}/otau/delete",
+                    "mqv:topic": "{{CITYLINK_CORE_ACTION}}/adapt/delete",
                     "op": [
                         "invokeaction"
                     ],

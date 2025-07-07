@@ -36,7 +36,7 @@
             "type": "string",
             "enum": [
                 "UNDEF",
-                "OTAU",
+                "ADAPT",
                 "APP"
             ]
         }
@@ -48,7 +48,7 @@
         }
     },
     "actions": {
-        "OTAUInit": {
+        "adaptInit": {
             "title": "Over The Air Update Init",
             "description": "Reboot the end node into Over The Air Update mode.",
             "safe": false,
@@ -58,7 +58,7 @@
                 "description": "URL for the new Application Thing Model."
             }
         },
-        "OTAUFinish": {
+        "adaptFinish": {
             "title": "Over The Air Update Finish",
             "description": "Reboot the end node into normal mode after an Over The Air Update.",
             "safe": false,
@@ -69,7 +69,7 @@
                 "description": "Commit the update. If false, the update is discarded and the end node reboots into normal mode without applying the changes."
             }
         },
-        "OTAUWrite": {
+        "adaptWrite": {
             "title": "Over The Air Update (VFS) Write",
             "description": "Write to a file in the Virtual File System while in Over The Air Update mode.",
             "safe": false,
@@ -115,7 +115,7 @@
                 ]
             }
         },
-        "OTAUDelete": {
+        "adaptDelete": {
             "title": "Over The Air Update (VFS) Delete",
             "description": "Delete a file or directory in the Virtual File System while in Over The Air Update mode.",
             "safe": false,
