@@ -1,6 +1,6 @@
 @startuml
 skinparam linetype ortho
-hide empty members
+hide members
 
 abstract EdgeConnector {
     # controllerFactories: EndNodeControllerFactory[]
@@ -38,7 +38,7 @@ class EndNode{
 
 EndNodeController --* EndNode : contains
 EndNodeControllerFactory --> EndNodeController : produces
-EdgeConnector "1" --* "0..*" EndNodeController : contains
-EdgeConnector "1" --* "1..*" EndNodeControllerFactory : contains
+EdgeConnector "1" --* "0..*\t  " EndNodeController : contains
+EdgeConnector "1" --* "1..*\t   " EndNodeControllerFactory : contains
 
 @enduml

@@ -1,7 +1,6 @@
 @startuml
 skinparam linetype ortho
-skinparam nodesep 120
-hide empty members
+hide members
 
 package "@citylink-edgenode/core" {
 
@@ -39,10 +38,10 @@ class EndNode{
     + static from(tm: ThingModel | URL): Promise<EndNode>
 }
 
-EndNodeController --* EndNode : contains
-EndNodeControllerFactory --> EndNodeController : produces
-EdgeConnector "1" --* "0..*" EndNodeController : contains\n
-EdgeConnector "1" --* "1..*\t" EndNodeControllerFactory : contains
+EndNodeController --* EndNode
+EndNodeControllerFactory --> EndNodeController
+EdgeConnector "1" --* "0..*\t   " EndNodeController
+EdgeConnector "1" --* "1..*\t   " EndNodeControllerFactory
 
 }
 
@@ -71,11 +70,11 @@ package "@citylink-edgenode/controller-umqtt-core"{
     }
 
 
-    UMQTTCoreControllerFactory --> UMQTTCoreController: produces
+    UMQTTCoreControllerFactory --> UMQTTCoreController
 }
 
-EdgeConnector -r--|> MQTTEdgeConnector: extends
-EndNodeControllerFactory -r..|> UMQTTCoreControllerFactory: implements
-EndNodeController -r..|> UMQTTCoreController: implements\t
-UMQTTCoreController --* EndNode : contains
+EdgeConnector -r--|> MQTTEdgeConnector
+EndNodeControllerFactory -r..|> UMQTTCoreControllerFactory
+EndNodeController -r..|> UMQTTCoreController
+UMQTTCoreController --* EndNode
 @enduml

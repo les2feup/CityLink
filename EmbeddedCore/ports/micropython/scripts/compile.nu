@@ -1,4 +1,7 @@
-export def main [ basedir: path = .] {
+export def main [
+    basedir: path = .
+    --opt_level (-o) = 0
+] {
     let basedir = $basedir | path expand
     let outbasedir = $basedir | path join ".compiled" | path expand
     let files = cd $basedir | glob **/*.py
@@ -11,7 +14,7 @@ export def main [ basedir: path = .] {
         let outdir = $outbasedir | path join $extra
 
         mkdir $outdir
-        mpy-cross $file -o ($outdir | path join $outname)
+        mpy-cross -O$opt_level $file -o ($outdir | path join $outname)
 
         {dir: $outdir, file: $outname}
     }

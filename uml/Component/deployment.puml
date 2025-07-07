@@ -2,16 +2,16 @@
 hide empty members
 skinparam linetype ortho
 
-cloud "CityLink Repository" as git << Web >>
+cloud "CityLink Repository" as git << GitHub >>
 
 node "x86_64 Linux machine" as pc {
     package "Edge Connector" as con {
         component "Registration Listener" as regl <<MQTT>>
-        component "Node Controller" as nctrl <<Micropython + MQTT>>
+        component "End Node Controller" as nctrl <<Micropython + MQTT>>
     }
 
-    package "Thing Directory" as thingD {
-        component "Things API" as WoTApi << HTTP >>
+    package "Thing Description Directory" as thingD {
+        component "WoT APIs" as WoTApi << HTTP >>
         component "CityLink API" as clApi << HTTP >>
     }
 
@@ -27,7 +27,7 @@ node "Raspberry Pi Pico W" as pico {
     component "Embedded Core Runtime" as rt << Micropython+MQTT>>
 }
 
-pc <-r-- git
-broker <-r--> pico
+pc <-u- git
+broker <-d-> pico
 
 @enduml
