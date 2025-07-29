@@ -2,7 +2,7 @@
 
 Main project repository for the City Link framework.
 
-This project is part of my Master's thesis in Electrical and Computer Engineering at the [Faculty of Engineering, University of Porto](https://www.up.pt/feup/en/), Portugal.
+This project is part of a Master's thesis in Electrical and Computer Engineering at the [Faculty of Engineering, University of Porto](https://www.up.pt/feup/en/), Portugal.
 
 Project documentation can be found on the [project wiki page](https://github.com/les2feup/CityLink/wiki).
 NOTE: The wiki is still under construction, and some sections may be incomplete or missing. As part of an ongoing rebranding and migration, the wiki may refer to the project's previsou name as "Smart Sensor Actuator".
